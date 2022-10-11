@@ -71,7 +71,11 @@ pub mod board {
     //! # board module
     //!
     //! module to hold board specific values like dimensions etc.
-    //!
+    //! 
+    //! Quadrant 1 = left block
+    //! Quadrant 2 = top block
+    //! Quadrant 3 = right block
+    //! 
     //! Contents:
     //!     X_MAX   (const)
     //!     X_MIN   (const)
@@ -95,18 +99,38 @@ pub mod board {
     /// Board's down most y axis length.
     pub const Y_MIN: i32 = -2_i32;
 
-    // Board border.
-    /// Board's right most length.
+    // Camera view over the board.
+    /// Board's right most length in view.
     pub const RGT: i32 =  10_i32;
 
-    /// Board's left most length.
-    pub const LFT: i32 = -10_i32;
+    /// Board's left most length in view.
+    pub const LFT: i32 = -11_i32;
 
-    /// Board's top most length.
-    pub const TOP: i32 =  10_i32;
+    /// Board's top most length in view.
+    pub const TOP: i32 =  8_i32;
 
-    /// Board's bottom most length.
-    pub const BTM: i32 =  -4_i32;
+    /// Board's bottom most length in view.
+    pub const BTM: i32 =  -3_i32;
+
+
+    /// To keep track of all the points on a board.
+    pub const BOARD: [(i32, i32); 72] = [
+        // Quadrant 1
+        (-8, -2),   (-7, -2),   (-6, -2),   (-5, -2),   (-4, -2),   (-3, -2),
+        (-8, -1),   (-7, -1),   (-6, -1),   (-5, -1),   (-4, -1),   (-3, -1),
+        (-8,  1),   (-7,  1),   (-6,  1),   (-5,  1),   (-4,  1),   (-3,  1),
+        (-8,  2),   (-7,  2),   (-6,  2),   (-5,  2),   (-4,  2),   (-3,  2),
+        // Quadrant 2
+        (-2,  3),   (-2,  4),   (-2,  5),   (-2,  6),   (-2,  7),   (-2,  8),
+        (-1,  3),   (-1,  4),   (-1,  5),   (-1,  6),   (-1,  7),   (-1,  8),
+        ( 1,  3),   ( 1,  4),   ( 1,  5),   ( 1,  6),   ( 1,  7),   ( 1,  8),
+        ( 2,  3),   ( 2,  4),   ( 2,  5),   ( 2,  6),   ( 2,  7),   ( 2,  8),
+        // Quadrant 3
+        ( 8, -2),   ( 7, -2),   ( 6, -2),   ( 5, -2),   ( 4, -2),   ( 3, -2),
+        ( 8, -1),   ( 7, -1),   ( 6, -1),   ( 5, -1),   ( 4, -1),   ( 3, -1),
+        ( 8,  1),   ( 7,  1),   ( 6,  1),   ( 5,  1),   ( 4,  1),   ( 3,  1),
+        ( 8,  2),   ( 7,  2),   ( 6,  2),   ( 5,  2),   ( 4,  2),   ( 3,  2),
+    ];
 }
 
 /// Error enum to handle errors across the lib.
@@ -170,7 +194,7 @@ impl<'a> PlayerLW<'a> {
             team: PlayerLW::teamstr_from_team(team),
         }
     }
-    
+
     /// To turn a team enum value to a String value.
     ///
     /// Takes __Team__ enum value and converts is to __String__ value.
@@ -193,14 +217,6 @@ impl<'a> PlayerLW<'a> {
 ///
 /// Takes a String argument, clones and returns as &str using stringify macro.
 fn str_from_string<'a> (str: String) -> &'a str { stringify!("{}", str) }
-
-/// To build the game.
-///
-/// Does an extra validation check before starting the game.
-pub fn build_board(game: &Game) -> Result<(), Error> {
-    
-    todo!()
-}
 
 /// To check the winner of the game and close it.
 ///

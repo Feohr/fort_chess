@@ -1,0 +1,61 @@
+/*
+-* Date: 14th of September, 2022.
+-* ==============================
+-*
+-* This was a game I came up with as a child. I was looking to create my own rust project and
+-* wonderd if I could turn my game idea into reality. So here we are. I hope you enjoy it.
+-*
+-* Note: This game is open-source and free to use, re-engineered or re-used however you like.
+-* You are also welcomed to contribute to this and rest of my repositories.
+-*
+-*      Github:     https://github.com/RehaanMohammed
+-*      LinkedIn:   https://www.linkedin.com/in/mohammed-rehaan-193305222
+-*      Blog:       https://www.myblog.io/aboutme/
+-*      Articles:   https://www.letsgetrusty.io/authors/RehaanMohammed/
+-* ====================================================================================
+-*
+-* Rules:
+-*
+-*      *   This is a mini-game made in rust called fort chess.
+-*
+-*      *   You need 2-4 players to play this game.
+-*
+-*      *   There are a total of 80 boxes. 25 in each quadrant (24 + 1 inside fort).
+-*
+-*      *   Three players (fort attackers) have 2 knights and 4 Pawns.
+-*
+-*      *   One player (fort defender) has 4 Knight, 2 Rook, 3 Minister, 3 Queen and 12 Pawns
+-*          Evenly distributed across the boards.
+-*
+-*      *   There is no king. They are all sleeping peacefully while their soldiers
+-*          bleed(realistic?).
+-*
+-*      *   The players cannot cross-over to the other player's boards.
+-*          // except the fort defender (only the queens and ministers are allowed to cross).
+-*
+-*      *   The defending player defeats the attacking players by reaching
+-*          the border of the attacking player's board.
+-*
+-*      *   The defending player loses if the attacking player reaches to the center of the fort.
+-*
+-* To Win:
+-*      *   In order to win the game, the defender must either defeat all the players or
+-*          the attacking player must reach the center of the fort and roll the dice to get 6.
+-* ===============================================================================================
+-*
+-* Some ideas to re-impliment this code into your own project:
+-*
+-*      *   Make a full blown out 3d-version of this game.
+-*
+-*      *   Turn this game into online multiplayer.
+-*
+-*      *   Make this game adaptable with 2 compulsory opponents and rest as optional.
+-*
+-*      *   Add AI bots for opponents.
+-*
+-*      *   Make a terminal version of this game with only ASCII graphics.
+-*
+-*      *   Make this game cross-platform and port it to Android/IOS.
+-*
+-*  -- Mohammed Rehaan
+-*/
