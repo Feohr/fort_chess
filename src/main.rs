@@ -14,7 +14,7 @@ use fort_builders::board::{ TOP, BTM, RGT, LFT };
 use thiserror::Error;
 
 pub const RESOLUTION: f32 = (16.0 / 9.0) * 20.0;
-pub const TILESIZE: (f32, f32) = (1.0, 1.0);
+pub const TILESIZE: (f32, f32) = (0.99, 0.99);
 
 use tiles::{ TilePlugin, load_tile };
 
@@ -22,7 +22,7 @@ use tiles::{ TilePlugin, load_tile };
 enum Error {
     #[error("Error while loading graphics ({0}).")]
     GraphicalError(String),
-    #[error("Error withing the fort builder module ({0}).")]
+    #[error("Error within the fort builder module ({0}).")]
     InternalErrorLibError(#[from] fort_builders::Error),
     // SoundError(sound_lib::Error),
 }
@@ -38,7 +38,6 @@ fn spawn_camera(mut commands: Commands) {
     commands.spawn_bundle(camera);
 }
 
-
 // Players are different colors based on their choice team.
 // In future, make this semi-automated.
 // When no option, the program will automatically assign a team.
@@ -46,8 +45,6 @@ fn main() {
     App::new()
         .insert_resource(ClearColor(Color::rgb(0.1, 0.1, 0.1)))
         .insert_resource(WindowDescriptor{
-            // resizable: false,
-            // decorations: true,
             title: "Fort Chess".to_string(),
             .. Default::default()
         })

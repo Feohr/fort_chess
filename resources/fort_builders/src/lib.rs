@@ -101,36 +101,16 @@ pub mod board {
 
     // Camera view over the board.
     /// Board's right most length in view.
-    pub const RGT: i32 =  10_i32;
+    pub const RGT: i32 =  12_i32;
 
     /// Board's left most length in view.
-    pub const LFT: i32 = -11_i32;
+    pub const LFT: i32 = -13_i32;
 
     /// Board's top most length in view.
-    pub const TOP: i32 =  8_i32;
+    pub const TOP: i32 =  10_i32;
 
     /// Board's bottom most length in view.
     pub const BTM: i32 =  -3_i32;
-
-
-    /// To keep track of all the points on a board.
-    pub const BOARD: [(i32, i32); 72] = [
-        // Quadrant 1
-        (-8, -2),   (-7, -2),   (-6, -2),   (-5, -2),   (-4, -2),   (-3, -2),
-        (-8, -1),   (-7, -1),   (-6, -1),   (-5, -1),   (-4, -1),   (-3, -1),
-        (-8,  1),   (-7,  1),   (-6,  1),   (-5,  1),   (-4,  1),   (-3,  1),
-        (-8,  2),   (-7,  2),   (-6,  2),   (-5,  2),   (-4,  2),   (-3,  2),
-        // Quadrant 2
-        (-2,  3),   (-2,  4),   (-2,  5),   (-2,  6),   (-2,  7),   (-2,  8),
-        (-1,  3),   (-1,  4),   (-1,  5),   (-1,  6),   (-1,  7),   (-1,  8),
-        ( 1,  3),   ( 1,  4),   ( 1,  5),   ( 1,  6),   ( 1,  7),   ( 1,  8),
-        ( 2,  3),   ( 2,  4),   ( 2,  5),   ( 2,  6),   ( 2,  7),   ( 2,  8),
-        // Quadrant 3
-        ( 8, -2),   ( 7, -2),   ( 6, -2),   ( 5, -2),   ( 4, -2),   ( 3, -2),
-        ( 8, -1),   ( 7, -1),   ( 6, -1),   ( 5, -1),   ( 4, -1),   ( 3, -1),
-        ( 8,  1),   ( 7,  1),   ( 6,  1),   ( 5,  1),   ( 4,  1),   ( 3,  1),
-        ( 8,  2),   ( 7,  2),   ( 6,  2),   ( 5,  2),   ( 4,  2),   ( 3,  2),
-    ];
 }
 
 /// Error enum to handle errors across the lib.
