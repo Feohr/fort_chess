@@ -4,14 +4,12 @@
 //! handles initialization, run and execution of the game.
 //!
 
-#![feature(array_zip)]
-
 pub mod game;
 pub mod player;
 mod pieces;
 
 use game::Game;
-use player::{ Player, Team };
+use player::Team;
 use thiserror::Error;
 use std::time::SystemTime;
 
@@ -29,15 +27,16 @@ pub mod board {
     //! Quadrant 2: top block
     //! Quadrant 3: right block
     //!
-    //! # Contents:
-    //! -   X_MAX   (const)
-    //! -   X_MIN   (const)
-    //! -   Y_MAX   (const)
-    //! -   Y_MIN   (const)
-    //! -   RGT     (const)
-    //! -   LFT     (const)
-    //! -   TOP     (const)
-    //! -   BTM     (const)
+    //! ## Contents:
+    //! -   X_MAX       (const)
+    //! -   X_MIN       (const)
+    //! -   Y_MAX       (const)
+    //! -   Y_MIN       (const)
+    //! -   RGT         (const)
+    //! -   LFT         (const)
+    //! -   TOP         (const)
+    //! -   BTM         (const)
+    //! -   Quadrant    (enum)
 
     // Board tile borders.
     /// Board's right most x axis length.
@@ -80,6 +79,17 @@ pub mod board {
         /// Block 3.
         Q3,
     }
+    
+    impl Quadrant {
+        pub fn from_index(index: usize) -> Result<Self, super::Error> {
+            match index {
+                0   =>  Ok(Quadrant::Q1),
+                1   =>  Ok(Quadrant::Q2),
+                2   =>  Ok(Quadrant::Q2),
+                _   =>  Err(super::Error::InvalidQuadrantIndex(index)),
+            }
+        }
+    }
 }
 
 /// Error enum to handle errors across the lib.
@@ -106,13 +116,23 @@ pub enum Error {
     RED, RST)]
     PieceVectorIndexOutOfBounds(usize, usize),
 
+    /// If the position referenced is not present in the pieces vector.
+    #[error("{} The given index of the piece {0} does not exist in a vec of length {1}. {}",
+    RED, RST)]
+    PlayerVectorIndexOutOfBounds(usize, usize),
+
     /// When an illegal position is referenced.
-    #[error("{} The given index {0} cannot exist as the vector index can only be \
-            (0 < length < 24) {}", RED, RST)]
-    IllegalVectorIndex(usize),
+    #[error("{} The given index {0} cannot exist as the index for a piece vector should be \
+    (0 < length < 24 | 8). {}", RED, RST)]
+    IllegalPieceVectorIndex(usize),
+
+    /// When an illegal position is referenced.
+    #[error("{} The given index {0} cannot exist as the index for a player vector should be \
+    (0 < length < 4). {}", RED, RST)]
+    IllegalPlayerVectorIndex(usize),
 
     /// When more than one winner exists.
-    #[error("{} There seens to be more than one winner {}", RED, RST)]
+    #[error("{} There seens to be more than one winner. {}", RED, RST)]
     MoreThanOneWinner(usize),
 
     /// If Invalid Team index was provided.
@@ -120,8 +140,19 @@ pub enum Error {
     InvalidTeamIndex(usize),
 
     /// If Invalid Piece type index was provided.
-    #[error("{} The provided index {0} does not have a piece type corresponding to it. {}", RED, RST)]
+    #[error("{} The provided index {0} does not have a piece type corresponding to it. {}",
+    RED, RST)]
     InvalidPieceTypeIndex(u8),
+
+    /// If error faced during creation of __Piece__ vector.
+    #[error("{} Ran into issue while creating vectors. {}",
+    RED, RST)]
+    EmptyPieceVectorCreated,
+
+    /// If invalid Quadrant index was provided.
+    #[error("{} The provided index {0} does not have a quadrant corresponding to it. {}",
+    RED, RST)]
+    InvalidQuadrantIndex(usize),
 }
 
 /// A light weight representation of the __Player__ struct.
@@ -129,7 +160,7 @@ pub enum Error {
 /// A ligth weight representation of __Player__ struct since, we do not really need to clone the
 /// whole damn struct for simple info about the player. __Pieces__ and indicators aren't of use.
 ///
-/// Contents:
+/// ## Contents:
 /// -   name: name of the player.
 /// -   team: team of the player.
 #[derive(Debug)]
@@ -147,21 +178,21 @@ impl<'a> PlayerLW<'a> {
     /// Takes string name input and team name to create a __PlayerLw__ struct.
     fn new(name: String, team: Team) -> PlayerLW<'a> {
         PlayerLW {
-            name: str_from_string(name.clone()),
-            team: PlayerLW::teamstr_from_team(team),
+            name: str_from_string(name),
+            team: teamstr_from_team(team),
         }
     }
+}
 
-    /// To turn a team enum value to a String value.
-    ///
-    /// Takes __Team__ enum value and converts is to __String__ value.
-    fn teamstr_from_team(team: Team) -> &'a str {
-        match team {
-            Team::Red    => "Red",
-            Team::Green  => "Green",
-            Team::Blue   => "Blue",
-            Team::Yellow => "Yellow",
-        }
+/// To turn a team enum value to a String value.
+///
+/// Takes __Team__ enum value and converts is to __String__ value.
+fn teamstr_from_team<'a>(team: Team) -> &'a str {
+    match team {
+        Team::Red    => "Red",
+        Team::Green  => "Green",
+        Team::Blue   => "Blue",
+        Team::Yellow => "Yellow",
     }
 }
 
@@ -182,46 +213,52 @@ pub fn exit<'a>(mut game: Game) -> Result<Option<PlayerLW<'a>>, Error> {
     if game.is_interrupt() {
         return Ok(None);
     }
-    // To save the number of winners.
-    let mut winners: Vec<PlayerLW> = Vec::new();
-    for player in &game.players {
-        if player.is_winner {
-            winners.push(PlayerLW::new(
+    let mut winners: Vec<PlayerLW> = 
+        game
+        .players
+        .iter()
+        .filter_map(
+            |player|
+            match player.is_winner {
+                true    =>  Some(
+                                PlayerLW::new(
                                     player.name.clone(),
                                     player.team.clone(),
                                 )
-                    );
-        }
-    }
+                            ),
+                false   =>  None,
+            }
+        )
+        .collect::<Vec<PlayerLW>>();
     // Set the game to exit after extracting the results.
     // This step is kinda unecessary but still added for my peace of mind.
     game.set_state_exit();
     // Match to declare the result.
     match winners.len() {
         // Draw.
-        0   =>  return Ok(None),
+        0   =>  Ok(None),
         // Winner.
-        1   =>  return Ok(Some(winners.remove(0))),
+        1   =>  Ok(Some(winners.remove(0))),
         // More than one winner.
-        _   =>  return Err(Error::MoreThanOneWinner(winners.len())),
+        _   =>  Err(Error::MoreThanOneWinner(winners.len())),
     }
 }
 
 /// To get a random value between 1 and 6.
 ///
 /// Simulates a dice roll to get a value between 1 to 6. In exceptional cases you might be
-/// constantly getting 1 as return value. This will happen if the system date is set before 
+/// constantly getting 1 as return value. This will happen if the system date is set before
 /// 01/01/1970 (Unix Epoch). Please regain sanity and change it back to the current date.
 pub fn dice_roll() -> usize {
-    if let Ok(n) = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
-        // The values after mod 6 will be in-between 0 and 5.
-        // Adding 1 to make the range as 1 to 6.
-        return ((n.as_secs() % 6_u64) + 1_u64) as usize;
+    match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
+        Ok(n)   =>  ((n.as_secs() % 6_u64) + 1_u64) as usize,
+        Err(_)  =>  {
+            // You should not be reaching this but if you do then your computer date is stuck
+            // before the 70's.
+            eprintln!("{} System date set earlier than UNIX EPOCH {}", RED, RST);
+            1_usize
+        },
     }
-    // You should not be reaching this but if you do then your computer date is stuck before the
-    // 70's.
-    eprintln!("{} System date set earlier than UNIX EPOCH {}", RED, RST);
-    1_usize
 }
 
 #[cfg(test)]

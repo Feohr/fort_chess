@@ -9,7 +9,7 @@ use bevy::render::camera::{ ScalingMode, WindowOrigin, OrthographicProjection };
 use fort_builders::{ dice_roll, exit, PlayerLW };
 use fort_builders::player::{ Player, PlayerAction, Team };
 use fort_builders::game::{ Game, GameAction };
-use fort_builders::board::{ TOP, BTM, RGT, LFT };
+use fort_builders::board::{ TOP, BTM, RGT, LFT, Quadrant };
 
 pub const RESOLUTION: f32 = (16.0 / 9.0) * 20.0;
 pub const TILESIZE: (f32, f32) = (0.98, 0.98);
@@ -19,58 +19,44 @@ struct GameAsset(Game);
 
 use tiles::TilePlugin;
 
-// To soawn camera with the resolution.
-fn spawn_camera(mut commands: Commands) {
-    commands
-        .spawn().insert_bundle(  Camera2dBundle {
-                            projection: OrthographicProjection {
-                                            top:    (TOP as f32) * RESOLUTION,
-                                            bottom: (BTM as f32) * RESOLUTION,
-                                            right:  (RGT as f32) * RESOLUTION,
-                                            left:   (LFT as f32) * RESOLUTION,
-                                            scaling_mode:   ScalingMode::None,
-                                            window_origin:  WindowOrigin::Center,
-                                            ..Default::default()
-                                        },
-                            ..default()
-                        }
-                    );
-}
-
 fn setup(mut commands: Commands) {
-    let mut players = Vec::new();
-    let roll = dice_roll() % 4;
-    for i in 0..4 {
-        players.push(
-            Player::from(
-                format!("player {}", i + 1),
-                Team::from_index(i).unwrap(),
-                    if roll == i {
-                        true
-                    } else {
-                        false
-                    }
-            ).unwrap(),
-        );
-    }
+    let roll = dice_roll() % 3;
+    let players =   (0..4)
+                    .into_iter()
+                    .map(
+                        |i|
+                        {
+                            Player::from(
+                                format!("player {}", i + 1),
+                                Team::from_index(i).unwrap(),
+                                if roll == i {
+                                    true
+                                } else {
+                                    false
+                                },
+                                Quadrant::from_index(i % 3).unwrap(),
+                            )
+                            .unwrap()
+                        }
+                    )
+                    .collect::<Vec<Player>>();
     commands
         .spawn()
         .insert(GameAsset(Game::init(players)));
-    commands
-        .spawn().insert_bundle(  Camera2dBundle {
-                            projection: OrthographicProjection {
-                                            top:    (TOP as f32) * RESOLUTION,
-                                            bottom: (BTM as f32) * RESOLUTION,
-                                            right:  (RGT as f32) * RESOLUTION,
-                                            left:   (LFT as f32) * RESOLUTION,
-                                            scaling_mode:   ScalingMode::None,
-                                            window_origin:  WindowOrigin::Center,
-                                            ..Default::default()
-                                        },
-                            ..default()
-                        }
-                    );
-
+    commands.spawn()
+            .insert_bundle( Camera2dBundle {
+                                projection: OrthographicProjection {
+                                                top:    (TOP as f32) * RESOLUTION,
+                                                bottom: (BTM as f32) * RESOLUTION,
+                                                right:  (RGT as f32) * RESOLUTION,
+                                                left:   (LFT as f32) * RESOLUTION,
+                                                scaling_mode:   ScalingMode::None,
+                                                window_origin:  WindowOrigin::Center,
+                                                ..default()
+                                            },
+                                ..default()
+                            }
+            );
 }
 
 fn print_game_info(query: Query<&GameAsset>) {

@@ -2,58 +2,24 @@
 //!
 //! Holds the data and functions corresponding to the chess pieces.
 
+mod piece_alignment;
+
 use crate::Error;
 use crate::board::{ X_MAX, Y_MAX, X_MIN, Y_MIN, Quadrant };
 use std::fmt;
-use piece_alignment::{
-    DEF_Q1, DEF_Q2, DEF_Q3, DEF_P_Q1, DEF_P_Q2, DEF_P_Q3,
-    ENM_Q1, ENM_Q2, ENM_Q3, ENM_P,
-};
-
-type PosInfo    = [(i32, i32); 8];
-type TypeInfo   = [u8; 8];
-type PieceInfo  = (PosInfo, TypeInfo);
-
-mod piece_alignment {
-    // The defender.
-    pub const DEF_Q1: [(i32, i32); 8] = [
-        (-3,    -2), (-3,   -1), (-3,    0), (-3,     1),
-        (-4,    -2), (-4,   -1), (-4,    0), (-4,     1),
-    ];
-    pub const DEF_Q2: [(i32, i32); 8] = [
-        (-2,     2), (-1,    2), ( 0,    2), ( 1,     2),
-        (-2,     3), (-1,    3), ( 0,    3), ( 1,     3),
-    ];
-    pub const DEF_Q3: [(i32, i32); 8] = [
-        ( 2,     1), ( 2,    0), ( 2,   -1), ( 2,    -2),
-        ( 3,     1), ( 3,    0), ( 3,   -1), ( 3,    -2),
-    ];
-
-    // The enemies.
-    pub const ENM_Q1: [(i32, i32); 8] = [
-        (-7,    -2), (-7,   -1), (-7,    0), (-7,     1),
-        (-8,    -2), (-8,   -1), (-8,    0), (-8,     1),
-    ];
-    pub const ENM_Q2: [(i32, i32); 8] = [
-        (-2,     6), (-1,    6), ( 0,    6), ( 1,     6),
-        (-2,     7), (-1,    7), ( 0,    7), ( 1,     7),
-    ];
-    pub const ENM_Q3: [(i32, i32); 8] = [
-        ( 6,     1), ( 6,    0), ( 6,   -1), ( 6,    -2),
-        ( 7,     1), ( 7,    0), ( 7,   -1), ( 7,    -2),
-    ];
-
-    // piece type index
-    pub const ENM_P     : [u8; 8] = [ 3, 3, 3, 3, 4, 3, 3, 4 ];
-    pub const DEF_P_Q1  : [u8; 8] = [ 4, 1, 2, 0, 3, 3, 3, 3 ];
-    pub const DEF_P_Q2  : [u8; 8] = [ 4, 2, 1, 4, 3, 3, 3, 3 ];
-    pub const DEF_P_Q3  : [u8; 8] = [ 0, 1, 2, 4, 3, 3, 3, 3 ];
-}
+use piece_alignment::get_resp_info;
 
 /// To determine the piece type.
 ///
 /// All the possible chess pieces to be used in game.
 /// Does not contain king as this variation doesn't have it.
+///
+/// ## Contents:
+/// -   Rook
+/// -   Minister
+/// -   Queen
+/// -   Pawn
+/// -   Knight
 pub enum PieceType {
     Rook,       // 0
     Minister,   // 1
@@ -81,7 +47,7 @@ impl<'a> PieceType {
 }
 
 impl PieceType {
-    fn type_from_index(index: u8) -> Result<PieceType, Error> {
+    fn from_index(index: u8) -> Result<PieceType, Error> {
         match index {
             0 => Ok(PieceType::Rook),
             1 => Ok(PieceType::Minister),
@@ -98,7 +64,7 @@ impl PieceType {
 /// The x value corresponds to the x axis.
 /// Similarly, the y value corresponds to the y axis.
 ///
-/// # Contents:
+/// ## Contents:
 /// -   x:  the x-axis value.
 /// -   y:  the y-axis value.
 pub struct Position {
@@ -115,8 +81,7 @@ impl fmt::Debug for Position {
     }
 }
 
-impl Position {
-    /// To check if a position value is inside the board.
+/// To check if a position value is inside the board.
     ///
     /// This function is used to check if a particular position is inside the board.
     /// Wherever this function returns false, the program should be stopped with an error
@@ -128,18 +93,19 @@ impl Position {
     /// context is inside a board or not.
     ///
     /// **Do not use this function to check for custom values**
-    #[inline]
-    pub fn in_range(x: i32, y: i32) -> bool {
-            ( x < X_MAX && x >= X_MIN )
-        &&  ( y < Y_MAX && y >= Y_MIN )
-    }
+#[inline(always)]
+pub fn in_board_range(x: i32, y: i32) -> bool {
+        ( x < X_MAX && x >= X_MIN )
+    &&  ( y < Y_MAX && y >= Y_MIN )
+}
 
+impl Position {
     /// To create a position struct.
     ///
     /// Takes the x and y value, checks if it is inside the board and creates the struct.
     #[inline]
     pub fn from(x: i32, y: i32) -> Result<Self, Error> {
-        if !Self::in_range(x, y) {
+        if !in_board_range(x, y) {
             return Err(Error::IllegalPosition(x, y));
         }
         // Finally.
@@ -152,7 +118,7 @@ impl Position {
 
 /// Piece struct that holds the type and the position of each piece.
 ///
-/// # Contents:
+/// ## Contents:
 /// -   piece_type: holds the type of the piece via __PieceType__ enum.
 /// -   position:   holds the position of the piece via __Position__ struct.
 pub struct Piece {
@@ -165,7 +131,7 @@ pub struct Piece {
 
 impl fmt::Debug for Piece {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "<{:?}, {:?}>", self.piece_type, self.position)
+        write!(f, "[{:?}, {:?}]", self.piece_type, self.position)
     }
 }
 
@@ -183,66 +149,64 @@ impl Piece {
         })
     }
 
-    fn get_pos_from_quadrant(is_defender: bool, quadrant: &Quadrant) -> PosInfo {
-        if is_defender {
-            match quadrant {
-                Quadrant::Q1 => return DEF_Q1,
-                Quadrant::Q2 => return DEF_Q2,
-                Quadrant::Q3 => return DEF_Q3,
-            }
+    pub fn init_pieces(is_defender: bool, quadrant: Quadrant) -> Result<Vec<Piece>, Error> {
+        let (pos, tp) = get_resp_info(is_defender, quadrant);
+        let piece_vec = pos
+                        .into_iter()
+                        .zip(tp)
+                        .flat_map(
+                            |(position, piece_type)| -> Result<Piece, Error>
+                            {
+                                let piece = Piece::from(
+                                                position.0,
+                                                position.1,
+                                                PieceType::from_index(piece_type)?,
+                                            )?;
+                                Ok(piece)
+                            }
+                        )
+                        .collect::<Vec<Piece>>();
+        match piece_vec.is_empty() {
+            true    =>  Err(Error::EmptyPieceVectorCreated),
+            false   =>  Ok(piece_vec),
         }
-            match quadrant {
-                Quadrant::Q1 => return ENM_Q1,
-                Quadrant::Q2 => return ENM_Q2,
-                Quadrant::Q3 => return ENM_Q3,
-            }
-    }
-
-    fn get_type_from_quadrant(is_defender: bool, quadrant: &Quadrant) -> TypeInfo {
-        if is_defender {
-            match quadrant {
-                Quadrant::Q1 => return DEF_P_Q1,
-                Quadrant::Q2 => return DEF_P_Q2,
-                Quadrant::Q3 => return DEF_P_Q3,
-            }
-        }
-            return ENM_P;
-    }
-
-    fn get_resp_info(is_defender: bool, quadrant: Quadrant) -> PieceInfo {
-        let pos     = Piece::get_pos_from_quadrant(is_defender, &quadrant);
-        let tp      = Piece::get_type_from_quadrant(is_defender, &quadrant);
-        return (pos, tp);
-    }
-
-    pub fn init_pieces(is_defender: bool, quadrant: Quadrant) -> Vec<Piece> {
-        let (pos, tp) = Piece::get_resp_info(is_defender, quadrant);
-        let mut piece_vec = Vec::new();
-        for (position, piece_type) in pos.zip(tp).iter() {
-            piece_vec.push(
-                Piece {
-                    piece_type: PieceType::type_from_index(*piece_type).unwrap(),
-                    position: Position {
-                        x: position.0,
-                        y: position.1,
-                    }
-                }
-            );
-        }
-            return piece_vec;
     }
 
     /// To update the Position of the piece.
     ///
-    /// Takes x and y value and changes the position to the given value.
+    /// Takes x and y value and chan    ges the position to the given value.
     /// Returns error if the new position is out of range.
     pub fn update_pos(&mut self, x: i32, y: i32) -> Result<(), Error> {
-        if !Position::in_range(x, y) {
+        if !in_board_range(x, y) {
             return Err(Error::IllegalPosition(x, y));
         } 
         Ok({
             self.position.x = x;
             self.position.y = y;
         })
+    }
+    /// To check wether a vector index is valid.
+    ///
+    /// There can be a maximum of 24 pieces inside a player pieces vec. Anything more than that is an
+    /// error.
+    pub fn is_valid_index(pos: usize, is_defender: bool) -> Result<(), Error> { 
+        let check = match is_defender {
+                        true    =>  pos < 24,
+                        false   =>  pos < 8,
+                    };
+        match check {
+            true    =>  Ok(()),
+            false   =>  Err(Error::IllegalPieceVectorIndex(pos)),
+        }
+    }
+
+    /// To check if the position is inside the piece vector bounds.
+    ///
+    /// takes a usize value and checks the vector size with the length of the pieces vec.
+    pub fn is_in_bounds(pos: usize, len: usize) -> Result<(), Error> {
+        match len < pos {
+            true    =>  Err(Error::PieceVectorIndexOutOfBounds(pos, len)),
+            false   =>  Ok(()),
+        }
     }
 }

@@ -6,6 +6,7 @@
 
 use crate::Error;
 use crate::pieces::Piece;
+use crate::board::Quadrant;
 
 /// Contains the types of teams.
 ///
@@ -13,7 +14,7 @@ use crate::pieces::Piece;
 /// Each player must have a unique team.
 /// Maximum of only four players can play at a time.
 ///
-/// # Contents:
+/// ## Contents:
 /// -   Red
 /// -   Blue
 /// -   Green
@@ -46,7 +47,7 @@ impl Team {
 ///
 /// Contains data such as name, pieces held, team, etc.
 ///
-/// # Contents:
+/// ## Contents:
 /// -   name:           the name of the player.
 /// -   pieces:         pieces held by the player.
 /// -   team:           player team.
@@ -82,14 +83,19 @@ fn is_name_len_valid(len: usize) -> bool {
     // Name length of 46 seems to be an average length all over the world so I dcided to go with 50
     // as the name length limit. Also, the size of the name fits well within the game screen and
     // doesn't cause overlapping issues.
-    return len > 2 && len < 50;
+    len > 2 && len < 50
 }
 
 impl Player {
     /// Used to initialize a new player based on the inputs.
     ///
     /// Takes the name, team and is_defender boolean value to create a __Player__ struct.
-    pub fn from(name: String, team: Team, is_defender: bool) -> Result<Self, Error> {
+    pub fn from(
+        name: String,
+        team: Team,
+        is_defender: bool,
+        quadrant: Quadrant,
+    ) -> Result<Self, Error> {
         // Check if len is of valid size. i.e. less than 50.
         let len = name.len();
         if !is_name_len_valid(len) {
@@ -98,7 +104,7 @@ impl Player {
         // Finally.
         Ok(Player {
             name,
-            pieces: Vec::default(),
+            pieces: Piece::init_pieces(is_defender, quadrant)?,
             team,
             is_defender,
             is_winner: false,
@@ -106,6 +112,14 @@ impl Player {
         })
     }
 
+    /// To check wether a index is even possible.
+    pub fn is_valid_player_index(pos: usize) -> Result<(), Error> {
+        // 4 is the maximum number of players that can play.
+        match pos < 4_usize {
+            true    =>  Ok(()),
+            false   =>  Err(Error::IllegalPlayerVectorIndex(pos)),
+        }
+    }
     /// To set the player as a winner.
     ///
     /// Changes the __is_winner__ value to __true__.
@@ -134,7 +148,7 @@ impl Player {
 
 /// A public trait to handle __Player__ actions during runtime.
 ///
-/// # Actions:
+/// ## Actions:
 /// -   get_piece_pos:  To get piece position within the struct based on x, y coordinates.
 /// -   kill_piece:     To remove a piece from the __pieces__ vector.
 /// -   update_piece:   To update piece position.
@@ -144,18 +158,11 @@ pub trait PlayerAction {
     fn kill_piece(&mut self, pos: usize) -> Result<Piece, Error>;
 
     fn update_piece(&mut self, x: i32, y: i32, pos: usize) -> Result<bool, Error>;
+
+    fn kill_self(&mut self);
 }
 
-/// To check wether a vector index is valid.
-///
-/// There can be a maximum of 24 pieces inside a player pieces vec. Anything more than that is an
-/// error.
-pub fn is_valid_index(pos: usize, is_defender: bool) -> bool { 
-    if is_defender {
-        return pos < 24;
-    }
-    return pos < 8;
-}
+
 
 impl PlayerAction for Player {
     /// To get position of the piece that is clicked in relevance to the vec.
@@ -170,21 +177,16 @@ impl PlayerAction for Player {
                 return Some(index);
             }
         }
-        return None;
+            return None;
     }
 
     /// To kill a piece inside the __Player__ struct.
     ///
     /// Takes the position of the piece, finds it inside the vector and deletes that piece.
     fn kill_piece(&mut self, pos: usize) -> Result<Piece, Error> {
-        if !is_valid_index(pos, self.is_defender) {
-            return Err(Error::IllegalVectorIndex(pos));
-        }
+        Piece::is_valid_index(pos, self.is_defender)?;
         // To check if the position exists inside the vector.
-        let len = self.pieces.len();
-        if len < pos {
-            return Err(Error::PieceVectorIndexOutOfBounds(pos, len));
-        }
+        Piece::is_in_bounds(pos, self.pieces.len())?;
         // Finally.
         Ok(self.pieces.remove(pos))
     }
@@ -194,15 +196,10 @@ impl PlayerAction for Player {
     /// Takes x and y coordinates to update the piece at the position that is provided.
     /// returns a result type in case of errors.
     fn update_piece(&mut self, x: i32, y: i32, pos: usize) -> Result<bool, Error> {
-        if !is_valid_index(pos, self.is_defender) {
-            return Err(Error::IllegalVectorIndex(pos));
-        }
+        Piece::is_valid_index(pos, self.is_defender)?;
         // To check if the position exists inside the vector.
-        let len = self.pieces.len();
-        if len < pos {
-            return Err(Error::PieceVectorIndexOutOfBounds(pos, len));
-        }
-        // if piece already at that position.
+        Piece::is_in_bounds(pos, self.pieces.len())?;
+                // if piece already at that position.
         if self.pieces[pos].position.x == x
         && self.pieces[pos].position.y == y {
             return Ok(false);
@@ -211,4 +208,14 @@ impl PlayerAction for Player {
         self.pieces[pos].update_pos(x, y)?;
         return Ok(true);
     }
+
+    /// To kill itself.
+    ///
+    /// Suicide.
+    fn kill_self(&mut self) {
+        self.set_not_play();
+        self.set_not_winner();
+    }
 }
+
+    
