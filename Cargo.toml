@@ -14,4 +14,3 @@ opt-level = 3
 [dependencies]
 bevy = { version = "0.8.1", features = ["dynamic"] }
 fort_builders = {path = "resources/fort_builders"}
-thiserror = "1.0.37"

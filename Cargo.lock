@@ -1399,7 +1399,6 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "fort_builders",
- "thiserror",
 ]
 
 [[package]]
