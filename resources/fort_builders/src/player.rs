@@ -7,8 +7,7 @@
 // use crate::Error;
 use crate::board::Quadrant;
 use crate::pieces;
-use crate::pieces::Piece;
-use crate::pieces::Position;
+use crate::pieces::{Piece, Position};
 use crate::{RED, RST};
 use thiserror::Error;
 
@@ -240,7 +239,8 @@ impl PlayerAction for Player {
         Ok(self
             .pieces
             .iter()
-            .position(|&pos| pos.position == position_holder))
+            .position(|&pos| pos.position == position_holder)
+        )
     }
 
     /// To kill a piece inside the __Player__ struct.

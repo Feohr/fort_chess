@@ -2,7 +2,6 @@
 //!
 //! Holds the entry point and the interface to interact with the below library.
 //! handles initialization, run and execution of the game.
-//!
 
 pub mod game;
 mod pieces;
