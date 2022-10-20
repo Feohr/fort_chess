@@ -1,8 +1,8 @@
-use bevy::prelude::*;
-use crate::TILESIZE;
 use crate::fort_builders::board::*;
-use bevy::text::{ Text, TextStyle, TextAlignment, Text2dBounds };
 use crate::RESOLUTION;
+use crate::TILESIZE;
+use bevy::prelude::*;
+use bevy::text::{Text, Text2dBounds, TextAlignment, TextStyle};
 
 pub struct TilePlugin;
 struct TileSheet(Handle<TextureAtlas>);
@@ -17,15 +17,11 @@ const BREADTH: i32 = 2;
 
 impl Plugin for TilePlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_startup_system_to_stage(
-                StartupStage::PreStartup,
-                load_tile,
-            )
-            .add_system(    draw_board  )
-            .add_system(    put_text    )
-            .add_system(    draw_border )
-            .add_system(    draw_fort   );
+        app.add_startup_system_to_stage(StartupStage::PreStartup, load_tile)
+            .add_system(draw_board)
+            .add_system(put_text)
+            .add_system(draw_border)
+            .add_system(draw_fort);
     }
 }
 
@@ -34,28 +30,27 @@ impl Plugin for TilePlugin {
 // To spawn text box into the game. Holds names of the player. Can be a maximum of 4. With
 // different colors.
 fn put_text(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn_bundle(
-        Text2dBundle {
+    commands
+        .spawn_bundle(Text2dBundle {
             text_2d_bounds: Text2dBounds {
                 size: Vec2::splat(3.5 * RESOLUTION),
             },
-            text:   Text::from_section(
-                        "Mohammed Rehaan",
-                        TextStyle {
-                            font: asset_server.load("fonts/fira-sans.regular.ttf"),
-                            font_size: 0.5 * RESOLUTION,
-                            color: Color::RED,
-                        },
-                    )
-                    .with_alignment(TextAlignment::CENTER),
-            transform:  Transform {
-                            translation: Vec3::new(-11.25 * RESOLUTION, -0.5 * RESOLUTION, 5.0),
-                            ..default()
-                        },
+            text: Text::from_section(
+                "Mohammed Rehaan",
+                TextStyle {
+                    font: asset_server.load("fonts/fira-sans.regular.ttf"),
+                    font_size: 0.5 * RESOLUTION,
+                    color: Color::RED,
+                },
+            )
+            .with_alignment(TextAlignment::CENTER),
+            transform: Transform {
+                translation: Vec3::new(-11.25 * RESOLUTION, -0.5 * RESOLUTION, 5.0),
+                ..default()
+            },
             ..default()
-        }
-    )
-    .insert(Name::new("Player Name"));
+        })
+        .insert(Name::new("Player Name"));
 }
 
 // To decide whether a dark tile or a light tile should be spawned.
@@ -71,46 +66,52 @@ fn switch(x: i32, y: i32) -> usize {
 // Couldn't just add it to the loop.
 // It's a long explaination... I had to use this cause, I suck at coding.
 fn ret_x_minus_one(x: i32) -> i32 {
-    if x > 0 {
-        return x - 1;
+    match x > 0 {
+        true => x - 1,
+        false => x,
     }
-    return x;
 }
 
 /// Drawing the board.
-fn draw_board(mut commands: Commands, tile: Res<TileSheet> ) {
-    for x in X_MIN..=X_MAX {
-        for mut y in Y_MIN..=Y_MAX {
-            let (x_a, y_a) = (x.abs(), y.abs());
-            if          y == 0 // Removing the extra column along the x-axis.
-                // Getting rid of the middle part where the fort will reside.
-                ||  (
-                        x_a <= BREADTH
-                    &&  y_a <= BREADTH
-                )
-                    // Simple formula to build the board shape.
-                    // Absolutely imperfect. If you can come up with a better formula please go
-                    // ahead.
-                ||  (
-                        x_a > BREADTH
-                    &&  y_a > BREADTH
-                ) {
-                        continue;
+// Just simple looping and condtion checking to draw the board.
+// I personally am not satisfied by the logic. I feel like there should be an easier way to do
+// this. Something a lot more cleaner and pretty.
+fn draw_board(mut commands: Commands, tile: Res<TileSheet>) {
+    (X_MIN..=X_MAX).for_each(|x| {
+        (Y_MIN..=Y_MAX).for_each(|mut y| {
+            match y == 0 // Removing the extra column along the x-axis.
+            // Getting rid of the middle part where the fort will reside.
+            ||  (
+                    x.abs() <= BREADTH
+                &&  y.abs() <= BREADTH
+            )
+            // Simple formula to build the board shape.
+            // It is absolutely imperfect.
+            // If you can come up with a better formula please go ahead.
+            ||  (
+                    x.abs() > BREADTH
+                &&  y.abs() > BREADTH
+            ) {
+                true => (),
+                false => {
+                    if y > 0 {
+                        y -= 1
+                    }
+                    let tile = spawn_tile(
+                        &mut commands,
+                        &tile,
+                        switch(x, y),
+                        Vec3::new(
+                            ret_x_minus_one(x) as f32 * RESOLUTION,
+                            y as f32 * RESOLUTION,
+                            2.0,
+                        ),
+                    );
+                    commands.entity(tile).insert(Name::new("Tile"));
+                }
             }
-            if  y > 0 { y -= 1 }
-            let tile =  spawn_tile(
-                            &mut commands,
-                            &tile,
-                            switch(x, y),
-                            Vec3::new(
-                                ret_x_minus_one(x) as f32 * RESOLUTION,
-                                y as f32 * RESOLUTION,
-                                2.0,
-                            ),
-                        );
-            commands.entity(tile).insert(Name::new("Tile"));
-        }
-    }
+        })
+    });
 }
 
 /// Drawing the border of the board.
@@ -121,69 +122,71 @@ fn draw_board(mut commands: Commands, tile: Res<TileSheet> ) {
 // sticks out. Again, it's not the cleanest algorithm but it wil work. Wouldn't recommend scaling
 // the sizes to see if the algorithm works.
 fn draw_border(mut commands: Commands, tile: Res<TileSheet>) {
-    let breadth = BREADTH + 1;
-    for x in ( X_MIN - 1 )..=( X_MAX + 1 ) {
-        for mut y in ( Y_MIN - 1 )..=( Y_MAX + 1 ) {
-            let (x_a, y_a) = (x.abs(), y.abs());
-            if          y == 0 // Removing the extra Zeroeth column along the Y-axis.
-                ||  (
-                        x_a > breadth
-                    &&  y_a > breadth
-                ) {
-                        continue;
+    ((X_MIN - 1)..=(X_MAX + 1)).for_each(|x| {
+        ((Y_MIN - 1)..=(Y_MAX + 1)).for_each(|mut y| {
+            match y == 0 // Removing the extra Zeroeth column along the Y-axis.
+            ||  (
+                    x.abs() > BREADTH + 1
+                &&  y.abs() > BREADTH + 1
+            ) {
+                true => (),
+                false => {
+                    // To get rid of the zeroeth line.
+                    if y > 0 {
+                        y -= 1
+                    }
+                    let tile = spawn_tile(
+                        &mut commands,
+                        &tile,
+                        2,
+                        Vec3::new(
+                            ret_x_minus_one(x) as f32 * RESOLUTION,
+                            y as f32 * RESOLUTION,
+                            1.0,
+                        ),
+                    );
+                    commands.entity(tile).insert(Name::new("Border"));
+                }
             }
-            // To get rid of the zeroeth line.
-            if  y > 0 { y -= 1 }
-            let tile =  spawn_tile(
-                            &mut commands,
-                            &tile,
-                            2,
-                            Vec3::new(
-                                ret_x_minus_one(x) as f32 * RESOLUTION,
-                                y as f32 * RESOLUTION,
-                                1.0,
-                                )
-                            );
-            commands.entity(tile).insert(Name::new("Border"));
-        }
-    }
+        })
+    });
 }
 
 /// To draw the fort.
 // Simple funcion to draw the fort. Nothing special just iterating over a loop and drawing sprites.
 fn draw_fort(mut commands: Commands, tile: Res<TileSheet>) {
     // To draw the outer fort tiles.
-    for x in -BREADTH..=BREADTH {
-        for y in -BREADTH..BREADTH {
-            let tile =  spawn_tile(
-                            &mut commands,
-                            &tile,
-                            3,
-                            Vec3::new(
-                                ret_x_minus_one(x) as f32 * RESOLUTION,
-                                y as f32 * RESOLUTION,
-                                3.0,
-                                )
-                            );
+    (-BREADTH..=BREADTH).for_each(|x| {
+        (-BREADTH..BREADTH).for_each(|y| {
+            let tile = spawn_tile(
+                &mut commands,
+                &tile,
+                3,
+                Vec3::new(
+                    ret_x_minus_one(x) as f32 * RESOLUTION,
+                    y as f32 * RESOLUTION,
+                    3.0,
+                ),
+            );
             commands.entity(tile).insert(Name::new("Fort Exterior"));
-        }
-    }
+        })
+    });
     // To draw the inner fort.
-    for x in (-BREADTH + 1)..=(BREADTH - 1) {
-        for y in (-BREADTH + 1)..(BREADTH - 1) {
-            let tile =  spawn_tile(
-                            &mut commands,
-                            &tile,
-                            4,
-                            Vec3::new(
-                                ret_x_minus_one(x) as f32 * RESOLUTION,
-                                y as f32 * RESOLUTION,
-                                4.0,
-                                )
-                            );
+    ((-BREADTH + 1)..=(BREADTH - 1)).for_each(|x| {
+        ((-BREADTH + 1)..(BREADTH - 1)).for_each(|y| {
+            let tile = spawn_tile(
+                &mut commands,
+                &tile,
+                4,
+                Vec3::new(
+                    ret_x_minus_one(x) as f32 * RESOLUTION,
+                    y as f32 * RESOLUTION,
+                    4.0,
+                ),
+            );
             commands.entity(tile).insert(Name::new("Fort Interior"));
-        }
-    }
+        })
+    });
 }
 
 /// To load the tile asset.
@@ -194,19 +197,16 @@ pub fn load_tile(
     asset: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
-    commands.insert_resource(
-        TileSheet(  texture_atlases.add(
-                        TextureAtlas::from_grid_with_padding(
-                            asset.load("spritesheet/tile_sheet.png"),
-                            Vec2::new(125.0, 125.0),
-                            5, // Rows.
-                            1, // Columns.
-                            Vec2::splat(1.0),
-                            Vec2::splat(0.0),
-                        )
-                    )
-        )
-    );
+    commands.insert_resource(TileSheet(texture_atlases.add(
+        TextureAtlas::from_grid_with_padding(
+            asset.load("spritesheet/tile_sheet.png"),
+            Vec2::new(125.0, 125.0),
+            5, // Rows.
+            1, // Columns.
+            Vec2::splat(1.0),
+            Vec2::splat(0.0),
+        ),
+    )));
 }
 
 /// To spawn a tile.
@@ -225,22 +225,19 @@ fn spawn_tile(
     index: usize,
     translation: Vec3,
 ) -> Entity {
-    commands.spawn_bundle(SpriteSheetBundle{
-        sprite: TextureAtlasSprite{
-                    index,
-                    custom_size: Some(
-                                    Vec2::new(
-                                        TILESIZE.0 * RESOLUTION,
-                                        TILESIZE.1 * RESOLUTION,
-                                    )
-                                ),
-                    ..default()
-                },
-        texture_atlas: tile.0.clone(),
-        transform: Transform {
-           translation: translation,
-           ..default()
-        },
-        ..default()
-    }).id()
+    commands
+        .spawn_bundle(SpriteSheetBundle {
+            sprite: TextureAtlasSprite {
+                index,
+                custom_size: Some(Vec2::new(TILESIZE.0 * RESOLUTION, TILESIZE.1 * RESOLUTION)),
+                ..default()
+            },
+            texture_atlas: tile.0.clone(),
+            transform: Transform {
+                translation: translation,
+                ..default()
+            },
+            ..default()
+        })
+        .id()
 }

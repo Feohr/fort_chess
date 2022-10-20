@@ -4,9 +4,55 @@
 //! Used to create, kill, set values and to update position of the player pieces.
 //! Also contains the team object to handle the player teams.
 
-use crate::Error;
-use crate::pieces::Piece;
+// use crate::Error;
 use crate::board::Quadrant;
+use crate::pieces;
+use crate::pieces::Piece;
+use crate::pieces::Position;
+use crate::{RED, RST};
+use thiserror::Error;
+
+/// Player Error enum.
+#[derive(Error, Debug)]
+pub enum Error {
+    /// If the name is too long or too short.
+    #[error(
+        "{} The name is either too long or too short. Ideal length is (3 < name < 255). \
+        Your name length: {0} {}",
+        RED,
+        RST
+    )]
+    InvalidNameLength(usize),
+
+    /// If the position referenced is not present in the pieces vector.
+    #[error(
+        "{} The given index of the piece {0} does not exist in a vec of length {1}. {}",
+        RED,
+        RST
+    )]
+    PlayerVectorIndexOutOfBounds(usize, usize),
+
+    /// When an illegal position is referenced.
+    #[error(
+        "{} The given index {0} cannot exist as the index for a player vector should be \
+    (0 < length < 4). {}",
+        RED,
+        RST
+    )]
+    IllegalPlayerVectorIndex(usize),
+
+    /// If Invalid Team index was provided.
+    #[error(
+        "{} The provided index {0} does not have a team corresponding to it. {}",
+        RED,
+        RST
+    )]
+    InvalidTeamIndex(usize),
+
+    /// Error from pieces module.
+    #[error("{} Error in piece module originated from player module. {}", RED, RST)]
+    PlayerPieceModuleError(#[from] pieces::Error),
+}
 
 /// Contains the types of teams.
 ///
@@ -28,20 +74,31 @@ pub enum Team {
 }
 
 impl Team {
-/// To get a team corresponding to the index value.
-///
-/// Takes a usize and returns a TEAM struct.
+    /// To get a team corresponding to the index value.
+    ///
+    /// Takes a usize and returns a TEAM struct.
     pub fn from_index(index: usize) -> Result<Self, Error> {
         match index {
-            0   =>  Ok(Team::Red),
-            1   =>  Ok(Team::Blue),
-            2   =>  Ok(Team::Green),
-            3   =>  Ok(Team::Yellow),
-            _   =>  Err(Error::InvalidTeamIndex(index)),
+            0 => Ok(Team::Red),
+            1 => Ok(Team::Blue),
+            2 => Ok(Team::Green),
+            3 => Ok(Team::Yellow),
+            _ => Err(Error::InvalidTeamIndex(index)),
+        }
+    }
+
+    /// To turn a team enum value to a String value.
+    ///
+    /// Takes __Team__ enum value and converts is to __String__ value.
+    pub fn teamstr_from_team<'a>(team: Team) -> &'a str {
+        match team {
+            Team::Red    => "Red",
+            Team::Green  => "Green",
+            Team::Blue   => "Blue",
+            Team::Yellow => "Yellow",
         }
     }
 }
-
 
 /// __Player__ struct used to handle player specific information.
 ///
@@ -75,17 +132,6 @@ pub struct Player {
     pub is_play: bool,
 }
 
-/// A simple function to check if the name length is too big or too small.
-///
-/// returns false if the name length is invalid. The constraints are 3 > name_length < 255.
-/// else returns true.
-fn is_name_len_valid(len: usize) -> bool {
-    // Name length of 46 seems to be an average length all over the world so I dcided to go with 50
-    // as the name length limit. Also, the size of the name fits well within the game screen and
-    // doesn't cause overlapping issues.
-    len > 2 && len < 50
-}
-
 impl Player {
     /// Used to initialize a new player based on the inputs.
     ///
@@ -97,10 +143,7 @@ impl Player {
         quadrant: Quadrant,
     ) -> Result<Self, Error> {
         // Check if len is of valid size. i.e. less than 50.
-        let len = name.len();
-        if !is_name_len_valid(len) {
-            return Err(Error::InvalidNameLength(len));
-        }
+        Self::is_name_len_valid(name.len())?;
         // Finally.
         Ok(Player {
             name,
@@ -112,14 +155,6 @@ impl Player {
         })
     }
 
-    /// To check wether a index is even possible.
-    pub fn is_valid_player_index(pos: usize) -> Result<(), Error> {
-        // 4 is the maximum number of players that can play.
-        match pos < 4_usize {
-            true    =>  Ok(()),
-            false   =>  Err(Error::IllegalPlayerVectorIndex(pos)),
-        }
-    }
     /// To set the player as a winner.
     ///
     /// Changes the __is_winner__ value to __true__.
@@ -133,7 +168,7 @@ impl Player {
         self.is_winner = false;
     }
 
-    /// To set player __is_play__ value to true. 
+    /// To set player __is_play__ value to true.
     ///
     /// Conversely, __set_not_play__ funtion will convert to false.
     pub fn set_play(&mut self) {
@@ -144,6 +179,37 @@ impl Player {
     pub fn set_not_play(&mut self) {
         self.is_play = false;
     }
+
+    /// To check wether a index is even possible.
+    pub fn is_valid_player_index(pos: usize) -> Result<(), Error> {
+        // 4 is the maximum number of players that can play.
+        match pos < 4_usize {
+            true  => Ok(()),
+            false => Err(Error::IllegalPlayerVectorIndex(pos)),
+        }
+    }
+
+    /// To check if the position is less than the vector length.
+    pub fn is_in_bounds(pos: usize, len: usize) -> Result<(), Error> {
+        match pos < len {
+            true  => Ok(()),
+            false => Err(Error::PlayerVectorIndexOutOfBounds(pos, len)),
+        }
+    }
+
+    /// A simple function to check if the name length is too big or too small.
+    ///
+    /// returns false if the name length is invalid. The constraints are 3 > name_length < 255.
+    /// else returns true.
+    fn is_name_len_valid(len: usize) -> Result<(), Error> {
+        // Name length of 46 seems to be an average length all over the world so I dcided to go
+        // with 50 as the name length limit. Also, the size of the name fits well within the game
+        // screen and doesn't cause overlapping issues.
+        match len > 2 && len < 50 {
+            true  => Ok(()),
+            false => Err(Error::InvalidNameLength(len)),
+        }
+    }
 }
 
 /// A public trait to handle __Player__ actions during runtime.
@@ -153,7 +219,7 @@ impl Player {
 /// -   kill_piece:     To remove a piece from the __pieces__ vector.
 /// -   update_piece:   To update piece position.
 pub trait PlayerAction {
-    fn get_piece_pos(&self, x: i32, y: i32) -> Option<usize>;
+    fn get_piece_pos(&self, x: i32, y: i32) -> Result<Option<usize>, Error>;
 
     fn kill_piece(&mut self, pos: usize) -> Result<Piece, Error>;
 
@@ -162,8 +228,6 @@ pub trait PlayerAction {
     fn kill_self(&mut self);
 }
 
-
-
 impl PlayerAction for Player {
     /// To get position of the piece that is clicked in relevance to the vec.
     ///
@@ -171,13 +235,12 @@ impl PlayerAction for Player {
     /// being referenced and returns the position of the piece inside the __pieces__ vector.
     /// This can be used to update the piece position. Returns null if not piece exist at that
     /// location.
-    fn get_piece_pos(&self, x: i32, y: i32) -> Option<usize> { 
-        for (index, piece) in self.pieces.iter().enumerate() {
-            if piece.position.x == x && piece.position.y == y {
-                return Some(index);
-            }
-        }
-            return None;
+    fn get_piece_pos(&self, x: i32, y: i32) -> Result<Option<usize>, Error> {
+        let position_holder = Position::from(x, y)?;
+        Ok(self
+            .pieces
+            .iter()
+            .position(|&pos| pos.position == position_holder))
     }
 
     /// To kill a piece inside the __Player__ struct.
@@ -196,12 +259,12 @@ impl PlayerAction for Player {
     /// Takes x and y coordinates to update the piece at the position that is provided.
     /// returns a result type in case of errors.
     fn update_piece(&mut self, x: i32, y: i32, pos: usize) -> Result<bool, Error> {
+        // Is the index valid.
         Piece::is_valid_index(pos, self.is_defender)?;
         // To check if the position exists inside the vector.
         Piece::is_in_bounds(pos, self.pieces.len())?;
-                // if piece already at that position.
-        if self.pieces[pos].position.x == x
-        && self.pieces[pos].position.y == y {
+        // if piece already at that position.
+        if self.pieces[pos].position.x == x && self.pieces[pos].position.y == y {
             return Ok(false);
         }
         // Finally.
@@ -217,5 +280,3 @@ impl PlayerAction for Player {
         self.set_not_winner();
     }
 }
-
-    

@@ -2,9 +2,9 @@
 //!
 //! Game module to initialize, stop and exit the game.
 
-use crate::player::{ Player, PlayerAction };
+use crate::pieces::Piece;
+use crate::player::{Player, PlayerAction};
 use crate::Error;
-use crate::pieces::{ Piece, in_board_range };
 
 /// __GameState__ enum to keep track of game state.
 ///
@@ -39,20 +39,6 @@ pub struct Game {
     status: GameState,
 }
 
-/// To handle operations over the Game.
-///
-/// ## Contents:
-/// -   hunt:   searches for pieces to kill and kills them.
-/// -   update: updates the given player piece with x nd y value.
-/// -   next:   gets the player index who's turn it is.
-pub trait GameAction {
-    fn hunt(&mut self) -> Result<Option<Player>, Error>;
-
-    fn update(&mut self, x: i32, y: i32, pos: usize) -> Result<bool, Error>;
-
-    fn next(&mut self);
-}
-
 impl Game {
     /// To initialize game object.
     ///
@@ -73,16 +59,28 @@ impl Game {
     /// Takes the player position in vec and removes them.
     /// Returns a Result value hence needs to be error handled.
     fn kill(&mut self, pos: usize) -> Result<Player, Error> {
-        let len = self.players.len();
-        if pos >= len {
-            eprintln!("Cannot kill the player as already dead");
-            return Err(Error::PlayerVectorIndexOutOfBounds(len, pos));
-        }
+        // If player position is in bounds.
+        Player::is_in_bounds(pos, self.players.len())?;
+        // if player can have that index at all.
         Player::is_valid_player_index(pos)?;
+        // Finally.
         self.players[pos].kill_self();
-        Ok(
-            self.players.remove(pos)
-        )
+        Ok(self.players.remove(pos))
+    }
+
+    /// To know if the x and y holds a piece of another player.
+    ///
+    /// Takes x and y values and iterates over all the players in the games to decide which
+    /// particular piece is present and removes that piece to return it.
+    pub fn check_piece_in_pos_get(&mut self, x: i32, y: i32) -> Result<Option<Piece>, Error> {
+        Piece::in_board_range(x, y)?;
+        for player in self.players.iter_mut() {
+            if let Some(index) = player.get_piece_pos(x, y)? {
+                let res = player.kill_piece(index)?;
+                return Ok(Some(res));
+            }
+        }
+        return Ok(None);
     }
 
     /// To change the game state to __Interrupt__.
@@ -127,23 +125,18 @@ impl Game {
     pub fn is_interrupt(&self) -> bool {
         self.status == GameState::Interrupt
     }
+}
 
-    /// To know if the x and y holds a piece of another player.
-    ///
-    /// Takes x and y values and iterates over all the players in the games to decide which
-    /// particular piece is present and removes that piece to return it.
-    pub fn check_piece_in_pos_get(&mut self, x: i32, y: i32) -> Result<Option<Piece>, Error> {
-        if !in_board_range(x, y) {
-            return Err(Error::IllegalPosition(x, y));
-        }
-        for player in self.players.iter_mut() {
-            if let Some(index) = player.get_piece_pos(x, y) {
-                let res = player.kill_piece(index)?;
-                return Ok(Some(res));
-            }
-        }
-            return Ok(None);
-    }
+/// To handle operations over the Game.
+///
+/// ## Contents:
+/// -   hunt:   searches for pieces to kill and kills them.
+/// -   update: updates the given player piece with x nd y value.
+/// -   next:   gets the player index who's turn it is.
+pub trait GameAction {
+    fn hunt(&mut self) -> Result<Option<Player>, Error>;
+
+    fn next(&mut self);
 }
 
 impl GameAction for Game {
@@ -153,33 +146,23 @@ impl GameAction for Game {
     /// iteration.
     fn hunt(&mut self) -> Result<Option<Player>, Error> {
         for (index, player) in self.players.iter().enumerate() {
-            if  (
-                    player.pieces.is_empty()
-                &&  !player.is_winner
-            )   ||  !player.is_play {
-                    // If the player is dead.
-                    let kill = self.kill(index)?;
-                    return Ok(Some(kill));
+            if (player.pieces.is_empty() && !player.is_winner) || !player.is_play {
+                // If the player is dead.
+                let kill = self.kill(index)?;
+                return Ok(Some(kill));
             }
         }
-            // When nothing happend.
-            return Ok(None);
-    }
-
-    /// To update the current player piece with x and y pos.
-    ///
-    /// Takes the x and y value and updates it. A wrapper for update_piece essentially.
-    fn update(&mut self, x: i32, y: i32, pos: usize) -> Result<bool, Error> {
-        return self.players[self.turn].update_piece(x, y, pos);
+        // When nothing happend.
+        return Ok(None);
     }
 
     /// Changes the turn value to indiacate which player turn it is.
     ///
     /// Adds value to turn and changes to 0 if the value exceeds players vector len.
     fn next(&mut self) {
-        if self.turn < self.players.len() {
-            self.turn += 1;
+        match self.turn < self.players.len() {
+            true  => self.turn += 1,
+            false => self.turn = 0,
         }
-        self.turn = 0;
     }
 }
