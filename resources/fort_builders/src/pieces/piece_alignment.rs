@@ -6,7 +6,6 @@ use crate::board::Quadrant;
 
 type PosInfo = Vec<(i32, i32)>;
 type TypeInfo = Vec<u8>;
-type PieceInfo = (PosInfo, TypeInfo);
 
 // The defender.
 fn get_def_pos() -> PosInfo {
@@ -51,14 +50,14 @@ fn get_def_type() -> TypeInfo {
     ]
 }
 
-fn get_piece_type(is_defender: bool) -> TypeInfo {
+pub fn get_piece_type(is_defender: bool) -> TypeInfo {
     match is_defender {
         true  => get_def_type(),
         false => get_enm_type(),
     }
 }
 
-fn get_pos_from_quadrant(is_defender: bool, quadrant: &Quadrant) -> PosInfo {
+pub fn get_pos_from_quadrant(is_defender: bool, quadrant: &Quadrant) -> PosInfo {
     match is_defender {
         true => get_def_pos(),
         false => match quadrant {
@@ -67,11 +66,4 @@ fn get_pos_from_quadrant(is_defender: bool, quadrant: &Quadrant) -> PosInfo {
             Quadrant::Q3 => get_enm_pos_q3(),
         },
     }
-}
-
-pub fn get_resp_info(is_defender: bool, quadrant: Quadrant) -> PieceInfo {
-    (
-        get_pos_from_quadrant(is_defender, &quadrant),
-        get_piece_type(is_defender),
-    )
 }

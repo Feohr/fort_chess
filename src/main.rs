@@ -27,7 +27,7 @@ fn setup(mut commands: Commands) {
             Player::from(
                 format!("player {}", i + 1),
                 Team::from_index(i).unwrap(),
-                if roll == i { true } else { false },
+                roll == i,
                 Quadrant::from_index(i % 3).unwrap(),
             )
             .unwrap()
@@ -49,9 +49,9 @@ fn setup(mut commands: Commands) {
 }
 
 fn print_game_info(query: Query<&GameAsset>) {
-    for game in query.iter() {
+    query.iter().for_each(|game| {
         println!("{:#?}", game);
-    }
+    })
 }
 
 // Players are different colors based on their choice team.

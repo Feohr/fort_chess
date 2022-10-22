@@ -55,11 +55,17 @@ fn put_text(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 // To decide whether a dark tile or a light tile should be spawned.
 fn switch(x: i32, y: i32) -> usize {
-    let flip = if x > 0 { 0_usize } else { 1_usize };
-    if (x + y) % 2 == 0 {
-        return 1_usize ^ flip;
-    }
-    return 0_usize ^ flip;
+    (
+        match x > 0 {
+            true  => 0_usize,
+            false => 1_usize,
+        }
+    ) ^ (
+        match (x + y) % 2 == 0 {
+            true  => 1_usize,
+            false => 0_usize,
+        }
+    )
 }
 
 // To get rid of the extra "Zeroeth" column along the y-axis.
@@ -67,7 +73,7 @@ fn switch(x: i32, y: i32) -> usize {
 // It's a long explaination... I had to use this cause, I suck at coding.
 fn ret_x_minus_one(x: i32) -> i32 {
     match x > 0 {
-        true => x - 1,
+        true  => x - 1,
         false => x,
     }
 }

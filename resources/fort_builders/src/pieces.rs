@@ -7,7 +7,7 @@ mod piece_alignment;
 // use crate::Error;
 use crate::board::{Quadrant, X_MAX, X_MIN, Y_MAX, Y_MIN};
 use crate::{RED, RST};
-use piece_alignment::get_resp_info;
+use piece_alignment::{get_pos_from_quadrant, get_piece_type};
 use thiserror::Error;
 
 use std::fmt;
@@ -43,10 +43,6 @@ pub enum Error {
         RST
     )]
     InvalidPieceTypeIndex(u8),
-
-    /// If error faced during creation of __Piece__ vector.
-    #[error("{} Ran into issue while creating vectors. {}", RED, RST)]
-    EmptyPieceVectorCreated,
 }
 
 /// To determine the piece type.
@@ -131,7 +127,10 @@ impl Position {
     pub fn from(x: i32, y: i32) -> Result<Self, Error> {
         Piece::in_board_range(x, y)?;
         // Finally.
-        Ok(Position { x, y })
+        Ok(Position {
+            x,
+            y,
+        })
     }
 }
 
@@ -162,19 +161,17 @@ impl Piece {
     /// x and y correspond to the x and y coordinates. The piece argument corresponds to the
     /// type.
     fn from(x: i32, y: i32, piece: PieceType) -> Result<Piece, Error> {
-        let pos = Position::from(x, y)?;
         Ok(Piece {
             piece_type: piece,
-            position: pos,
+            position: Position::from(x, y)?,
         })
     }
 
     /// Function used to initialize the pieces vector.
     pub fn init_pieces(is_defender: bool, quadrant: Quadrant) -> Result<Vec<Piece>, Error> {
-        let (pos, tp) = get_resp_info(is_defender, quadrant);
-        let piece_vec = pos
+        Ok(get_pos_from_quadrant(is_defender, &quadrant)
             .into_iter()
-            .zip(tp)
+            .zip(get_piece_type(is_defender))
             .flat_map(|(position, piece_type)| -> Result<Piece, Error> {
                 let piece = Piece::from(
                                 position.0,
@@ -183,11 +180,7 @@ impl Piece {
                             )?;
                 Ok(piece)
             })
-            .collect::<Vec<Piece>>();
-        match piece_vec.is_empty() {
-            true  => Err(Error::EmptyPieceVectorCreated),
-            false => Ok(piece_vec),
-        }
+            .collect::<Vec<Piece>>())
     }
 
     /// To update the Position of the piece.

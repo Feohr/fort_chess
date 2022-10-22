@@ -64,7 +64,11 @@ impl Game {
         // if player can have that index at all.
         Player::is_valid_player_index(pos)?;
         // Finally.
-        self.players[pos].kill_self();
+        self.players
+            .get_mut(pos)
+            // Hopefully shouldn't panic as already validated before.
+            .expect("Invalid Player position {pos}")
+            .kill_self();
         Ok(self.players.remove(pos))
     }
 
@@ -72,15 +76,24 @@ impl Game {
     ///
     /// Takes x and y values and iterates over all the players in the games to decide which
     /// particular piece is present and removes that piece to return it.
-    pub fn check_piece_in_pos_get(&mut self, x: i32, y: i32) -> Result<Option<Piece>, Error> {
+    ///
+    /// This function does not check if there are more than one pieces at a position.
+    /// This function will kill all the pieces at a position.
+    /// Shouldn't cause unwanted issues as there can only be one piece at a position at any given
+    /// time.
+    pub fn get_all_pieces_in_pos(&mut self, x: i32, y: i32) -> Result<Vec<Piece>, Error> {
         Piece::in_board_range(x, y)?;
-        for player in self.players.iter_mut() {
-            if let Some(index) = player.get_piece_pos(x, y)? {
-                let res = player.kill_piece(index)?;
-                return Ok(Some(res));
-            }
-        }
-        return Ok(None);
+        Ok(self.players
+            .iter_mut()
+            .flat_map(|player| -> Result<Option<Piece>, Error> {
+                if let Some(index) = player.get_piece_pos(x, y)? {
+                    let res = player.kill_piece(index)?;
+                    return Ok(Some(res));
+                }
+                Ok(None)
+            })
+            .filter_map(|pos| pos)
+            .collect::<Vec<Piece>>())
     }
 
     /// To change the game state to __Interrupt__.
@@ -103,8 +116,7 @@ impl Game {
 
     /// To change the game state to __Running__.
     ///
-    /// Takes __self__ reference and changes status to __Running__.
-    ///
+    /// Takes __self__ reference and changes status to __Running__.///
     /// **Idempotent function**
     pub fn set_state_run(&mut self) {
         self.status = GameState::Running;
@@ -134,7 +146,7 @@ impl Game {
 /// -   update: updates the given player piece with x nd y value.
 /// -   next:   gets the player index who's turn it is.
 pub trait GameAction {
-    fn hunt(&mut self) -> Result<Option<Player>, Error>;
+    fn hunt(&mut self) -> Result<Vec<Player>, Error>;
 
     fn next(&mut self);
 }
@@ -144,16 +156,23 @@ impl GameAction for Game {
     ///
     /// function that takes self reference and searches for pieces that need to be killed at each
     /// iteration.
-    fn hunt(&mut self) -> Result<Option<Player>, Error> {
-        for (index, player) in self.players.iter().enumerate() {
-            if (player.pieces.is_empty() && !player.is_winner) || !player.is_play {
-                // If the player is dead.
+    fn hunt(&mut self) -> Result<Vec<Player>, Error> {
+        Ok(self.players
+            .iter()
+            .enumerate()
+            .filter_map(|(index, player)| {
+                match (player.pieces.is_empty() && !player.is_winner) || !player.is_play {
+                    true  => Some(index),
+                    false => None,
+                }
+            })
+            .collect::<Vec<usize>>()
+            .into_iter()
+            .flat_map(|index| -> Result<Player, Error> {
                 let kill = self.kill(index)?;
-                return Ok(Some(kill));
-            }
-        }
-        // When nothing happend.
-        return Ok(None);
+                Ok(kill)
+            })
+            .collect::<Vec<Player>>())
     }
 
     /// Changes the turn value to indiacate which player turn it is.

@@ -3,6 +3,8 @@
 //! Holds the entry point and the interface to interact with the below library.
 //! handles initialization, run and execution of the game.
 
+#![feature(iterator_try_collect)]
+
 pub mod game;
 mod pieces;
 pub mod player;
@@ -179,24 +181,28 @@ pub fn results<'a>(mut winners: Vec<PlayerLW<'a>>) -> Result<Option<PlayerLW<'a>
 pub fn exit<'a>(mut game: Game) -> Result<Option<PlayerLW<'a>>, Error> {
     // If the game is interrupted then early quit
     // Currently no logic is set to display this but maybe in the future,
-    if game.is_interrupt() {
-        return Ok(None);
+    match game.is_interrupt() {
+        true  => Ok(None),
+        false => {
+            // Gathering the winners.
+            let winners: Vec<PlayerLW> = game
+                .players
+                .iter()
+                .filter_map(|player|
+                    match player.is_winner {
+                        true  => Some(PlayerLW::new(player.name.clone(), player.team.clone())),
+                        false => None,
+                    }
+                )
+                .collect::<Vec<PlayerLW>>();
+            // Set the game to exit after extracting the results.
+            // This step is kinda unecessary but still added for my peace of mind.
+            game.set_state_exit();
+            // Finally.
+            // Match to declare the result.
+            results(winners)
+        },
     }
-    // Gathering the winners.
-    let winners: Vec<PlayerLW> = game
-        .players
-        .iter()
-        .filter_map(|player| match player.is_winner {
-            true  => Some(PlayerLW::new(player.name.clone(), player.team.clone())),
-            false => None,
-        })
-        .collect::<Vec<PlayerLW>>();
-    // Set the game to exit after extracting the results.
-    // This step is kinda unecessary but still added for my peace of mind.
-    game.set_state_exit();
-    // Finally.
-    // Match to declare the result.
-    results(winners)
 }
 
 /// To get a random value between 1 and 6.

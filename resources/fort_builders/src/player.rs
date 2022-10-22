@@ -264,12 +264,18 @@ impl PlayerAction for Player {
         // To check if the position exists inside the vector.
         Piece::is_in_bounds(pos, self.pieces.len())?;
         // if piece already at that position.
-        if self.pieces[pos].position.x == x && self.pieces[pos].position.y == y {
-            return Ok(false);
+        match self.pieces[pos].position.x == x && self.pieces[pos].position.y == y {
+            true  => Ok(false),
+            false => {
+                // Finally.
+                self.pieces
+                    .get_mut(pos)
+                    // Hopefully won't panic because previously checked.
+                    .expect("Invalid piece position {pos}")
+                    .update_pos(x, y)?;
+                Ok(true)
+            },
         }
-        // Finally.
-        self.pieces[pos].update_pos(x, y)?;
-        return Ok(true);
     }
 
     /// To kill itself.
