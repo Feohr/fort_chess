@@ -1,8 +1,16 @@
-use crate::fort_builders::board::*;
-use crate::RESOLUTION;
-use crate::TILESIZE;
-use bevy::prelude::*;
-use bevy::text::{Text, Text2dBounds, TextAlignment, TextStyle};
+use bevy::{
+    prelude::{
+        App, AssetServer, Assets, Color, Commands, Entity, Handle, Name, Plugin, Res, ResMut, 
+        SpriteSheetBundle, StartupStage, Text2dBundle, TextureAtlas, TextureAtlasSprite, Transform,
+        Vec2, Vec3, default,
+    },
+    text::{Text, Text2dBounds, TextAlignment, TextStyle},
+};
+use crate::{RESOLUTION, TILESIZE};
+use fort_builders::{
+    board::{X_MIN, X_MAX, Y_MIN, Y_MAX},
+    ret_minus_one,
+};
 
 pub struct TilePlugin;
 struct TileSheet(Handle<TextureAtlas>);
@@ -68,15 +76,6 @@ fn switch(x: i32, y: i32) -> usize {
     )
 }
 
-// To get rid of the extra "Zeroeth" column along the y-axis.
-// Couldn't just add it to the loop.
-// It's a long explaination... I had to use this cause, I suck at coding.
-fn ret_x_minus_one(x: i32) -> i32 {
-    match x > 0 {
-        true  => x - 1,
-        false => x,
-    }
-}
 
 /// Drawing the board.
 // Just simple looping and condtion checking to draw the board.
@@ -108,7 +107,7 @@ fn draw_board(mut commands: Commands, tile: Res<TileSheet>) {
                         &tile,
                         switch(x, y),
                         Vec3::new(
-                            ret_x_minus_one(x) as f32 * RESOLUTION,
+                            ret_minus_one(x) as f32 * RESOLUTION,
                             y as f32 * RESOLUTION,
                             2.0,
                         ),
@@ -146,7 +145,7 @@ fn draw_border(mut commands: Commands, tile: Res<TileSheet>) {
                         &tile,
                         2,
                         Vec3::new(
-                            ret_x_minus_one(x) as f32 * RESOLUTION,
+                            ret_minus_one(x) as f32 * RESOLUTION,
                             y as f32 * RESOLUTION,
                             1.0,
                         ),
@@ -169,7 +168,7 @@ fn draw_fort(mut commands: Commands, tile: Res<TileSheet>) {
                 &tile,
                 3,
                 Vec3::new(
-                    ret_x_minus_one(x) as f32 * RESOLUTION,
+                    ret_minus_one(x) as f32 * RESOLUTION,
                     y as f32 * RESOLUTION,
                     3.0,
                 ),
@@ -185,7 +184,7 @@ fn draw_fort(mut commands: Commands, tile: Res<TileSheet>) {
                 &tile,
                 4,
                 Vec3::new(
-                    ret_x_minus_one(x) as f32 * RESOLUTION,
+                    ret_minus_one(x) as f32 * RESOLUTION,
                     y as f32 * RESOLUTION,
                     4.0,
                 ),
@@ -198,7 +197,7 @@ fn draw_fort(mut commands: Commands, tile: Res<TileSheet>) {
 /// To load the tile asset.
 // Main functtion to load the tile asset into scope.
 // Runs at startup before staging.
-pub fn load_tile(
+fn load_tile(
     mut commands: Commands,
     asset: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,

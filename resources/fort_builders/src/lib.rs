@@ -3,8 +3,6 @@
 //! Holds the entry point and the interface to interact with the below library.
 //! handles initialization, run and execution of the game.
 
-#![feature(iterator_try_collect)]
-
 pub mod game;
 mod pieces;
 pub mod player;
@@ -72,6 +70,7 @@ pub mod board {
     /// -   Block 1
     /// -   Block 2
     /// -   Block 3
+    #[derive(Debug)]
     pub enum Quadrant {
         /// Block 1.
         Q1,
@@ -86,7 +85,7 @@ pub mod board {
             match index {
                 0 => Ok(Quadrant::Q1),
                 1 => Ok(Quadrant::Q2),
-                2 => Ok(Quadrant::Q2),
+                2 => Ok(Quadrant::Q3),
                 _ => Err(super::Error::InvalidQuadrantIndex(index)),
             }
         }
@@ -164,7 +163,7 @@ fn str_from_string<'a>(_str: String) -> &'a str {
 }
 
 /// Takes a PlayerLW  vector and checks for the number of winners.
-pub fn results<'a>(mut winners: Vec<PlayerLW<'a>>) -> Result<Option<PlayerLW<'a>>, Error> {
+fn results<'a>(mut winners: Vec<PlayerLW<'a>>) -> Result<Option<PlayerLW<'a>>, Error> {
     match winners.len() {
         // Draw.
         0 => Ok(None),
@@ -219,6 +218,22 @@ pub fn dice_roll() -> usize {
             eprintln!("{} System date set earlier than UNIX EPOCH {}", RED, RST);
             1_usize
         }
+    }
+}
+
+// To get rid of the extra "Zeroeth" column along the y-axis.
+// Couldn't just add it to the loop.
+// It's a long explaination... I had to use this cause, I suck at coding.
+// Can use with i32, i64, u16, u32, u64, isize and usize.
+pub fn ret_minus_one<T>(x: T) -> T
+where
+    T:      std::cmp::PartialOrd<T>
+        +   std::ops::Sub<Output=T>
+        +   From<u16>,
+{
+    match x > From::from(0) {
+        true  => x - From::from(1),
+        false => x,
     }
 }
 

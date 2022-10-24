@@ -5,8 +5,12 @@
 mod piece_alignment;
 
 // use crate::Error;
-use crate::board::{Quadrant, X_MAX, X_MIN, Y_MAX, Y_MIN};
-use crate::{RED, RST};
+use crate::{
+    RED, RST,
+    board::{
+        Quadrant, X_MAX, X_MIN, Y_MAX, Y_MIN
+    },
+};
 use piece_alignment::{get_pos_from_quadrant, get_piece_type};
 use thiserror::Error;
 
@@ -43,6 +47,15 @@ pub enum Error {
         RST
     )]
     InvalidPieceTypeIndex(u8),
+
+    /// If Invalid Piece type index was provided.
+    #[error(
+        "{} The vector id non-singular with length {0}. {}",
+        RED,
+        RST
+    )]
+    VectorNonSingular(usize),
+
 }
 
 /// To determine the piece type.
@@ -92,6 +105,16 @@ impl PieceType {
             3 => Ok(PieceType::Pawn),
             4 => Ok(PieceType::Knight),
             _ => Err(Error::InvalidPieceTypeIndex(index)),
+        }
+    }
+
+    pub fn to_index(&self) -> usize {
+        match self {
+            PieceType::Rook     => 0,
+            PieceType::Minister => 1,
+            PieceType::Queen    => 2,
+            PieceType::Pawn     => 3,
+            PieceType::Knight   => 4,
         }
     }
 }
@@ -168,7 +191,7 @@ impl Piece {
     }
 
     /// Function used to initialize the pieces vector.
-    pub fn init_pieces(is_defender: bool, quadrant: Quadrant) -> Result<Vec<Piece>, Error> {
+    pub(crate) fn init_pieces(is_defender: bool, quadrant: Quadrant) -> Result<Vec<Piece>, Error> {
         Ok(get_pos_from_quadrant(is_defender, &quadrant)
             .into_iter()
             .zip(get_piece_type(is_defender))
@@ -187,7 +210,7 @@ impl Piece {
     ///
     /// Takes x and y value and chan    ges the position to the given value.
     /// Returns error if the new position is out of range.
-    pub fn update_pos(&mut self, x: i32, y: i32) -> Result<(), Error> {
+    pub(crate) fn update_pos(&mut self, x: i32, y: i32) -> Result<(), Error> {
         Self::in_board_range(x, y)?;
         Ok({
             self.position.x = x;
@@ -199,7 +222,7 @@ impl Piece {
     ///
     /// There can be a maximum of 24 pieces inside a player pieces vec. Anything more than that is an
     /// error.
-    pub fn is_valid_index(pos: usize, is_defender: bool) -> Result<(), Error> {
+    pub(crate) fn is_valid_index(pos: usize, is_defender: bool) -> Result<(), Error> {
         match match is_defender {
             true  => pos < 24,
             false => pos < 8,
@@ -212,7 +235,7 @@ impl Piece {
     /// To check if the position is inside the piece vector bounds.
     ///
     /// takes a usize value and checks the vector size with the length of the pieces vec.
-    pub fn is_in_bounds(pos: usize, len: usize) -> Result<(), Error> {
+    pub(crate) fn is_in_bounds(pos: usize, len: usize) -> Result<(), Error> {
         match pos < len {
             true  => Ok(()),
             false => Err(Error::PieceVectorIndexOutOfBounds(pos, len)),
@@ -222,10 +245,29 @@ impl Piece {
     /// To check if a position value is inside the board.
     ///
     /// This function is used to check if a particular position is inside the board.
-    pub fn in_board_range(x: i32, y: i32) -> Result<(), Error> {
+    pub(crate) fn in_board_range(x: i32, y: i32) -> Result<(), Error> {
         match (x < X_MAX && x >= X_MIN) && (y < Y_MAX && y >= Y_MIN) {
             true  => Ok(()),
             false => return Err(Error::IllegalPosition(x, y)),
+        }
+    }
+}
+
+pub(crate) trait TryIsSingular {
+    type Item;
+    type Error;
+
+    fn try_is_singular(self) -> Result<Vec<Self::Item>, Self::Error>;
+}
+
+impl TryIsSingular for std::vec::Vec<Piece> {
+    type Item = Piece;
+    type Error = Error;
+
+    fn try_is_singular(self) -> Result<Vec<Self::Item>, Self::Error> {
+        match self.len() < 2 {
+            true  => Ok(self),
+            false => Err(Error::VectorNonSingular(self.len())),
         }
     }
 }

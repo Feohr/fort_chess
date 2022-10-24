@@ -66,10 +66,10 @@ pub enum Error {
 /// -   Yellow
 #[derive(Copy, Clone, Debug)]
 pub enum Team {
-    Red,
-    Blue,
-    Green,
-    Yellow,
+    Red,    // 0
+    Blue,   // 1
+    Green,  // 2
+    Yellow, // 3
 }
 
 impl Team {
@@ -95,6 +95,15 @@ impl Team {
             Team::Green  => "Green",
             Team::Blue   => "Blue",
             Team::Yellow => "Yellow",
+        }
+    }
+
+    pub fn to_index(&self) -> usize {
+        match self {
+            Team::Red    => 0,
+            Team::Blue   => 1,
+            Team::Green  => 2,
+            Team::Yellow => 3,
         }
     }
 }
@@ -158,29 +167,29 @@ impl Player {
     ///
     /// Changes the __is_winner__ value to __true__.
     /// Conversely, __set_not_winner__ will set the value to true.
-    pub fn set_winner(&mut self) {
+    pub(crate) fn set_winner(&mut self) {
         self.is_winner = true;
     }
 
     /// Set not winner function.
-    pub fn set_not_winner(&mut self) {
+    pub(crate) fn set_not_winner(&mut self) {
         self.is_winner = false;
     }
 
     /// To set player __is_play__ value to true.
     ///
     /// Conversely, __set_not_play__ funtion will convert to false.
-    pub fn set_play(&mut self) {
+    pub(crate) fn set_play(&mut self) {
         self.is_play = true;
     }
 
     /// Player not play function.
-    pub fn set_not_play(&mut self) {
+    pub(crate) fn set_not_play(&mut self) {
         self.is_play = false;
     }
 
     /// To check wether a index is even possible.
-    pub fn is_valid_player_index(pos: usize) -> Result<(), Error> {
+    pub(crate) fn is_valid_player_index(pos: usize) -> Result<(), Error> {
         // 4 is the maximum number of players that can play.
         match pos < 4_usize {
             true  => Ok(()),
@@ -189,7 +198,7 @@ impl Player {
     }
 
     /// To check if the position is less than the vector length.
-    pub fn is_in_bounds(pos: usize, len: usize) -> Result<(), Error> {
+    pub(crate) fn is_in_bounds(pos: usize, len: usize) -> Result<(), Error> {
         match pos < len {
             true  => Ok(()),
             false => Err(Error::PlayerVectorIndexOutOfBounds(pos, len)),
@@ -217,7 +226,7 @@ impl Player {
 /// -   get_piece_pos:  To get piece position within the struct based on x, y coordinates.
 /// -   kill_piece:     To remove a piece from the __pieces__ vector.
 /// -   update_piece:   To update piece position.
-pub trait PlayerAction {
+pub(crate) trait PlayerAction {
     fn get_piece_pos(&self, x: i32, y: i32) -> Result<Option<usize>, Error>;
 
     fn kill_piece(&mut self, pos: usize) -> Result<Piece, Error>;

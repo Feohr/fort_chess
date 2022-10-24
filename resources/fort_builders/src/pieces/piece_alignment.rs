@@ -50,14 +50,14 @@ fn get_def_type() -> TypeInfo {
     ]
 }
 
-pub fn get_piece_type(is_defender: bool) -> TypeInfo {
+pub(crate) fn get_piece_type(is_defender: bool) -> TypeInfo {
     match is_defender {
         true  => get_def_type(),
         false => get_enm_type(),
     }
 }
 
-pub fn get_pos_from_quadrant(is_defender: bool, quadrant: &Quadrant) -> PosInfo {
+pub(crate) fn get_pos_from_quadrant(is_defender: bool, quadrant: &Quadrant) -> PosInfo {
     match is_defender {
         true => get_def_pos(),
         false => match quadrant {

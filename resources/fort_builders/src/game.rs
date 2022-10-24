@@ -2,7 +2,7 @@
 //!
 //! Game module to initialize, stop and exit the game.
 
-use crate::pieces::Piece;
+use crate::pieces::{ Piece, TryIsSingular };
 use crate::player::{Player, PlayerAction};
 use crate::Error;
 
@@ -93,7 +93,8 @@ impl Game {
                 Ok(None)
             })
             .filter_map(|pos| pos)
-            .collect::<Vec<Piece>>())
+            .collect::<Vec<Piece>>()
+            .try_is_singular()?)
     }
 
     /// To change the game state to __Interrupt__.
