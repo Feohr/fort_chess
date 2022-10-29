@@ -1,5 +1,18 @@
+//! game module.
+//!
+//! To handle game functionalities like start, update and win/lose/draw.
+//! Holds the GameAsset which is the instance of the current game data object.
+//! It also is responsible for drawing the pieces to the board.
+//!
+//! ## Contents:
+//! -   GamePlugin
+//! -   GameAsset
+//! -   Piece
+
+/*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
+
 use bevy::prelude::*;
-use crate::{RESOLUTION, TILESIZE};
+use crate::{RESOLUTION, TILESIZE, SPRITESIZE};
 use fort_builders::{
     board::Quadrant,
     dice_roll,
@@ -7,22 +20,51 @@ use fort_builders::{
     player::{Player, Team},
 };
 
+// Temporary.
 const PLAYERS: usize = 4;
 
-#[derive(Debug, Component)]
-pub struct GameAsset(Game);
-
-struct PlayerSheet(Handle<TextureAtlas>);
-
+/// The GamePlugin that holds piece drawing information.
 pub struct GamePlugin;
 
+#[derive(Component)]
+struct PlayerSheet(Handle<TextureAtlas>);
+
+#[derive(Component)]
+struct Piece;
+
+#[derive(Component)]
+struct Highlight;
+
+#[derive(Debug, Component)]
+pub struct GameAsset(pub Game);
+
+/*████Functions██████████████████████████████████████████████████████████████████████████████████*/
+
+/*████GameAsset████*/
+/*-----------------------------------------------------------------------------------------------*/
+impl GameAsset {
+    /// To get a reference to the inner game tuple element,
+    pub fn get(&self) -> &Game {
+        &self.0
+    }
+
+    /// To get a mutable reference to the inner game tuple element,
+    pub fn get_mut(&mut self) -> &mut Game {
+        &mut self.0
+    }
+}
+/*-----------------------------------------------------------------------------------------------*/
+
+/*████Plugin for GamePlugin████*/
+/*-----------------------------------------------------------------------------------------------*/
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system_to_stage(StartupStage::PreStartup, init_game)
-            .add_startup_system(load_sprite)
-            .add_system(draw_pieces);
+        app.add_startup_system_to_stage(StartupStage::Startup, init_game)
+            .add_startup_system_to_stage(StartupStage::Startup, load_sprite)
+            .add_system(gametick);
     } 
 }
+/*-----------------------------------------------------------------------------------------------*/
 
 /// Function to map quadrants to the player correctly ignoring the defender quadrant.
 ///
@@ -31,36 +73,64 @@ impl Plugin for GamePlugin {
 /// this problem.
 fn calcq(i: usize, roll: usize) -> usize {
     match i {
-        i if i == roll => roll,
-        i if i < roll  => i,
-        i if i > roll  => (i - 1) % 3,
+        i if i == roll || i < roll => i,
+        i if i >  roll => (i - 1) % 3,
         _ => panic!("Unexpected error when matching i and roll {i}, {roll}."),
     }
 }
 
+/// Initial game creation.
 fn init_game(mut commands: Commands) {
-    let roll = dbg!(dice_roll() % 3);
-    let players = (0..PLAYERS)
+    let roll = (dice_roll() % 3) % PLAYERS;
+    commands.insert_resource(
+        GameAsset(  Game::init((0..PLAYERS)
         .into_iter()
         .map(|i| {
-            Player::from(
+                Player::from(
                 format!("player {}", i + 1),
                 Team::from_index(i).unwrap(),
                 roll == i,
-                Quadrant::from_index(dbg!(calcq(i, roll))).unwrap(),
+                PLAYERS,
+                Quadrant::from_index(calcq(i, roll)).unwrap(),
             )
             .unwrap()
         })
-        .collect::<Vec<Player>>();
-    commands.insert_resource(GameAsset(dbg!(Game::init(players))));
+        .collect::<Vec<Player>>())));
 }
 
-fn draw_pieces(
+fn gametick(
     mut commands: Commands,
     sprite: Res<PlayerSheet>,
-    game: Res<GameAsset>,
+    mut game: ResMut<GameAsset>,
+    dquery: Query<Entity, With<Piece>>,
+    hquery: Query<Entity, With<Highlight>>,
 ) {
-    game.0.players
+    if !game.get().update { return }
+    draw_pieces(&mut commands, &sprite, &game, &dquery);
+    highlight(&mut commands, &game, &hquery);
+    game.get_mut().set_update_false();
+}
+
+fn clear_pieces(
+    commands: &mut Commands,
+    query: &Query<Entity, With<Piece>>,
+) {
+    if query.is_empty() { return }
+    for pieces in query.iter() {
+        commands.entity(pieces).despawn();
+    }
+}
+
+/// To draw the players.
+fn draw_pieces(
+    mut commands: &mut Commands,
+    sprite: &Res<PlayerSheet>,
+    game: &ResMut<GameAsset>,
+    query: &Query<Entity, With<Piece>>,
+) {
+    if !game.get().update { return }
+    clear_pieces(&mut commands, &query);
+    game.get().players
         .iter()
         .for_each(|player| {
             player.pieces
@@ -73,14 +143,56 @@ fn draw_pieces(
                         Vec3::new(
                             piece.position.x as f32 * RESOLUTION,
                             piece.position.y as f32 * RESOLUTION,
-                            6.0,
+                            7.0,
                         ),
                     );
-                    commands.entity(sprite).insert(Name::from("Piece"));
+                    commands.entity(sprite).insert(Name::from("Piece"))
+                            .insert(Piece);
                 })
-        })
+        });
 }
 
+fn clear_highlight(
+    commands: &mut Commands,
+    query: &Query<Entity, With<Highlight>>,
+) {
+    if query.is_empty() { return }
+    for blocks in query.iter() {
+        commands.entity(blocks).despawn();
+    }
+}
+
+fn highlight(
+    mut commands: &mut Commands,
+    game: &ResMut<GameAsset>,
+    query: &Query<Entity, With<Highlight>>,
+) {
+    if !game.get().update { return }
+    clear_highlight(&mut commands, &query);
+    for piece in game.get().pieces() {
+        commands.spawn().insert_bundle(SpriteBundle {
+            sprite: Sprite {
+                color: Color::rgba(0.2, 0.2, 0.2, 1.0),
+                custom_size: Some(Vec2::new(
+                        (TILESIZE.0) * RESOLUTION,
+                        (TILESIZE.1) * RESOLUTION,
+                )),
+                ..default()
+            },
+            transform: Transform {
+                translation: Vec3::new(
+                    piece.position.x as f32 * RESOLUTION,
+                    piece.position.y as f32 * RESOLUTION,
+                    5.0,
+                ),
+                ..default()
+            },
+            ..default()
+        }).insert(Highlight);
+    }
+}
+
+/// To load the player sprites.
 fn load_sprite(
     mut commands: Commands,
     asset: Res<AssetServer>,
@@ -89,10 +201,10 @@ fn load_sprite(
     commands.insert_resource(PlayerSheet(texture_atlases.add(
         TextureAtlas::from_grid_with_padding(
             asset.load("spritesheet/chess_pieces_sheet.png"),
-            Vec2::new(125.0, 125.0),
+            Vec2::splat(SPRITESIZE * 2.0),
             5, // Rows.
             5, // Columns.
-            Vec2::splat(1.0),
+            Vec2::splat(0.0),
             Vec2::splat(0.0),
         ),
     )));

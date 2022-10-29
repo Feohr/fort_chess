@@ -4,6 +4,8 @@
 //! Used to create, kill, set values and to update position of the player pieces.
 //! Also contains the team object to handle the player teams.
 
+/*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
+
 // use crate::Error;
 use crate::board::Quadrant;
 use crate::pieces;
@@ -72,6 +74,58 @@ pub enum Team {
     Yellow, // 3
 }
 
+/// __Player__ struct used to handle player specific information.
+///
+/// Contains data such as name, pieces held, team, etc.
+///
+/// ## Contents:
+/// -   name:           the name of the player.
+/// -   pieces:         pieces held by the player.
+/// -   team:           player team.
+/// -   is_defender:    if a player is defending.
+/// -   is_winner:      if the player is winner.
+/// -   is_play:        is the player still playing.
+#[derive(Debug)]
+pub struct Player {
+    /// The name of the player.
+    pub name: String,
+
+    /// The pieces held by the player.
+    pub pieces: Vec<Piece>,
+
+    /// The team player belongs to.
+    pub team: Team,
+
+    /// Indicates if the player is a defender.
+    pub is_defender: bool,
+
+    /// Indicates if the player is a winner.
+    pub is_winner: bool,
+
+    /// Indicates if the player is still playing.
+    pub is_play: bool,
+}
+
+/// A public trait to handle __Player__ actions during runtime.
+///
+/// ## Actions:
+/// -   get_piece_pos:  To get piece position within the struct based on x, y coordinates.
+/// -   kill_piece:     To remove a piece from the __pieces__ vector.
+/// -   update_piece:   To update piece position.
+pub(crate) trait PlayerAction {
+    fn get_piece_pos(&self, x: i32, y: i32) -> Result<Option<usize>, Error>;
+
+    fn kill_piece(&mut self, pos: usize) -> Result<Piece, Error>;
+
+    fn update_piece(&mut self, x: i32, y: i32, pos: usize) -> Result<bool, Error>;
+
+    fn kill_self(&mut self);
+}
+
+/*████Functions██████████████████████████████████████████████████████████████████████████████████*/
+
+/*████Team████*/
+/*-----------------------------------------------------------------------------------------------*/
 impl Team {
     /// To get a team corresponding to the index value.
     ///
@@ -107,39 +161,10 @@ impl Team {
         }
     }
 }
+/*-----------------------------------------------------------------------------------------------*/
 
-/// __Player__ struct used to handle player specific information.
-///
-/// Contains data such as name, pieces held, team, etc.
-///
-/// ## Contents:
-/// -   name:           the name of the player.
-/// -   pieces:         pieces held by the player.
-/// -   team:           player team.
-/// -   is_defender:    if a player is defending.
-/// -   is_winner:      if the player is winner.
-/// -   is_play:        is the player still playing.
-#[derive(Debug)]
-pub struct Player {
-    /// The name of the player.
-    pub name: String,
-
-    /// The pieces held by the player.
-    pub pieces: Vec<Piece>,
-
-    /// The team player belongs to.
-    pub team: Team,
-
-    /// Indicates if the player is a defender.
-    pub is_defender: bool,
-
-    /// Indicates if the player is a winner.
-    pub is_winner: bool,
-
-    /// Indicates if the player is still playing.
-    pub is_play: bool,
-}
-
+/*████Player████*/
+/*-----------------------------------------------------------------------------------------------*/
 impl Player {
     /// Used to initialize a new player based on the inputs.
     ///
@@ -148,6 +173,7 @@ impl Player {
         name: String,
         team: Team,
         is_defender: bool,
+        quadrant_active: usize,
         quadrant: Quadrant,
     ) -> Result<Self, Error> {
         // Check if len is of valid size. i.e. less than 50.
@@ -155,36 +181,36 @@ impl Player {
         // Finally.
         Ok(Player {
             name,
-            pieces: Piece::init_pieces(is_defender, quadrant)?,
+            pieces: Piece::init_pieces(is_defender, quadrant, quadrant_active)?,
             team,
             is_defender,
             is_winner: false,
             is_play: true,
-        })
+        }.sort_pieces_get())
     }
 
     /// To set the player as a winner.
     ///
     /// Changes the __is_winner__ value to __true__.
     /// Conversely, __set_not_winner__ will set the value to true.
-    pub(crate) fn set_winner(&mut self) {
+    pub fn set_winner(&mut self) {
         self.is_winner = true;
     }
 
     /// Set not winner function.
-    pub(crate) fn set_not_winner(&mut self) {
+    pub fn set_not_winner(&mut self) {
         self.is_winner = false;
     }
 
     /// To set player __is_play__ value to true.
     ///
     /// Conversely, __set_not_play__ funtion will convert to false.
-    pub(crate) fn set_play(&mut self) {
+    pub fn set_play(&mut self) {
         self.is_play = true;
     }
 
     /// Player not play function.
-    pub(crate) fn set_not_play(&mut self) {
+    pub fn set_not_play(&mut self) {
         self.is_play = false;
     }
 
@@ -205,6 +231,15 @@ impl Player {
         }
     }
 
+    /// For sorting the pieces.
+    fn sort_pieces(&mut self) { self.pieces.sort() }
+
+    /// To sort and return the object.
+    fn sort_pieces_get(mut self) -> Self {
+        self.pieces.sort();
+        self
+    }
+
     /// A simple function to check if the name length is too big or too small.
     ///
     /// returns false if the name length is invalid. The constraints are 3 > name_length < 255.
@@ -219,23 +254,10 @@ impl Player {
         }
     }
 }
+/*-----------------------------------------------------------------------------------------------*/
 
-/// A public trait to handle __Player__ actions during runtime.
-///
-/// ## Actions:
-/// -   get_piece_pos:  To get piece position within the struct based on x, y coordinates.
-/// -   kill_piece:     To remove a piece from the __pieces__ vector.
-/// -   update_piece:   To update piece position.
-pub(crate) trait PlayerAction {
-    fn get_piece_pos(&self, x: i32, y: i32) -> Result<Option<usize>, Error>;
-
-    fn kill_piece(&mut self, pos: usize) -> Result<Piece, Error>;
-
-    fn update_piece(&mut self, x: i32, y: i32, pos: usize) -> Result<bool, Error>;
-
-    fn kill_self(&mut self);
-}
-
+/*████PlayerAction for Player████*/
+/*-----------------------------------------------------------------------------------------------*/
 impl PlayerAction for Player {
     /// To get position of the piece that is clicked in relevance to the vec.
     ///
@@ -282,6 +304,7 @@ impl PlayerAction for Player {
                     // Hopefully won't panic because previously checked.
                     .expect("Invalid piece position {pos}")
                     .update_pos(x, y)?;
+                self.sort_pieces();
                 Ok(true)
             },
         }
@@ -295,3 +318,4 @@ impl PlayerAction for Player {
         self.set_not_winner();
     }
 }
+/*-----------------------------------------------------------------------------------------------*/

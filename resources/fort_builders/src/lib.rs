@@ -3,9 +3,12 @@
 //! Holds the entry point and the interface to interact with the below library.
 //! handles initialization, run and execution of the game.
 
+/*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
+
 pub mod game;
-mod pieces;
 pub mod player;
+pub mod board;
+    mod pieces;
 
 use game::Game;
 use player::Team;
@@ -13,87 +16,11 @@ use std::time::SystemTime;
 use thiserror::Error;
 
 // To print red output.
-const RED: &str = "\x1b[31;1m";
+pub const RED: &str = "\x1b[31;1m";
 // To reset stdout. i.e. white.
-const RST: &str = "\x1b[0m";
-
-pub mod board {
-    //! # board module
-    //!
-    //! module to hold board specific values like dimensions etc.
-    //!
-    //! Quadrant 1: left block
-    //! Quadrant 2: top block
-    //! Quadrant 3: right block
-    //!
-    //! ## Contents:
-    //! -   X_MAX       (const)
-    //! -   X_MIN       (const)
-    //! -   Y_MAX       (const)
-    //! -   Y_MIN       (const)
-    //! -   RGT         (const)
-    //! -   LFT         (const)
-    //! -   TOP         (const)
-    //! -   BTM         (const)
-    //! -   Quadrant    (enum)
-
-    // Board tile borders.
-    /// Board's right most x axis length.
-    pub const X_MAX: i32 = 8_i32;
-
-    /// Board's left most x acis length.
-    pub const X_MIN: i32 = -8_i32;
-
-    /// Board's top most y axis length.
-    pub const Y_MAX: i32 = 8_i32;
-
-    /// Board's down most y axis length.
-    pub const Y_MIN: i32 = -2_i32;
-
-    // Camera view over the board.
-    /// Board's right most length in view.
-    pub const RGT: i32 = 12_i32;
-
-    /// Board's left most length in view.
-    /// Extra one lower as the "Zeroeth" column is present.
-    pub const LFT: i32 = -13_i32;
-
-    /// Board's top most length in view.
-    pub const TOP: i32 = 10_i32;
-
-    /// Board's bottom most length in view.
-    pub const BTM: i32 = -4_i32;
-
-    /// Quadrants inside the game.
-    ///
-    /// ## Contents:
-    /// -   Block 1
-    /// -   Block 2
-    /// -   Block 3
-    #[derive(Debug)]
-    pub enum Quadrant {
-        /// Block 1.
-        Q1,
-        /// Block 2.
-        Q2,
-        /// Block 3.
-        Q3,
-    }
-
-    impl Quadrant {
-        pub fn from_index(index: usize) -> Result<Self, super::Error> {
-            match index {
-                0 => Ok(Quadrant::Q1),
-                1 => Ok(Quadrant::Q2),
-                2 => Ok(Quadrant::Q3),
-                _ => Err(super::Error::InvalidQuadrantIndex(index)),
-            }
-        }
-    }
-}
+pub const RST: &str = "\x1b[0m";
 
 /// Error enum to handle errors across the lib.
-///
 #[derive(Error, Debug)]
 pub enum Error {
     /// To handle runtime IO errors.
@@ -141,17 +68,22 @@ pub struct PlayerLW<'a> {
     team: &'a str,
 }
 
+/*████Functions██████████████████████████████████████████████████████████████████████████████████*/
+
+/*████PlayerLW████*/
+/*-----------------------------------------------------------------------------------------------*/
 impl<'a> PlayerLW<'a> {
     /// To create a new __PlayerLW__ struct.
     ///
     /// Takes string name input and team name to create a __PlayerLw__ struct.
-    pub fn new(name: String, team: Team) -> PlayerLW<'a> {
+    fn new(name: String, team: Team) -> PlayerLW<'a> {
         PlayerLW {
             name: str_from_string(name),
             team: Team::teamstr_from_team(team),
         }
     }
 }
+/*-----------------------------------------------------------------------------------------------*/
 
 /// Simple utility function to create a &str from a String.
 ///
@@ -177,31 +109,21 @@ fn results<'a>(mut winners: Vec<PlayerLW<'a>>) -> Result<Option<PlayerLW<'a>>, E
 /// To check the winner of the game and close it.
 ///
 /// Result enum with the winner player. If the return value is __None__ then the game is a draw.
-pub fn exit<'a>(mut game: Game) -> Result<Option<PlayerLW<'a>>, Error> {
-    // If the game is interrupted then early quit
-    // Currently no logic is set to display this but maybe in the future,
-    match game.is_interrupt() {
-        true  => Ok(None),
-        false => {
-            // Gathering the winners.
-            let winners: Vec<PlayerLW> = game
-                .players
-                .iter()
-                .filter_map(|player|
-                    match player.is_winner {
-                        true  => Some(PlayerLW::new(player.name.clone(), player.team.clone())),
-                        false => None,
-                    }
-                )
-                .collect::<Vec<PlayerLW>>();
-            // Set the game to exit after extracting the results.
-            // This step is kinda unecessary but still added for my peace of mind.
-            game.set_state_exit();
-            // Finally.
-            // Match to declare the result.
-            results(winners)
-        },
-    }
+pub fn exit<'a>(game: Game) -> Result<Option<PlayerLW<'a>>, Error> {
+    // Gathering the winners.
+    let winners: Vec<PlayerLW> = game
+        .players
+        .iter()
+        .filter_map(|player|
+            match player.is_winner {
+                true  => Some(PlayerLW::new(player.name.clone(), player.team.clone())),
+                false => None,
+            }
+        )
+        .collect::<Vec<PlayerLW>>();
+    // Finally.
+    // Match to declare the result.
+    results(winners)
 }
 
 /// To get a random value between 1 and 6.
@@ -229,13 +151,14 @@ pub fn ret_minus_one<T>(x: T) -> T
 where
     T:      std::cmp::PartialOrd<T>
         +   std::ops::Sub<Output=T>
-        +   From<u16>,
-{
+        +   From<u16> {
     match x > From::from(0) {
         true  => x - From::from(1),
         false => x,
     }
 }
+
+/*████Tests██████████████████████████████████████████████████████████████████████████████████████*/
 
 #[cfg(test)]
 mod tests {

@@ -2,29 +2,15 @@
 //!
 //! Game module to initialize, stop and exit the game.
 
-use crate::pieces::{ Piece, TryIsSingular };
+/*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
+
+use crate::pieces::{Piece, TryIsSingular};
 use crate::player::{Player, PlayerAction};
 use crate::Error;
 
-/// __GameState__ enum to keep track of game state.
-///
-/// ## Contents:
-/// -   Start
-/// -   Running
-/// -   Exit
-/// -   Interrupt
-#[derive(PartialEq, Eq, Debug)]
-enum GameState {
-    Start,
-    Running,
-    Exit,
-    // Not sure if I'll need this yet.
-    Interrupt,
-}
-
 /// A struct to create a game object.
 ///
-/// ## Contents:
+/// ## Contents
 /// -   players: players vector
 /// -   status": state of the game
 #[derive(Debug)]
@@ -35,9 +21,25 @@ pub struct Game {
     /// To hold the turn of the player.
     pub turn: usize,
 
-    /// To hold the game state.
-    status: GameState,
+    /// To hold the game update state to draw.
+    pub update: bool,
 }
+
+/// To handle operations over the Game.
+///
+/// ## Contents:
+/// -   hunt:   searches for pieces to kill and kills them.
+/// -   update: updates the given player piece with x nd y value.
+/// -   next:   gets the player index who's turn it is.
+pub trait GameAction {
+    fn hunt(&mut self) -> Result<Vec<Player>, Error>;
+
+    fn next(&mut self);
+
+    fn update(&mut self, x: i32, y: i32, pos: usize) -> Result<(), Error>;
+}
+
+/*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
 impl Game {
     /// To initialize game object.
@@ -50,7 +52,7 @@ impl Game {
         Game {
             players,
             turn: 0_usize,
-            status: GameState::Start,
+            update: true,
         }
     }
 
@@ -81,7 +83,7 @@ impl Game {
     /// This function will kill all the pieces at a position.
     /// Shouldn't cause unwanted issues as there can only be one piece at a position at any given
     /// time.
-    pub fn get_all_pieces_in_pos(&mut self, x: i32, y: i32) -> Result<Vec<Piece>, Error> {
+    pub fn get_pieces_in_pos(&mut self, x: i32, y: i32) -> Result<Vec<Piece>, Error> {
         Piece::in_board_range(x, y)?;
         Ok(self.players
             .iter_mut()
@@ -97,59 +99,27 @@ impl Game {
             .try_is_singular()?)
     }
 
-    /// To change the game state to __Interrupt__.
+    /// To change the game state to __true__.
     ///
-    /// Takes __self__ reference and changes status to __Interrupt__.
-    ///
-    /// **Idempotent function**
-    pub fn set_state_interrupt(&mut self) {
-        self.status = GameState::Interrupt;
-    }
-
-    /// To change the game state to __Exit__.
-    ///
-    /// Takes __self__ reference and changes status to __Exit__.
+    /// Takes __self__ reference and changes status to __true__.
     ///
     /// **Idempotent function**
-    pub fn set_state_exit(&mut self) {
-        self.status = GameState::Exit;
-    }
+    pub fn set_update_true(&mut self) { self.update = true }
 
-    /// To change the game state to __Running__.
+    /// To change the game update state to __false__.
     ///
-    /// Takes __self__ reference and changes status to __Running__.///
+    /// Takes __self__ reference and changes status to __false__.
+    ///
     /// **Idempotent function**
-    pub fn set_state_run(&mut self) {
-        self.status = GameState::Running;
+    pub fn set_update_false(&mut self) { self.update = false }
+
+    /// Return the players length.
+    pub fn len(&self) -> usize { self.players.len() }
+
+    /// To get the players in the present turn.
+    pub fn pieces(&self) -> &Vec<Piece> {
+        &self.players[self.turn].pieces
     }
-
-    /// To check if the game is still playing or if we need to stop it.
-    ///
-    /// Takes self argument and cross checks the players.
-    /// returns true if the game is ending. else returns false.
-    pub fn is_exit(&self) -> bool {
-        self.status == GameState::Exit
-    }
-
-    /// To check if the game is interrupted.
-    ///
-    /// Takes a self reference argument and checks the player.
-    /// If the returns true then the game should be pre-maturely stopped.
-    pub fn is_interrupt(&self) -> bool {
-        self.status == GameState::Interrupt
-    }
-}
-
-/// To handle operations over the Game.
-///
-/// ## Contents:
-/// -   hunt:   searches for pieces to kill and kills them.
-/// -   update: updates the given player piece with x nd y value.
-/// -   next:   gets the player index who's turn it is.
-pub trait GameAction {
-    fn hunt(&mut self) -> Result<Vec<Player>, Error>;
-
-    fn next(&mut self);
 }
 
 impl GameAction for Game {
@@ -184,5 +154,14 @@ impl GameAction for Game {
             true  => self.turn += 1,
             false => self.turn = 0,
         }
+        self.set_update_true();
+    }
+
+    /// To update player pieces position every turn.
+    fn update(&mut self, x: i32, y: i32, pos: usize) -> Result<(), Error> {
+        Ok(match self.players[self.turn].update_piece(x, y, pos)? {
+            true  => { self.set_update_true() },
+            false => (),
+        })
     }
 }

@@ -2,14 +2,14 @@
 //!
 //! Holds the data and functions corresponding to the chess pieces.
 
+/*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
+
 mod piece_alignment;
 
 // use crate::Error;
 use crate::{
     RED, RST,
-    board::{
-        Quadrant, X_MAX, X_MIN, Y_MAX, Y_MIN
-    },
+    board::{Quadrant, X_MAX, X_MIN, Y_MAX, Y_MIN},
 };
 use piece_alignment::{get_pos_from_quadrant, get_piece_type};
 use thiserror::Error;
@@ -55,7 +55,6 @@ pub enum Error {
         RST
     )]
     VectorNonSingular(usize),
-
 }
 
 /// To determine the piece type.
@@ -69,7 +68,7 @@ pub enum Error {
 /// -   Queen
 /// -   Pawn
 /// -   Knight
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub enum PieceType {
     Rook,     // 0
     Minister, // 1
@@ -78,6 +77,49 @@ pub enum PieceType {
     Knight,   // 4
 }
 
+/// To get the piece position.
+///
+/// The x value corresponds to the x axis.
+/// Similarly, the y value corresponds to the y axis.
+///
+/// ## Contents:
+/// -   x:  the x-axis value.
+/// -   y:  the y-axis value.
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+pub struct Position {
+    /// The x-axis value.
+    pub x: i32,
+
+    /// The y-axis value.
+    pub y: i32,
+}
+
+/// Piece struct that holds the type and the position of each piece.
+///
+/// ## Contents:
+/// -   piece_type: holds the type of the piece via __PieceType__ enum.
+/// -   position:   holds the position of the piece via __Position__ struct.
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+pub struct Piece {
+    /// To hold the type information for the piece.
+    pub piece_type: PieceType,
+
+    /// To hold the position information.
+    pub position: Position,
+}
+
+/// To check if a vector only has one item.
+pub(crate) trait TryIsSingular {
+    type Item;
+    type Error;
+
+    fn try_is_singular(self) -> Result<Vec<Self::Item>, Self::Error>;
+}
+
+/*████Functions██████████████████████████████████████████████████████████████████████████████████*/
+
+/*████PieceType████*/
+/*-----------------------------------------------------------------------------------------------*/
 impl fmt::Debug for PieceType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:<8}", self.as_str())
@@ -118,24 +160,10 @@ impl PieceType {
         }
     }
 }
+/*-----------------------------------------------------------------------------------------------*/
 
-/// To get the piece position.
-///
-/// The x value corresponds to the x axis.
-/// Similarly, the y value corresponds to the y axis.
-///
-/// ## Contents:
-/// -   x:  the x-axis value.
-/// -   y:  the y-axis value.
-#[derive(PartialEq, Eq, Copy, Clone)]
-pub struct Position {
-    /// The x-axis value.
-    pub x: i32,
-
-    /// The y-axis value.
-    pub y: i32,
-}
-
+/*████Position████*/
+/*-----------------------------------------------------------------------------------------------*/
 impl fmt::Debug for Position {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "({:2}, {:2})", self.x, self.y)
@@ -147,7 +175,7 @@ impl Position {
     ///
     /// Takes the x and y value, checks if it is inside the board and creates the struct.
     #[inline]
-    pub fn from(x: i32, y: i32) -> Result<Self, Error> {
+    pub(crate) fn from(x: i32, y: i32) -> Result<Self, Error> {
         Piece::in_board_range(x, y)?;
         // Finally.
         Ok(Position {
@@ -156,21 +184,10 @@ impl Position {
         })
     }
 }
+/*-----------------------------------------------------------------------------------------------*/
 
-/// Piece struct that holds the type and the position of each piece.
-///
-/// ## Contents:
-/// -   piece_type: holds the type of the piece via __PieceType__ enum.
-/// -   position:   holds the position of the piece via __Position__ struct.
-#[derive(Copy, Clone)]
-pub struct Piece {
-    /// To hold the type information for the piece.
-    pub piece_type: PieceType,
-
-    /// To hold the position information.
-    pub position: Position,
-}
-
+/*████Piece████*/
+/*-----------------------------------------------------------------------------------------------*/
 impl fmt::Debug for Piece {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "[{:?} {:?}]", self.piece_type, self.position)
@@ -183,7 +200,7 @@ impl Piece {
     /// Takes the positional arguments along with type argument to return a new piece type.
     /// x and y correspond to the x and y coordinates. The piece argument corresponds to the
     /// type.
-    fn from(x: i32, y: i32, piece: PieceType) -> Result<Piece, Error> {
+    pub fn from(x: i32, y: i32, piece: PieceType) -> Result<Piece, Error> {
         Ok(Piece {
             piece_type: piece,
             position: Position::from(x, y)?,
@@ -191,10 +208,14 @@ impl Piece {
     }
 
     /// Function used to initialize the pieces vector.
-    pub(crate) fn init_pieces(is_defender: bool, quadrant: Quadrant) -> Result<Vec<Piece>, Error> {
-        Ok(get_pos_from_quadrant(is_defender, &quadrant)
+    pub(crate) fn init_pieces(
+        is_defender: bool,
+        quadrant: Quadrant,
+        quadrant_active: usize,
+    ) -> Result<Vec<Piece>, Error> {
+        Ok(get_pos_from_quadrant(is_defender, &quadrant, quadrant_active)
             .into_iter()
-            .zip(get_piece_type(is_defender))
+            .zip(get_piece_type(is_defender, quadrant_active))
             .flat_map(|(position, piece_type)| -> Result<Piece, Error> {
                 let piece = Piece::from(
                                 position.0,
@@ -252,14 +273,10 @@ impl Piece {
         }
     }
 }
+/*-----------------------------------------------------------------------------------------------*/
 
-pub(crate) trait TryIsSingular {
-    type Item;
-    type Error;
-
-    fn try_is_singular(self) -> Result<Vec<Self::Item>, Self::Error>;
-}
-
+/*████TryIsSingular for Vec████*/
+/*-----------------------------------------------------------------------------------------------*/
 impl TryIsSingular for std::vec::Vec<Piece> {
     type Item = Piece;
     type Error = Error;
@@ -271,3 +288,4 @@ impl TryIsSingular for std::vec::Vec<Piece> {
         }
     }
 }
+/*-----------------------------------------------------------------------------------------------*/

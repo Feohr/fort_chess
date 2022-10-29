@@ -4,9 +4,8 @@ use bevy::{
         SpriteSheetBundle, StartupStage, Text2dBundle, TextureAtlas, TextureAtlasSprite, Transform,
         Vec2, Vec3, default,
     },
-    text::{Text, Text2dBounds, TextAlignment, TextStyle},
 };
-use crate::{RESOLUTION, TILESIZE};
+use crate::{RESOLUTION, TILESIZE, SPRITESIZE};
 use fort_builders::{
     board::{X_MIN, X_MAX, Y_MIN, Y_MAX},
     ret_minus_one,
@@ -25,40 +24,11 @@ const BREADTH: i32 = 2;
 
 impl Plugin for TilePlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system_to_stage(StartupStage::PreStartup, load_tile)
-            .add_system(draw_board)
-            .add_system(put_text)
-            .add_system(draw_border)
-            .add_system(draw_fort);
+        app .add_startup_system_to_stage(StartupStage::PreStartup, load_tile)
+            .add_startup_system_to_stage(StartupStage::Startup, draw_board)
+            .add_startup_system_to_stage(StartupStage::Startup, draw_border)
+            .add_startup_system_to_stage(StartupStage::Startup, draw_fort);
     }
-}
-
-/// The text on the side of the boards displaying player's names. In future this system would be
-/// it's own Plugin.
-// To spawn text box into the game. Holds names of the player. Can be a maximum of 4. With
-// different colors.
-fn put_text(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands
-        .spawn_bundle(Text2dBundle {
-            text_2d_bounds: Text2dBounds {
-                size: Vec2::splat(3.5 * RESOLUTION),
-            },
-            text: Text::from_section(
-                "Mohammed Rehaan",
-                TextStyle {
-                    font: asset_server.load("fonts/fira-sans.regular.ttf"),
-                    font_size: 0.5 * RESOLUTION,
-                    color: Color::RED,
-                },
-            )
-            .with_alignment(TextAlignment::CENTER),
-            transform: Transform {
-                translation: Vec3::new(-11.25 * RESOLUTION, -0.5 * RESOLUTION, 5.0),
-                ..default()
-            },
-            ..default()
-        })
-        .insert(Name::new("Player Name"));
 }
 
 // To decide whether a dark tile or a light tile should be spawned.
@@ -205,10 +175,10 @@ fn load_tile(
     commands.insert_resource(TileSheet(texture_atlases.add(
         TextureAtlas::from_grid_with_padding(
             asset.load("spritesheet/tile_sheet.png"),
-            Vec2::new(125.0, 125.0),
+            Vec2::splat(SPRITESIZE),
             5, // Rows.
             1, // Columns.
-            Vec2::splat(1.0),
+            Vec2::splat(0.0),
             Vec2::splat(0.0),
         ),
     )));
