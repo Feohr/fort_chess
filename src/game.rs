@@ -66,19 +66,8 @@ impl Plugin for GamePlugin {
 }
 /*-----------------------------------------------------------------------------------------------*/
 
-/// Function to map quadrants to the player correctly ignoring the defender quadrant.
-///
-/// The whole recurring theme seems to be that I am not satisfied by the logic/implementation of
-/// the function as a whole. I really wish I could come up with a more clever way of working around
-/// this problem.
-fn calcq(i: usize, roll: usize) -> usize {
-    match i {
-        i if i == roll || i < roll => i,
-        i if i >  roll => (i - 1) % 3,
-        _ => panic!("Unexpected error when matching i and roll {i}, {roll}."),
-    }
-}
-
+/*████Game████*/
+/*-----------------------------------------------------------------------------------------------*/
 /// Initial game creation.
 fn init_game(mut commands: Commands) {
     let roll = (dice_roll() % 3) % PLAYERS;
@@ -111,6 +100,23 @@ fn gametick(
     game.get_mut().set_update_false();
 }
 
+/// Function to map quadrants to the player correctly ignoring the defender quadrant.
+// The whole recurring theme seems to be that I am not satisfied by the logic/implementation of
+// the function as a whole. I really wish I could come up with a more clever way of working around
+// this problem.
+fn calcq(i: usize, roll: usize) -> usize {
+    match i {
+        i if i == roll || i < roll => i,
+        i if i >  roll => (i - 1) % 3,
+        _ => panic!("Unexpected error when matching i and roll {i}, {roll}."),
+    }
+}
+
+
+/*-----------------------------------------------------------------------------------------------*/
+
+/*████Piece████*/
+/*-----------------------------------------------------------------------------------------------*/
 fn clear_pieces(
     commands: &mut Commands,
     query: &Query<Entity, With<Piece>>,
@@ -151,7 +157,10 @@ fn draw_pieces(
                 })
         });
 }
+/*-----------------------------------------------------------------------------------------------*/
 
+/*████Highlight████*/
+/*-----------------------------------------------------------------------------------------------*/
 fn clear_highlight(
     commands: &mut Commands,
     query: &Query<Entity, With<Highlight>>,
@@ -191,7 +200,10 @@ fn highlight(
         }).insert(Highlight);
     }
 }
+/*-----------------------------------------------------------------------------------------------*/
 
+/*████PlayerSheet████*/
+/*-----------------------------------------------------------------------------------------------*/
 /// To load the player sprites.
 fn load_sprite(
     mut commands: Commands,
@@ -232,3 +244,4 @@ fn spawn_piece(
         })
         .id()
 }
+/*-----------------------------------------------------------------------------------------------*/
