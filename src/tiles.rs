@@ -1,7 +1,23 @@
+//! tiles module
+//!
+//! To hold the logic that draws the board to the screen. Runs one time at the beginning of the
+//! game.
+//!
+//! ##Contents:
+//! -   TilePlugin
+//! -   TileSheet
+//! -   draw_board
+//! -   draw_fort
+//! -   draw_border
+//! -   load_tiles
+//! -   spawn_tile
+
+/*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
+
 use bevy::{
     prelude::{
-        App, AssetServer, Assets, Color, Commands, Entity, Handle, Name, Plugin, Res, ResMut, 
-        SpriteSheetBundle, StartupStage, Text2dBundle, TextureAtlas, TextureAtlasSprite, Transform,
+        App, AssetServer, Assets, Commands, Entity, Handle, Name, Plugin, Res, ResMut, 
+        SpriteSheetBundle, StartupStage, TextureAtlas, TextureAtlasSprite, Transform,
         Vec2, Vec3, default,
     },
 };
@@ -12,6 +28,7 @@ use fort_builders::{
 };
 
 pub struct TilePlugin;
+
 struct TileSheet(Handle<TextureAtlas>);
 
 /// Holds the breadth size of the board.
@@ -22,6 +39,10 @@ struct TileSheet(Handle<TextureAtlas>);
 // Do not mess with the board size as it does not scale well.
 const BREADTH: i32 = 2;
 
+/*████Functions██████████████████████████████████████████████████████████████████████████████████*/
+
+/*████Plugin for TilePlugin████*/
+/*-----------------------------------------------------------------------------------------------*/
 impl Plugin for TilePlugin {
     fn build(&self, app: &mut App) {
         app .add_startup_system_to_stage(StartupStage::PreStartup, load_tile)
@@ -30,6 +51,7 @@ impl Plugin for TilePlugin {
             .add_startup_system_to_stage(StartupStage::Startup, draw_fort);
     }
 }
+/*-----------------------------------------------------------------------------------------------*/
 
 // To decide whether a dark tile or a light tile should be spawned.
 fn switch(x: i32, y: i32) -> usize {
@@ -46,7 +68,8 @@ fn switch(x: i32, y: i32) -> usize {
     )
 }
 
-
+/*████Drawing the Board████*/
+/*-----------------------------------------------------------------------------------------------*/
 /// Drawing the board.
 // Just simple looping and condtion checking to draw the board.
 // I personally am not satisfied by the logic. I feel like there should be an easier way to do
@@ -163,7 +186,10 @@ fn draw_fort(mut commands: Commands, tile: Res<TileSheet>) {
         })
     });
 }
+/*-----------------------------------------------------------------------------------------------*/
 
+/*████Drawing the Board████*/
+/*-----------------------------------------------------------------------------------------------*/
 /// To load the tile asset.
 // Main functtion to load the tile asset into scope.
 // Runs at startup before staging.
@@ -216,3 +242,4 @@ fn spawn_tile(
         })
         .id()
 }
+/*-----------------------------------------------------------------------------------------------*/

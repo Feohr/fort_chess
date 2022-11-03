@@ -122,11 +122,11 @@ impl Quadrant {
 }
 /*-----------------------------------------------------------------------------------------------*/
 
-pub fn get_full_width() -> f32 {
+fn get_full_width() -> f32 {
     (LFT.abs() + RGT) as f32
 }
 
-pub fn get_full_height() -> f32 {
+fn get_full_height() -> f32 {
     (BTM.abs() + TOP) as f32
 }
 
@@ -140,5 +140,12 @@ fn get_max_without_zero(xbool: bool, ybool: bool) -> (f32, f32) {
             true  => YMAXF - 1.0,
             false => YMAXF,
         }
+    )
+}
+
+pub fn get_cursor_pos(c_x: f32, c_y: f32, height: f32, width: f32) -> (f32, f32) {
+    (
+        (((c_x / width) * get_full_width()) + (LFT as f32)).round(),
+        (((c_y / height) * get_full_height()) + (BTM as f32)).round(),
     )
 }

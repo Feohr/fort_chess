@@ -8,7 +8,7 @@
 pub mod game;
 pub mod player;
 pub mod board;
-    mod pieces;
+pub mod pieces;
 
 use game::Game;
 use player::Team;
@@ -133,7 +133,7 @@ pub fn exit<'a>(game: Game) -> Result<Option<PlayerLW<'a>>, Error> {
 /// 01/01/1970 (Unix Epoch). Please regain sanity and change it back to the current date.
 pub fn dice_roll() -> usize {
     match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
-        Ok(n)  => ((n.as_secs() % 6_u64) + 1_u64) as usize,
+        Ok(n)  => (n.as_secs() % 6_u64) as usize,
         Err(_) => {
             // You should not be reaching this but if you do then your computer date is stuck
             // before the 70's.

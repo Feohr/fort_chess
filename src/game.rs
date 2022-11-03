@@ -22,6 +22,8 @@ use fort_builders::{
 
 // Temporary.
 const PLAYERS: usize = 4;
+// Highlight coior.
+const HILITE_CLR: Color = Color::rgba(0.6, 0.6, 0.6, 0.3);
 
 /// The GamePlugin that holds piece drawing information.
 pub struct GamePlugin;
@@ -59,7 +61,7 @@ impl GameAsset {
 /*-----------------------------------------------------------------------------------------------*/
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system_to_stage(StartupStage::Startup, init_game)
+        app .add_startup_system_to_stage(StartupStage::Startup, init_game)
             .add_startup_system_to_stage(StartupStage::Startup, load_sprite)
             .add_system(gametick);
     } 
@@ -70,21 +72,24 @@ impl Plugin for GamePlugin {
 /*-----------------------------------------------------------------------------------------------*/
 /// Initial game creation.
 fn init_game(mut commands: Commands) {
-    let roll = (dice_roll() % 3) % PLAYERS;
+    let roll = (dice_roll() % 3_usize) % PLAYERS;
     commands.insert_resource(
-        GameAsset(  Game::init((0..PLAYERS)
-        .into_iter()
-        .map(|i| {
-                Player::from(
-                format!("player {}", i + 1),
-                Team::from_index(i).unwrap(),
-                roll == i,
-                PLAYERS,
-                Quadrant::from_index(calcq(i, roll)).unwrap(),
-            )
-            .unwrap()
-        })
-        .collect::<Vec<Player>>())));
+        dbg!(GameAsset(  Game::init((0..PLAYERS)
+                        .into_iter()
+                        .map(|i| {
+                            Player::from(
+                                format!("player {}", i + 1),
+                                Team::from_index(i).unwrap(),
+                                roll == i,
+                                PLAYERS,
+                                Quadrant::from_index(calcq(i, roll)).unwrap(),
+                            )
+                            .unwrap()
+                        })
+                        .collect::<Vec<Player>>()
+                    )
+        )
+    ));
 }
 
 fn gametick(
@@ -106,9 +111,9 @@ fn gametick(
 // this problem.
 fn calcq(i: usize, roll: usize) -> usize {
     match i {
-        i if i == roll || i < roll => i,
+        i if i <= roll => i,
         i if i >  roll => (i - 1) % 3,
-        _ => panic!("Unexpected error when matching i and roll {i}, {roll}."),
+        _ => panic!("Unexpected error when matching i and roll ({i}, {roll})."),
     }
 }
 
@@ -149,7 +154,7 @@ fn draw_pieces(
                         Vec3::new(
                             piece.position.x as f32 * RESOLUTION,
                             piece.position.y as f32 * RESOLUTION,
-                            7.0,
+                            8.0,
                         ),
                     );
                     commands.entity(sprite).insert(Name::from("Piece"))
@@ -178,13 +183,13 @@ fn highlight(
 ) {
     if !game.get().update { return }
     clear_highlight(&mut commands, &query);
-    for piece in game.get().pieces() {
+    for piece in game.get().player().pieces() {
         commands.spawn().insert_bundle(SpriteBundle {
             sprite: Sprite {
-                color: Color::rgba(0.2, 0.2, 0.2, 1.0),
+                color: HILITE_CLR,
                 custom_size: Some(Vec2::new(
-                        (TILESIZE.0) * RESOLUTION,
-                        (TILESIZE.1) * RESOLUTION,
+                        TILESIZE.0 * RESOLUTION,
+                        TILESIZE.1 * RESOLUTION,
                 )),
                 ..default()
             },

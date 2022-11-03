@@ -1,5 +1,7 @@
 #![feature(panic_info_message)]
 
+/*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
+
 // Getting the board presets from the resources library.
 extern crate fort_builders;
 
@@ -9,12 +11,15 @@ mod listener;
 
 use bevy::{
     prelude::{
-        App, Camera2dBundle, ClearColor, Color, Commands, CursorMoved, DefaultPlugins, EventReader,
-        Msaa, WindowDescriptor, default, SpriteBundle, Sprite, Vec2, Vec3, Transform, Windows, Res,
-        Query, Component, Entity, With,
+        App, Camera2dBundle, ClearColor, Color, Commands, DefaultPlugins, Msaa, WindowDescriptor,
+        default, Windows, Res, ResMut, Component,
     },
     render::camera::{OrthographicProjection, ScalingMode, WindowOrigin},
     window::WindowMode,
+    input::{
+        Input,
+        keyboard::KeyCode,
+    },
 };
 use fort_builders::{
     board::{LFT, TOP, RGT, BTM},
@@ -22,14 +27,34 @@ use fort_builders::{
 };
 use game::GamePlugin;
 use tiles::TilePlugin;
-use listener::ListenerPlugin;
+use listener::listener;
 
 pub const RESOLUTION: f32 = 4.0 / 3.0;
-pub const TILESIZE: (f32, f32) = (0.99, 0.99);
 pub const SPRITESIZE: f32 = 32.0;
+pub const TILESIZE: (f32, f32) = (0.99, 0.99);
+pub const TILEDRAW: (f32, f32) = (0.89, 0.89);
+
+// To store player's position.
+#[derive(Debug, Component)]
+pub struct PlayerPosition(f32, f32);
+
+/*████Functions██████████████████████████████████████████████████████████████████████████████████*/
+
+fn window_close(
+    input: Res<Input<KeyCode>>,
+    mut window: ResMut<Windows>,
+) {
+    if  input.pressed(KeyCode::LControl)
+    &&  input.pressed(KeyCode::Q) {
+        let id = window.primary().id();
+        window.remove(id);
+    }
+}
 
 fn setup(mut commands: Commands) {
-   commands.spawn().insert_bundle(Camera2dBundle {
+    // Default player position.
+    commands.insert_resource(PlayerPosition(0.0, 0.0));
+    commands.spawn().insert_bundle(Camera2dBundle {
         projection: OrthographicProjection {
             left:   (LFT as f32) * RESOLUTION,
             top:    (TOP as f32) * RESOLUTION,
@@ -72,6 +97,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(TilePlugin)
         .add_plugin(GamePlugin)
-        .add_plugin(ListenerPlugin)
+        .add_system(listener)
+        .add_system(window_close)
         .run();
 }

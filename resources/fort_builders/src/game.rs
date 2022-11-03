@@ -23,6 +23,12 @@ pub struct Game {
 
     /// To hold the game update state to draw.
     pub update: bool,
+
+    /// To track if therre is a piece picked.
+    pub picked: bool,
+
+    /// Current position of the player piece.
+    pub position: usize,
 }
 
 /// To handle operations over the Game.
@@ -41,6 +47,8 @@ pub trait GameAction {
 
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
+/*████Game████*/
+/*-----------------------------------------------------------------------------------------------*/
 impl Game {
     /// To initialize game object.
     ///
@@ -53,6 +61,8 @@ impl Game {
             players,
             turn: 0_usize,
             update: true,
+            picked: false,
+            position: 0_usize,
         }
     }
 
@@ -81,8 +91,7 @@ impl Game {
     ///
     /// This function does not check if there are more than one pieces at a position.
     /// This function will kill all the pieces at a position.
-    /// Shouldn't cause unwanted issues as there can only be one piece at a position at any given
-    /// time.
+    /// Shouldn't cause unwanted issues as there can only be one piece at a position at any given time.
     pub fn get_pieces_in_pos(&mut self, x: i32, y: i32) -> Result<Vec<Piece>, Error> {
         Piece::in_board_range(x, y)?;
         Ok(self.players
@@ -113,15 +122,40 @@ impl Game {
     /// **Idempotent function**
     pub fn set_update_false(&mut self) { self.update = false }
 
+    /// To change the game picked state to __true__.
+    ///
+    /// Takes __self__ reference and changes picked to __true__.
+    ///
+    /// **Idempotent function**
+    pub fn set_pick_true(&mut self) { self.picked = true }
+
+    /// To change the game picked state to __false__.
+    ///
+    /// Takes __self__ reference and changes picked to __false__.
+    ///
+    /// **Idempotent function**
+    pub fn set_pick_false(&mut self) { self.picked = false }
+
+    /// To get the poisition of the piece that is chosen.
+    pub fn set_piece_pos(&mut self, pos: usize) { self.position = pos }
+
     /// Return the players length.
     pub fn len(&self) -> usize { self.players.len() }
 
-    /// To get the players in the present turn.
-    pub fn pieces(&self) -> &Vec<Piece> {
-        &self.players[self.turn].pieces
+    /// To return the current __Player__ struct.
+    pub fn player(&self) -> &Player {
+        &self.players[self.turn]
+    }
+
+    /// Mutable reference to the player.
+    pub fn player_mut(&mut self) -> &mut Player {
+        &mut self.players[self.turn]
     }
 }
+/*-----------------------------------------------------------------------------------------------*/
 
+/*████GameAction for Game████*/
+/*-----------------------------------------------------------------------------------------------*/
 impl GameAction for Game {
     /// Hunt for losers and kill them!
     ///
@@ -150,11 +184,10 @@ impl GameAction for Game {
     ///
     /// Adds value to turn and changes to 0 if the value exceeds players vector len.
     fn next(&mut self) {
-        match self.turn < self.players.len() {
+        match self.turn < self.players.len() - 1 {
             true  => self.turn += 1,
             false => self.turn = 0,
         }
-        self.set_update_true();
     }
 
     /// To update player pieces position every turn.
@@ -165,3 +198,4 @@ impl GameAction for Game {
         })
     }
 }
+/*-----------------------------------------------------------------------------------------------*/
