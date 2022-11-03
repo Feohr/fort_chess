@@ -4,7 +4,7 @@
 
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
-use crate::pieces::{Piece, TryIsSingular};
+use crate::pieces::Piece;
 use crate::player::{Player, PlayerAction};
 use crate::Error;
 
@@ -38,7 +38,7 @@ pub struct Game {
 /// -   update: updates the given player piece with x nd y value.
 /// -   next:   gets the player index who's turn it is.
 pub trait GameAction {
-    fn hunt(&mut self) -> Result<Vec<Player>, Error>;
+    fn hunt(&mut self) -> Result<Option<Player>, Error>;
 
     fn next(&mut self);
 
@@ -92,20 +92,14 @@ impl Game {
     /// This function does not check if there are more than one pieces at a position.
     /// This function will kill all the pieces at a position.
     /// Shouldn't cause unwanted issues as there can only be one piece at a position at any given time.
-    pub fn get_pieces_in_pos(&mut self, x: i32, y: i32) -> Result<Vec<Piece>, Error> {
+    pub fn get_pieces_in_pos(&mut self, x: i32, y: i32) -> Result<Option<Piece>, Error> {
         Piece::in_board_range(x, y)?;
-        Ok(self.players
-            .iter_mut()
-            .flat_map(|player| -> Result<Option<Piece>, Error> {
-                if let Some(index) = player.get_piece_pos(x, y)? {
-                    let res = player.kill_piece(index)?;
-                    return Ok(Some(res));
-                }
-                Ok(None)
-            })
-            .filter_map(|pos| pos)
-            .collect::<Vec<Piece>>()
-            .try_is_singular()?)
+        for player in self.players.iter_mut() {
+            if let Some(index) = player.get_piece_pos(x, y)? {
+                return Ok(Some(player.kill_piece(index)?))
+            }
+        }
+        Ok(None)
     }
 
     /// To change the game state to __true__.
@@ -143,14 +137,10 @@ impl Game {
     pub fn len(&self) -> usize { self.players.len() }
 
     /// To return the current __Player__ struct.
-    pub fn player(&self) -> &Player {
-        &self.players[self.turn]
-    }
+    pub fn player(&self) -> &Player { &self.players[self.turn] }
 
     /// Mutable reference to the player.
-    pub fn player_mut(&mut self) -> &mut Player {
-        &mut self.players[self.turn]
-    }
+    pub fn player_mut(&mut self) -> &mut Player { &mut self.players[self.turn] }
 }
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -161,23 +151,14 @@ impl GameAction for Game {
     ///
     /// function that takes self reference and searches for pieces that need to be killed at each
     /// iteration.
-    fn hunt(&mut self) -> Result<Vec<Player>, Error> {
-        Ok(self.players
-            .iter()
-            .enumerate()
-            .filter_map(|(index, player)| {
-                match (player.pieces.is_empty() && !player.is_winner) || !player.is_play {
-                    true  => Some(index),
-                    false => None,
-                }
-            })
-            .collect::<Vec<usize>>()
-            .into_iter()
-            .flat_map(|index| -> Result<Player, Error> {
+    fn hunt(&mut self) -> Result<Option<Player>, Error> {
+        for (index, player) in self.players.iter().enumerate() {
+            if (player.pieces.is_empty() && !player.is_winner) || !player.is_play {
                 let kill = self.kill(index)?;
-                Ok(kill)
-            })
-            .collect::<Vec<Player>>())
+                return Ok(Some(kill));
+            }
+        }
+        Ok(None)
     }
 
     /// Changes the turn value to indiacate which player turn it is.
@@ -185,7 +166,7 @@ impl GameAction for Game {
     /// Adds value to turn and changes to 0 if the value exceeds players vector len.
     fn next(&mut self) {
         match self.turn < self.players.len() - 1 {
-            true  => self.turn += 1,
+            true => self.turn += 1,
             false => self.turn = 0,
         }
     }
@@ -193,7 +174,7 @@ impl GameAction for Game {
     /// To update player pieces position every turn.
     fn update(&mut self, x: i32, y: i32, pos: usize) -> Result<(), Error> {
         Ok(match self.players[self.turn].update_piece(x, y, pos)? {
-            true  => { self.set_update_true() },
+            true => self.set_update_true(),
             false => (),
         })
     }

@@ -43,12 +43,12 @@ pub const BTM: i32 = -4_i32;
 
 /*████Local Constants████*/
 /*-----------------------------------------------------------------------------------------------*/
-const PADDING: f32 = 0.5;
 const XMINF: f32 = X_MIN as f32;
 const XMAXF: f32 = X_MAX as f32;
 const YMINF: f32 = Y_MIN as f32;
 const YMAXF: f32 = Y_MAX as f32;
 const EMPTY: f32 = 6.0;
+const ROUND: f32 = 0.5;
 const BOARD: f32 = EMPTY - 1.0;
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -72,37 +72,25 @@ pub enum Quadrant {
 
 /*████Picker Logics████*/
 /*-----------------------------------------------------------------------------------------------*/
-fn yq1(y: f32, ymax: f32) -> bool { y <= ymax - EMPTY && y >= YMINF }
-
-fn yq2(y: f32, ymax: f32) -> bool { y <= ymax && y >= (YMINF + 4.0) }
-
-fn xq2(x: f32, xmax: f32) -> bool { x <= xmax - EMPTY }
-
-fn xq12(x: f32, xmax: f32) -> bool { x >= xmax - (BOARD * 2.0) }
-
-fn xq11(x: f32, xmax: f32) -> bool { x <= xmax - (BOARD * 2.0) }
-
-fn xqabs(x: f32, xmax: f32) -> bool { x.abs() <= xmax && x.abs() >= xmax - BOARD }
-
-fn xnyq2(x: f32, y: f32, xmax: f32, ymax: f32) -> bool { xq2(x, xmax) && yq2(y, ymax) }
-
-fn pickerlogic(a: bool, b: bool, c: bool) -> bool {
-        ( a &&  b &&  c)
-    ||  ( a &&  b && !c)
-    ||  (!a &&  b &&  c)
-    ||  (!a && !b &&  c)
-}
-
 pub fn in_pos(m_x: f32, m_y: f32, plen: usize) -> bool {
     let (xmax, ymax) = get_max_without_zero(m_x > 0.0, m_y > 0.0);
-    if !(
-            (m_x >= XMINF - PADDING && m_x <= XMAXF - PADDING       )
-        &&  (m_y >= YMINF - PADDING && m_y <= YMAXF - PADDING       )
-    )   ||  (m_x.abs() <= xmax - EMPTY && m_y.abs() <= ymax - EMPTY ) { return false }
+    if !((m_x >= XMINF - ROUND && m_x <= XMAXF - ROUND)
+        && (m_y >= YMINF - ROUND && m_y <= YMAXF - ROUND))
+        || (m_x.abs() <= xmax - EMPTY && m_y.abs() <= ymax - EMPTY) { return false }
     match plen {
-        2 => xq11(m_x, xmax) && yq1(m_y, ymax),
-        3 => pickerlogic(xq12(m_x, xmax), xnyq2(m_x, m_y, xmax, ymax), yq1(m_y, ymax)),
-        4 => pickerlogic(xqabs(m_x, xmax), yq1(m_y, ymax), yq2(m_y, ymax)),
+        2 => m_x <= xmax - (BOARD * 2.0) && (m_y <= ymax - EMPTY && m_y >= YMINF),
+        3 => {
+            match m_x >= xmax - (BOARD * 2.0) {
+                true  => m_x <= xmax - EMPTY && (m_y <= ymax && m_y >= (YMINF + 4.0)),
+                false => m_y <= ymax - EMPTY &&  m_y >= YMINF,
+            }
+        },
+        4 => {
+            match m_x.abs() <= xmax && m_x.abs() >= xmax - BOARD {
+                true  => m_y <= ymax - EMPTY && m_y >= YMINF,
+                false => m_y <= ymax && m_y >= (YMINF + 4.0),
+            }
+        },
         _ => panic!("count of players cannot be less 2 or more than 4. LEN = {plen}"),
     }
 }
@@ -122,24 +110,20 @@ impl Quadrant {
 }
 /*-----------------------------------------------------------------------------------------------*/
 
-fn get_full_width() -> f32 {
-    (LFT.abs() + RGT) as f32
-}
+fn get_full_width() -> f32 { (LFT.abs() + RGT) as f32 }
 
-fn get_full_height() -> f32 {
-    (BTM.abs() + TOP) as f32
-}
+fn get_full_height() -> f32 { (BTM.abs() + TOP) as f32 }
 
 fn get_max_without_zero(xbool: bool, ybool: bool) -> (f32, f32) {
     (
         match xbool {
-            true  => XMAXF - 1.0,
+            true => XMAXF - 1.0,
             false => XMAXF,
         },
         match ybool {
-            true  => YMAXF - 1.0,
+            true => YMAXF - 1.0,
             false => YMAXF,
-        }
+        },
     )
 }
 

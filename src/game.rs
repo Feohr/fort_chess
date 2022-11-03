@@ -11,8 +11,8 @@
 
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
+use crate::{RESOLUTION, SPRITESIZE, TILESIZE};
 use bevy::prelude::*;
-use crate::{RESOLUTION, TILESIZE, SPRITESIZE};
 use fort_builders::{
     board::Quadrant,
     dice_roll,
@@ -61,10 +61,10 @@ impl GameAsset {
 /*-----------------------------------------------------------------------------------------------*/
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app .add_startup_system_to_stage(StartupStage::Startup, init_game)
+        app.add_startup_system_to_stage(StartupStage::Startup, init_game)
             .add_startup_system_to_stage(StartupStage::Startup, load_sprite)
             .add_system(gametick);
-    } 
+    }
 }
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -73,23 +73,21 @@ impl Plugin for GamePlugin {
 /// Initial game creation.
 fn init_game(mut commands: Commands) {
     let roll = (dice_roll() % 3_usize) % PLAYERS;
-    commands.insert_resource(
-        dbg!(GameAsset(  Game::init((0..PLAYERS)
-                        .into_iter()
-                        .map(|i| {
-                            Player::from(
-                                format!("player {}", i + 1),
-                                Team::from_index(i).unwrap(),
-                                roll == i,
-                                PLAYERS,
-                                Quadrant::from_index(calcq(i, roll)).unwrap(),
-                            )
-                            .unwrap()
-                        })
-                        .collect::<Vec<Player>>()
-                    )
-        )
-    ));
+    commands.insert_resource(dbg!(GameAsset(Game::init(
+        (0..PLAYERS)
+            .into_iter()
+            .map(|i| {
+                Player::from(
+                    format!("player {}", i + 1),
+                    Team::from_index(i).unwrap(),
+                    roll == i,
+                    PLAYERS,
+                    Quadrant::from_index(calcq(i, roll)).unwrap(),
+                )
+                .unwrap()
+            })
+            .collect::<Vec<Player>>()
+    ))));
 }
 
 fn gametick(
@@ -99,7 +97,9 @@ fn gametick(
     dquery: Query<Entity, With<Piece>>,
     hquery: Query<Entity, With<Highlight>>,
 ) {
-    if !game.get().update { return }
+    if !game.get().update {
+        return;
+    }
     draw_pieces(&mut commands, &sprite, &game, &dquery);
     highlight(&mut commands, &game, &hquery);
     game.get_mut().set_update_false();
@@ -112,21 +112,16 @@ fn gametick(
 fn calcq(i: usize, roll: usize) -> usize {
     match i {
         i if i <= roll => i,
-        i if i >  roll => (i - 1) % 3,
+        i if i > roll => (i - 1) % 3,
         _ => panic!("Unexpected error when matching i and roll ({i}, {roll})."),
     }
 }
-
 
 /*-----------------------------------------------------------------------------------------------*/
 
 /*████Piece████*/
 /*-----------------------------------------------------------------------------------------------*/
-fn clear_pieces(
-    commands: &mut Commands,
-    query: &Query<Entity, With<Piece>>,
-) {
-    if query.is_empty() { return }
+fn clear_pieces(commands: &mut Commands, query: &Query<Entity, With<Piece>>) {
     for pieces in query.iter() {
         commands.entity(pieces).despawn();
     }
@@ -139,38 +134,34 @@ fn draw_pieces(
     game: &ResMut<GameAsset>,
     query: &Query<Entity, With<Piece>>,
 ) {
-    if !game.get().update { return }
+    if !game.get().update {
+        return;
+    }
     clear_pieces(&mut commands, &query);
-    game.get().players
-        .iter()
-        .for_each(|player| {
-            player.pieces
-                .iter()
-                .for_each(|piece| {
-                    let sprite = spawn_piece(
-                        &mut commands,
-                        &sprite,
-                        (player.team.to_index() * 5) + piece.piece_type.to_index(),
-                        Vec3::new(
-                            piece.position.x as f32 * RESOLUTION,
-                            piece.position.y as f32 * RESOLUTION,
-                            8.0,
-                        ),
-                    );
-                    commands.entity(sprite).insert(Name::from("Piece"))
-                            .insert(Piece);
-                })
-        });
+    game.get().players.iter().for_each(|player| {
+        player.pieces.iter().for_each(|piece| {
+            let sprite = spawn_piece(
+                &mut commands,
+                &sprite,
+                (player.team.to_index() * 5) + piece.piece_type.to_index(),
+                Vec3::new(
+                    piece.position.x as f32 * RESOLUTION,
+                    piece.position.y as f32 * RESOLUTION,
+                    8.0,
+                ),
+            );
+            commands
+                .entity(sprite)
+                .insert(Name::from("Piece"))
+                .insert(Piece);
+        })
+    });
 }
 /*-----------------------------------------------------------------------------------------------*/
 
 /*████Highlight████*/
 /*-----------------------------------------------------------------------------------------------*/
-fn clear_highlight(
-    commands: &mut Commands,
-    query: &Query<Entity, With<Highlight>>,
-) {
-    if query.is_empty() { return }
+fn clear_highlight(commands: &mut Commands, query: &Query<Entity, With<Highlight>>) {
     for blocks in query.iter() {
         commands.entity(blocks).despawn();
     }
@@ -181,28 +172,30 @@ fn highlight(
     game: &ResMut<GameAsset>,
     query: &Query<Entity, With<Highlight>>,
 ) {
-    if !game.get().update { return }
+    if !game.get().update {
+        return;
+    }
     clear_highlight(&mut commands, &query);
     for piece in game.get().player().pieces() {
-        commands.spawn().insert_bundle(SpriteBundle {
-            sprite: Sprite {
-                color: HILITE_CLR,
-                custom_size: Some(Vec2::new(
-                        TILESIZE.0 * RESOLUTION,
-                        TILESIZE.1 * RESOLUTION,
-                )),
+        commands
+            .spawn()
+            .insert_bundle(SpriteBundle {
+                sprite: Sprite {
+                    color: HILITE_CLR,
+                    custom_size: Some(Vec2::new(TILESIZE.0 * RESOLUTION, TILESIZE.1 * RESOLUTION)),
+                    ..default()
+                },
+                transform: Transform {
+                    translation: Vec3::new(
+                        piece.position.x as f32 * RESOLUTION,
+                        piece.position.y as f32 * RESOLUTION,
+                        5.0,
+                    ),
+                    ..default()
+                },
                 ..default()
-            },
-            transform: Transform {
-                translation: Vec3::new(
-                    piece.position.x as f32 * RESOLUTION,
-                    piece.position.y as f32 * RESOLUTION,
-                    5.0,
-                ),
-                ..default()
-            },
-            ..default()
-        }).insert(Highlight);
+            })
+            .insert(Highlight);
     }
 }
 /*-----------------------------------------------------------------------------------------------*/

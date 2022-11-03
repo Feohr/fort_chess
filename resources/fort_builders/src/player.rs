@@ -151,7 +151,7 @@ impl Team {
             Team::Yellow => "Yellow",
         }
     }
-    
+
     /// Takes the __Team__ value and returns the respective index.
     pub fn to_index(&self) -> usize {
         match self {
@@ -195,32 +195,24 @@ impl Player {
     ///
     /// Changes the __is_winner__ value to __true__.
     /// Conversely, __set_not_winner__ will set the value to true.
-    pub fn set_winner(&mut self) {
-        self.is_winner = true;
-    }
+    pub fn set_winner(&mut self) { self.is_winner = true }
 
     /// Set not winner function.
-    pub fn set_not_winner(&mut self) {
-        self.is_winner = false;
-    }
+    pub fn set_not_winner(&mut self) { self.is_winner = false }
 
     /// To set player __is_play__ value to true.
     ///
     /// Conversely, __set_not_play__ funtion will convert to false.
-    pub fn set_play(&mut self) {
-        self.is_play = true;
-    }
+    pub fn set_play(&mut self) { self.is_play = true }
 
     /// Player not play function.
-    pub fn set_not_play(&mut self) {
-        self.is_play = false;
-    }
+    pub fn set_not_play(&mut self) { self.is_play = false }
 
     /// To check wether a index is even possible.
     pub(crate) fn is_valid_player_index(pos: usize) -> Result<(), Error> {
         // 4 is the maximum number of players that can play.
         match pos < 4_usize {
-            true  => Ok(()),
+            true => Ok(()),
             false => Err(Error::IllegalPlayerVectorIndex(pos)),
         }
     }
@@ -228,7 +220,7 @@ impl Player {
     /// To check if the position is less than the vector length.
     pub(crate) fn is_in_bounds(pos: usize, len: usize) -> Result<(), Error> {
         match pos < len {
-            true  => Ok(()),
+            true => Ok(()),
             false => Err(Error::PlayerVectorIndexOutOfBounds(pos, len)),
         }
     }
@@ -236,7 +228,9 @@ impl Player {
     /// For sorting the pieces.
     ///
     /// TimeSorts the pieces based on their position value.
-    fn sort_pieces(&mut self) { self.pieces.sort_by(|a, b| a.position.cmp(&b.position)) }
+    fn sort_pieces(&mut self) {
+        self.pieces.sort_by(|a, b| a.position.cmp(&b.position))
+    }
 
     /// To sort and return the object.
     ///
@@ -247,14 +241,10 @@ impl Player {
     }
 
     /// To get the players in the present turn.
-    pub fn pieces(&self) -> &Vec<Piece> {
-        &self.pieces
-    }
+    pub fn pieces(&self) -> &Vec<Piece> { &self.pieces }
 
     /// To get the players in the present turn.
-    pub fn pieces_mut(&mut self) -> &mut Vec<Piece> {
-        &mut self.pieces
-    }
+    pub fn pieces_mut(&mut self) -> &mut Vec<Piece> { &mut self.pieces }
 
     /// A simple function to check if the name length is too big or too small.
     ///
@@ -265,24 +255,19 @@ impl Player {
         // with 50 as the name length limit. Also, the size of the name fits well within the game
         // screen and doesn't cause overlapping issues.
         match len > 2 && len < 50 {
-            true  => Ok(()),
+            true => Ok(()),
             false => Err(Error::InvalidNameLength(len)),
         }
     }
 
     /// Binary search to get the piece.
     pub fn search(&self, x: f32, y: f32) -> Result<usize, usize> {
-        self.pieces
-            .binary_search_by(|piece|
-                piece
-                .position
-                .cmp(
-                    &Position {
-                        x: x as i32,
-                        y: y as i32,
-                    }
-                )
-            )
+        self.pieces.binary_search_by(|piece| {
+            piece.position.cmp(&Position {
+                x: x as i32,
+                y: y as i32,
+            })
+        })
     }
 }
 /*-----------------------------------------------------------------------------------------------*/
@@ -301,11 +286,10 @@ impl PlayerAction for Player {
         Ok(self
             .pieces
             .iter()
-            .position(|&pos| pos.position == position_holder)
-        )
+            .position(|&pos| pos.position == position_holder))
     }
 
-   /// To kill a piece inside the __Player__ struct.
+    /// To kill a piece inside the __Player__ struct.
     ///
     /// Takes the position of the piece, finds it inside the vector and deletes that piece.
     fn kill_piece(&mut self, pos: usize) -> Result<Piece, Error> {
@@ -329,7 +313,7 @@ impl PlayerAction for Player {
         Piece::is_in_bounds(pos, self.pieces.len())?;
         // if piece already at that position.
         match self.pieces[pos].position.x == x && self.pieces[pos].position.y == y {
-            true  => Ok(false),
+            true => Ok(false),
             false => {
                 // Finally.
                 self.pieces
@@ -340,7 +324,7 @@ impl PlayerAction for Player {
                 // sort the pieces.
                 self.sort_pieces();
                 Ok(true)
-            },
+            }
         }
     }
 

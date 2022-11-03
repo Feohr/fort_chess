@@ -14,16 +14,13 @@
 
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
-use bevy::{
-    prelude::{
-        App, AssetServer, Assets, Commands, Entity, Handle, Name, Plugin, Res, ResMut, 
-        SpriteSheetBundle, StartupStage, TextureAtlas, TextureAtlasSprite, Transform,
-        Vec2, Vec3, default,
-    },
+use crate::{RESOLUTION, SPRITESIZE, TILESIZE};
+use bevy::prelude::{
+    default, App, AssetServer, Assets, Commands, Entity, Handle, Name, Plugin, Res, ResMut,
+    SpriteSheetBundle, StartupStage, TextureAtlas, TextureAtlasSprite, Transform, Vec2, Vec3,
 };
-use crate::{RESOLUTION, TILESIZE, SPRITESIZE};
 use fort_builders::{
-    board::{X_MIN, X_MAX, Y_MIN, Y_MAX},
+    board::{X_MAX, X_MIN, Y_MAX, Y_MIN},
     ret_minus_one,
 };
 
@@ -57,12 +54,12 @@ impl Plugin for TilePlugin {
 fn switch(x: i32, y: i32) -> usize {
     (
         match x > 0 {
-            true  => 0_usize,
+            true => 0_usize,
             false => 1_usize,
         }
     ) ^ (
         match (x + y) % 2 == 0 {
-            true  => 1_usize,
+            true => 1_usize,
             false => 0_usize,
         }
     )

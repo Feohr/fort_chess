@@ -5,10 +5,10 @@
 
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
-pub mod game;
-pub mod player;
 pub mod board;
+pub mod game;
 pub mod pieces;
+pub mod player;
 
 use game::Game;
 use player::Team;
@@ -114,12 +114,10 @@ pub fn exit<'a>(game: Game) -> Result<Option<PlayerLW<'a>>, Error> {
     let winners: Vec<PlayerLW> = game
         .players
         .iter()
-        .filter_map(|player|
-            match player.is_winner {
-                true  => Some(PlayerLW::new(player.name.clone(), player.team.clone())),
-                false => None,
-            }
-        )
+        .filter_map(|player| match player.is_winner {
+            true => Some(PlayerLW::new(player.name.clone(), player.team.clone())),
+            false => None,
+        })
         .collect::<Vec<PlayerLW>>();
     // Finally.
     // Match to declare the result.
@@ -133,7 +131,7 @@ pub fn exit<'a>(game: Game) -> Result<Option<PlayerLW<'a>>, Error> {
 /// 01/01/1970 (Unix Epoch). Please regain sanity and change it back to the current date.
 pub fn dice_roll() -> usize {
     match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
-        Ok(n)  => (n.as_secs() % 6_u64) as usize,
+        Ok(n) => (n.as_secs() % 6_u64) as usize,
         Err(_) => {
             // You should not be reaching this but if you do then your computer date is stuck
             // before the 70's.
@@ -149,11 +147,10 @@ pub fn dice_roll() -> usize {
 // Can use with i32, i64, u16, u32, u64, isize and usize.
 pub fn ret_minus_one<T>(x: T) -> T
 where
-    T:      std::cmp::PartialOrd<T>
-        +   std::ops::Sub<Output=T>
-        +   From<u16> {
+    T: std::cmp::PartialOrd<T> + std::ops::Sub<Output = T> + From<u16>,
+{
     match x > From::from(0) {
-        true  => x - From::from(1),
+        true => x - From::from(1),
         false => x,
     }
 }

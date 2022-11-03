@@ -8,10 +8,10 @@ mod piece_alignment;
 
 // use crate::Error;
 use crate::{
-    RED, RST,
     board::{Quadrant, X_MAX, X_MIN, Y_MAX, Y_MIN},
+    RED, RST,
 };
-use piece_alignment::{get_pos_from_quadrant, get_piece_type};
+use piece_alignment::{get_piece_type, get_pos_from_quadrant};
 use thiserror::Error;
 
 use std::fmt;
@@ -49,11 +49,7 @@ pub enum Error {
     InvalidPieceTypeIndex(u8),
 
     /// If Invalid Piece type index was provided.
-    #[error(
-        "{} The vector id non-singular with length {0}. {}",
-        RED,
-        RST
-    )]
+    #[error("{} The vector id non-singular with length {0}. {}", RED, RST)]
     VectorNonSingular(usize),
 }
 
@@ -106,14 +102,6 @@ pub struct Piece {
 
     /// To hold the position information.
     pub position: Position,
-}
-
-/// To check if a vector only has one item.
-pub(crate) trait TryIsSingular {
-    type Item;
-    type Error;
-
-    fn try_is_singular(self) -> Result<Vec<Self::Item>, Self::Error>;
 }
 
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
@@ -178,10 +166,7 @@ impl Position {
     pub(crate) fn from(x: i32, y: i32) -> Result<Self, Error> {
         Piece::in_board_range(x, y)?;
         // Finally.
-        Ok(Position {
-            x,
-            y,
-        })
+        Ok(Position { x, y })
     }
 }
 /*-----------------------------------------------------------------------------------------------*/
@@ -213,18 +198,17 @@ impl Piece {
         quadrant: Quadrant,
         quadrant_active: usize,
     ) -> Result<Vec<Piece>, Error> {
-        Ok(get_pos_from_quadrant(is_defender, &quadrant, quadrant_active)
-            .into_iter()
-            .zip(get_piece_type(is_defender, quadrant_active))
-            .flat_map(|(position, piece_type)| -> Result<Piece, Error> {
-                let piece = Piece::from(
-                                position.0,
-                                position.1,
-                                PieceType::from_index(piece_type)?,
-                            )?;
-                Ok(piece)
-            })
-            .collect::<Vec<Piece>>())
+        Ok(
+            get_pos_from_quadrant(is_defender, &quadrant, quadrant_active)
+                .into_iter()
+                .zip(get_piece_type(is_defender, quadrant_active))
+                .flat_map(|(position, piece_type)| -> Result<Piece, Error> {
+                    let piece =
+                        Piece::from(position.0, position.1, PieceType::from_index(piece_type)?)?;
+                    Ok(piece)
+                })
+                .collect::<Vec<Piece>>(),
+        )
     }
 
     /// To update the Position of the piece.
@@ -245,10 +229,10 @@ impl Piece {
     /// error.
     pub(crate) fn is_valid_index(pos: usize, is_defender: bool) -> Result<(), Error> {
         match match is_defender {
-            true  => pos < 24,
+            true => pos < 24,
             false => pos < 8,
         } {
-            true  => Ok(()),
+            true => Ok(()),
             false => Err(Error::IllegalPieceVectorIndex(pos)),
         }
     }
@@ -258,7 +242,7 @@ impl Piece {
     /// takes a usize value and checks the vector size with the length of the pieces vec.
     pub(crate) fn is_in_bounds(pos: usize, len: usize) -> Result<(), Error> {
         match pos < len {
-            true  => Ok(()),
+            true => Ok(()),
             false => Err(Error::PieceVectorIndexOutOfBounds(pos, len)),
         }
     }
@@ -268,23 +252,8 @@ impl Piece {
     /// This function is used to check if a particular position is inside the board.
     pub(crate) fn in_board_range(x: i32, y: i32) -> Result<(), Error> {
         match (x < X_MAX && x >= X_MIN) && (y < Y_MAX && y >= Y_MIN) {
-            true  => Ok(()),
+            true => Ok(()),
             false => return Err(Error::IllegalPosition(x, y)),
-        }
-    }
-}
-/*-----------------------------------------------------------------------------------------------*/
-
-/*████TryIsSingular for Vec████*/
-/*-----------------------------------------------------------------------------------------------*/
-impl TryIsSingular for std::vec::Vec<Piece> {
-    type Item = Piece;
-    type Error = Error;
-
-    fn try_is_singular(self) -> Result<Vec<Self::Item>, Self::Error> {
-        match self.len() < 2 {
-            true  => Ok(self),
-            false => Err(Error::VectorNonSingular(self.len())),
         }
     }
 }
