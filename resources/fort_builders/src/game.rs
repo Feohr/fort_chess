@@ -26,9 +26,6 @@ pub struct Game {
 
     /// To track if therre is a piece picked.
     pub picked: bool,
-
-    /// Current position of the player piece.
-    pub position: usize,
 }
 
 /// To handle operations over the Game.
@@ -40,9 +37,9 @@ pub struct Game {
 pub trait GameAction {
     fn hunt(&mut self) -> Result<Option<Player>, Error>;
 
-    fn next(&mut self);
+    fn next_player(&mut self);
 
-    fn update(&mut self, x: i32, y: i32, pos: usize) -> Result<(), Error>;
+    fn update_position(&mut self, x: i32, y: i32, pos: usize) -> Result<(), Error>;
 }
 
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
@@ -62,7 +59,6 @@ impl Game {
             turn: 0_usize,
             update: true,
             picked: false,
-            position: 0_usize,
         }
     }
 
@@ -71,17 +67,18 @@ impl Game {
     /// Takes the player position in vec and removes them.
     /// Returns a Result value hence needs to be error handled.
     fn kill(&mut self, pos: usize) -> Result<Player, Error> {
-        // If player position is in bounds.
+
         Player::is_in_bounds(pos, self.players.len())?;
-        // if player can have that index at all.
+
         Player::is_valid_player_index(pos)?;
-        // Finally.
+
         self.players
             .get_mut(pos)
-            // Hopefully shouldn't panic as already validated before.
             .expect("Invalid Player position {pos}")
             .kill_self();
+
         Ok(self.players.remove(pos))
+
     }
 
     /// To know if the x and y holds a piece of another player.
@@ -92,14 +89,30 @@ impl Game {
     /// This function does not check if there are more than one pieces at a position.
     /// This function will kill all the pieces at a position.
     /// Shouldn't cause unwanted issues as there can only be one piece at a position at any given time.
-    pub fn get_pieces_in_pos(&mut self, x: i32, y: i32) -> Result<Option<Piece>, Error> {
+    pub fn piece_in_pos(&mut self, x: i32, y: i32) -> Result<Option<Piece>, Error> {
+
         Piece::in_board_range(x, y)?;
+
         for player in self.players.iter_mut() {
-            if let Some(index) = player.get_piece_pos(x, y)? {
+            if let Ok(index) = player.piece_index_from_xy_i32(x, y) {
                 return Ok(Some(player.kill_piece(index)?))
             }
         }
+
         Ok(None)
+
+    }
+
+    pub fn check_piece_in_pos(&self, x: f32, y: f32) -> bool {
+
+        for player in self.players.iter() {
+            if player.piece_index_from_xy_f32(x, y).is_ok() {
+                return true;
+            }
+        }
+
+        return false;
+
     }
 
     /// To change the game state to __true__.
@@ -121,26 +134,23 @@ impl Game {
     /// Takes __self__ reference and changes picked to __true__.
     ///
     /// **Idempotent function**
-    pub fn set_pick_true(&mut self) { self.picked = true }
+    pub fn set_picked_true(&mut self) { self.picked = true }
 
     /// To change the game picked state to __false__.
     ///
     /// Takes __self__ reference and changes picked to __false__.
     ///
     /// **Idempotent function**
-    pub fn set_pick_false(&mut self) { self.picked = false }
-
-    /// To get the poisition of the piece that is chosen.
-    pub fn set_piece_pos(&mut self, pos: usize) { self.position = pos }
+    pub fn set_picked_false(&mut self) { self.picked = false }
 
     /// Return the players length.
-    pub fn len(&self) -> usize { self.players.len() }
+    pub fn player_count(&self) -> usize { self.players.len() }
 
     /// To return the current __Player__ struct.
-    pub fn player(&self) -> &Player { &self.players[self.turn] }
+    pub fn current_player(&self) -> &Player { &self.players[self.turn] }
 
     /// Mutable reference to the player.
-    pub fn player_mut(&mut self) -> &mut Player { &mut self.players[self.turn] }
+    pub fn current_player_mut(&mut self) -> &mut Player { &mut self.players[self.turn] }
 }
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -152,31 +162,45 @@ impl GameAction for Game {
     /// function that takes self reference and searches for pieces that need to be killed at each
     /// iteration.
     fn hunt(&mut self) -> Result<Option<Player>, Error> {
+
         for (index, player) in self.players.iter().enumerate() {
-            if (player.pieces.is_empty() && !player.is_winner) || !player.is_play {
+
+            if (    player.pieces.is_empty()
+                && !player.is_winner
+            )   || !player.is_play {
+
                 let kill = self.kill(index)?;
+
                 return Ok(Some(kill));
+
             }
+
         }
-        Ok(None)
+
+        return Ok(None)
+
     }
 
     /// Changes the turn value to indiacate which player turn it is.
     ///
     /// Adds value to turn and changes to 0 if the value exceeds players vector len.
-    fn next(&mut self) {
+    fn next_player(&mut self) {
+
         match self.turn < self.players.len() - 1 {
             true => self.turn += 1,
             false => self.turn = 0,
         }
+
     }
 
     /// To update player pieces position every turn.
-    fn update(&mut self, x: i32, y: i32, pos: usize) -> Result<(), Error> {
+    fn update_position(&mut self, x: i32, y: i32, pos: usize) -> Result<(), Error> {
+
         Ok(match self.players[self.turn].update_piece(x, y, pos)? {
             true => self.set_update_true(),
             false => (),
         })
+
     }
 }
 /*-----------------------------------------------------------------------------------------------*/

@@ -11,7 +11,7 @@ use crate::{
     board::{Quadrant, X_MAX, X_MIN, Y_MAX, Y_MIN},
     RED, RST,
 };
-use piece_alignment::{get_piece_type, get_pos_from_quadrant};
+use piece_alignment::{piece_type, position_from_quadrant};
 use thiserror::Error;
 
 use std::fmt;
@@ -116,6 +116,7 @@ impl fmt::Debug for PieceType {
 
 impl<'a> PieceType {
     fn as_str(&self) -> &'a str {
+
         match self {
             PieceType::Rook     => "Rook",
             PieceType::Minister => "Minister",
@@ -123,11 +124,13 @@ impl<'a> PieceType {
             PieceType::Pawn     => "Pawn",
             PieceType::Knight   => "Knight",
         }
+
     }
 }
 
 impl PieceType {
     fn from_index(index: u8) -> Result<PieceType, Error> {
+
         match index {
             0 => Ok(PieceType::Rook),
             1 => Ok(PieceType::Minister),
@@ -136,16 +139,19 @@ impl PieceType {
             4 => Ok(PieceType::Knight),
             _ => Err(Error::InvalidPieceTypeIndex(index)),
         }
+
     }
 
-    pub fn to_index(&self) -> usize {
+    pub fn as_usize(&self) -> usize {
+
         match self {
-            PieceType::Rook     => 0,
-            PieceType::Minister => 1,
-            PieceType::Queen    => 2,
-            PieceType::Pawn     => 3,
-            PieceType::Knight   => 4,
+            PieceType::Rook     => 0_usize,
+            PieceType::Minister => 1_usize,
+            PieceType::Queen    => 2_usize,
+            PieceType::Pawn     => 3_usize,
+            PieceType::Knight   => 4_usize,
         }
+
     }
 }
 /*-----------------------------------------------------------------------------------------------*/
@@ -164,9 +170,11 @@ impl Position {
     /// Takes the x and y value, checks if it is inside the board and creates the struct.
     #[inline]
     pub(crate) fn from(x: i32, y: i32) -> Result<Self, Error> {
+
         Piece::in_board_range(x, y)?;
-        // Finally.
+
         Ok(Position { x, y })
+
     }
 }
 /*-----------------------------------------------------------------------------------------------*/
@@ -186,22 +194,25 @@ impl Piece {
     /// x and y correspond to the x and y coordinates. The piece argument corresponds to the
     /// type.
     pub fn from(x: i32, y: i32, piece: PieceType) -> Result<Piece, Error> {
+
         Ok(Piece {
             piece_type: piece,
             position: Position::from(x, y)?,
         })
+
     }
 
     /// Function used to initialize the pieces vector.
     pub(crate) fn init_pieces(
-        is_defender: bool,
-        quadrant: Quadrant,
-        quadrant_active: usize,
+        is_defender:        bool,
+        quadrant:           Quadrant,
+        quadrant_active:    usize,
     ) -> Result<Vec<Piece>, Error> {
+
         Ok(
-            get_pos_from_quadrant(is_defender, &quadrant, quadrant_active)
+            position_from_quadrant(is_defender, &quadrant, quadrant_active)
                 .into_iter()
-                .zip(get_piece_type(is_defender, quadrant_active))
+                .zip(piece_type(is_defender, quadrant_active))
                 .flat_map(|(position, piece_type)| -> Result<Piece, Error> {
                     let piece =
                         Piece::from(position.0, position.1, PieceType::from_index(piece_type)?)?;
@@ -209,6 +220,7 @@ impl Piece {
                 })
                 .collect::<Vec<Piece>>(),
         )
+
     }
 
     /// To update the Position of the piece.
@@ -216,11 +228,14 @@ impl Piece {
     /// Takes x and y value and chan    ges the position to the given value.
     /// Returns error if the new position is out of range.
     pub(crate) fn update_pos(&mut self, x: i32, y: i32) -> Result<(), Error> {
+
         Self::in_board_range(x, y)?;
+
         Ok({
             self.position.x = x;
             self.position.y = y;
         })
+
     }
 
     /// To check wether a vector index is valid.
@@ -228,6 +243,7 @@ impl Piece {
     /// There can be a maximum of 24 pieces inside a player pieces vec. Anything more than that is an
     /// error.
     pub(crate) fn is_valid_index(pos: usize, is_defender: bool) -> Result<(), Error> {
+
         match match is_defender {
             true => pos < 24,
             false => pos < 8,
@@ -235,26 +251,31 @@ impl Piece {
             true => Ok(()),
             false => Err(Error::IllegalPieceVectorIndex(pos)),
         }
+
     }
 
     /// To check if the position is inside the piece vector bounds.
     ///
     /// takes a usize value and checks the vector size with the length of the pieces vec.
     pub(crate) fn is_in_bounds(pos: usize, len: usize) -> Result<(), Error> {
+
         match pos < len {
             true => Ok(()),
             false => Err(Error::PieceVectorIndexOutOfBounds(pos, len)),
         }
+
     }
 
     /// To check if a position value is inside the board.
     ///
     /// This function is used to check if a particular position is inside the board.
     pub(crate) fn in_board_range(x: i32, y: i32) -> Result<(), Error> {
-        match (x < X_MAX && x >= X_MIN) && (y < Y_MAX && y >= Y_MIN) {
+
+        match (x <= X_MAX && x >= X_MIN) && (y <= Y_MAX && y >= Y_MIN) {
             true => Ok(()),
             false => return Err(Error::IllegalPosition(x, y)),
         }
+
     }
 }
 /*-----------------------------------------------------------------------------------------------*/

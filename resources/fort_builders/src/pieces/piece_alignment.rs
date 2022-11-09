@@ -12,7 +12,7 @@ type TypeInfo = Vec<u8>;
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
 // The defender.
-fn get_def_pos(quadrant_active: usize) -> PosInfo {
+fn defender_position(quadrant_active: usize) -> PosInfo {
     (1..quadrant_active)
         .into_iter()
         .flat_map(|i| match i {
@@ -31,30 +31,30 @@ fn get_def_pos(quadrant_active: usize) -> PosInfo {
 }
 
 // The enemies.
-fn get_enm_pos_q1() -> PosInfo {
+fn enemy_position_q1() -> PosInfo {
     vec![
         (-7, -2), (-7, -1), (-7,  0), (-7,  1), (-8, -2), (-8, -1), (-8,  0), (-8,  1),
     ]
 }
 
-fn get_enm_pos_q2() -> PosInfo {
+fn enemy_position_q2() -> PosInfo {
     vec![
         (-2,  6), (-1,  6), ( 0,  6), ( 1,  6), (-2,  7), (-1,  7), ( 0,  7), ( 1,  7),
     ]
 }
 
-fn get_enm_pos_q3() -> PosInfo {
+fn enemy_position_q3() -> PosInfo {
     vec![
         ( 6,  1), ( 6,  0), ( 6, -1), ( 6, -2), ( 7,  1), ( 7,  0), ( 7, -1), ( 7, -2),
     ]
 }
 
 // piece type index
-fn get_enm_type() -> TypeInfo {
+fn enemy_type() -> TypeInfo {
     vec![3, 3, 3, 3, 4, 3, 3, 4]
 }
 
-fn get_def_type(quadrant_active: usize) -> TypeInfo {
+fn defender_type(quadrant_active: usize) -> TypeInfo {
     (1..quadrant_active)
         .into_iter()
         .flat_map(|i| match i {
@@ -68,25 +68,29 @@ fn get_def_type(quadrant_active: usize) -> TypeInfo {
 
 /*████Public functions████*/
 /*-----------------------------------------------------------------------------------------------*/
-pub(crate) fn get_piece_type(is_defender: bool, quadrant_active: usize) -> TypeInfo {
+pub(crate) fn piece_type(is_defender: bool, quadrant_active: usize) -> TypeInfo {
+
     match is_defender {
-        true => get_def_type(quadrant_active),
-        false => get_enm_type(),
+        true  => defender_type(quadrant_active),
+        false => enemy_type(),
     }
+
 }
 
-pub(crate) fn get_pos_from_quadrant(
+pub(crate) fn position_from_quadrant(
     is_defender: bool,
     quadrant: &Quadrant,
     quadrant_active: usize,
 ) -> PosInfo {
+
     match is_defender {
-        true => get_def_pos(quadrant_active),
+        true  => defender_position(quadrant_active),
         false => match quadrant {
-            Quadrant::Q1 => get_enm_pos_q1(),
-            Quadrant::Q2 => get_enm_pos_q2(),
-            Quadrant::Q3 => get_enm_pos_q3(),
+            Quadrant::Q1 => enemy_position_q1(),
+            Quadrant::Q2 => enemy_position_q2(),
+            Quadrant::Q3 => enemy_position_q3(),
         },
     }
+
 }
 /*-----------------------------------------------------------------------------------------------*/

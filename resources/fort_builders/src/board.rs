@@ -20,6 +20,7 @@
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
 use crate::Error;
+// use crate::pieces::{Piece, PieceType, Position};
 
 // Board tile borders.
 /// Board's right most x axis length.
@@ -48,7 +49,6 @@ const XMAXF: f32 = X_MAX as f32;
 const YMINF: f32 = Y_MIN as f32;
 const YMAXF: f32 = Y_MAX as f32;
 const EMPTY: f32 = 6.0;
-const ROUND: f32 = 0.5;
 const BOARD: f32 = EMPTY - 1.0;
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -70,66 +70,66 @@ pub enum Quadrant {
 
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
-/*████Picker Logics████*/
-/*-----------------------------------------------------------------------------------------------*/
-pub fn in_pos(m_x: f32, m_y: f32, plen: usize) -> bool {
-    let (xmax, ymax) = get_max_without_zero(m_x > 0.0, m_y > 0.0);
-    if !((m_x >= XMINF - ROUND && m_x <= XMAXF - ROUND)
-        && (m_y >= YMINF - ROUND && m_y <= YMAXF - ROUND))
-        || (m_x.abs() <= xmax - EMPTY && m_y.abs() <= ymax - EMPTY) { return false }
-    match plen {
-        2 => m_x <= xmax - (BOARD * 2.0) && (m_y <= ymax - EMPTY && m_y >= YMINF),
-        3 => {
-            match m_x >= xmax - (BOARD * 2.0) {
-                true  => m_x <= xmax - EMPTY && (m_y <= ymax && m_y >= (YMINF + 4.0)),
-                false => m_y <= ymax - EMPTY &&  m_y >= YMINF,
-            }
-        },
-        4 => {
-            match m_x.abs() <= xmax && m_x.abs() >= xmax - BOARD {
-                true  => m_y <= ymax - EMPTY && m_y >= YMINF,
-                false => m_y <= ymax && m_y >= (YMINF + 4.0),
-            }
-        },
-        _ => panic!("count of players cannot be less 2 or more than 4. LEN = {plen}"),
-    }
-}
-/*-----------------------------------------------------------------------------------------------*/
-
 /*████Quadrant████*/
 /*-----------------------------------------------------------------------------------------------*/
 impl Quadrant {
     pub fn from_index(index: usize) -> Result<Self, Error> {
+
         match index {
             0 => Ok(Quadrant::Q1),
             1 => Ok(Quadrant::Q2),
             2 => Ok(Quadrant::Q3),
             _ => Err(Error::InvalidQuadrantIndex(index)),
         }
+
+    }
+
+    pub fn from_xy(x: f32, y: f32) -> Result<Self, Error> {
+
+        if position_in_q1_bounds(x, y) { return Ok(Quadrant::Q1) }
+        if position_in_q2_bounds(x, y) { return Ok(Quadrant::Q2) }
+        if position_in_q3_bounds(x, y) { return Ok(Quadrant::Q3) }
+
+        Err(Error::PositionNotInQuadrant(x as i32, y as i32))
+
     }
 }
 /*-----------------------------------------------------------------------------------------------*/
 
-fn get_full_width() -> f32 { (LFT.abs() + RGT) as f32 }
-
-fn get_full_height() -> f32 { (BTM.abs() + TOP) as f32 }
-
-fn get_max_without_zero(xbool: bool, ybool: bool) -> (f32, f32) {
-    (
-        match xbool {
-            true => XMAXF - 1.0,
-            false => XMAXF,
-        },
-        match ybool {
-            true => YMAXF - 1.0,
-            false => YMAXF,
-        },
-    )
+/*████Board Bounds Logic████*/
+/*-----------------------------------------------------------------------------------------------*/
+/// Returns the bool if the x and y values are inside bounds.
+pub fn position_in_q1_bounds(x: f32, y: f32) -> bool {
+        (x < XMAXF - (BOARD * 2.0) && x >= XMINF)
+    &&  (y <= (YMAXF - 1.0) - EMPTY && y >= YMINF)
 }
 
-pub fn get_cursor_pos(c_x: f32, c_y: f32, height: f32, width: f32) -> (f32, f32) {
+pub fn position_in_q2_bounds(x: f32, y: f32) -> bool {
+        (x <= (XMAXF - 1.0) - EMPTY && x >= XMAXF - (BOARD * 2.0))
+    &&  (y < YMAXF && y >= (YMINF + 4.0))
+}
+
+pub fn position_in_q3_bounds(x: f32, y: f32) -> bool {
+        (x >= XMAXF - EMPTY && x < XMAXF)
+    &&  (y <= (YMAXF - 1.0) - EMPTY && y >= YMINF)
+}
+
+pub fn position_in_board_bounds(x: f32, y: f32) -> bool {
+        position_in_q1_bounds(x, y)
+    ||  position_in_q2_bounds(x, y)
+    ||  position_in_q3_bounds(x, y)
+}
+
+/*████Cursor Position Logic████*/
+/*-----------------------------------------------------------------------------------------------*/
+fn full_width() -> f32 { (LFT.abs() + RGT) as f32 }
+
+fn full_height() -> f32 { (BTM.abs() + TOP) as f32 }
+
+pub fn cursor_in_window(c_x: f32, c_y: f32, height: f32, width: f32) -> (f32, f32) {
     (
-        (((c_x / width) * get_full_width()) + (LFT as f32)).round(),
-        (((c_y / height) * get_full_height()) + (BTM as f32)).round(),
+        (((c_x / width) * full_width()) + (LFT as f32)).round(),
+        (((c_y / height) * full_height()) + (BTM as f32)).round(),
     )
 }
+/*-----------------------------------------------------------------------------------------------*/

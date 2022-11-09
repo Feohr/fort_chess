@@ -5,13 +5,13 @@
 //! It also is responsible for drawing the pieces to the board.
 //!
 //! ## Contents:
-//! -   GamePlugin
-//! -   GameAsset
-//! -   Piece
+//! -   GamePlugin.
+//! -   GameAsset.
+//! -   Piece.
 
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
-use crate::{RESOLUTION, SPRITESIZE, TILESIZE};
+use crate::{RESOLUTION, SPRITESIZE, TILESIZE, ZAxisLevel};
 use bevy::prelude::*;
 use fort_builders::{
     board::Quadrant,
@@ -20,13 +20,12 @@ use fort_builders::{
     player::{Player, Team},
 };
 
-// Temporary.
-const PLAYERS: usize = 4;
-// Highlight coior.
-const HILITE_CLR: Color = Color::rgba(0.6, 0.6, 0.6, 0.3);
+const PLAYERS: usize = 3;
+const HILITE_COLOR: Color = Color::rgba(0.6, 0.6, 0.6, 0.3);
+const PIECES_SPRITESHEET_WIDTH: usize = 5_usize;
 
 /// The GamePlugin that holds piece drawing information.
-pub struct GamePlugin;
+pub(crate) struct GamePlugin;
 
 #[derive(Component)]
 struct PlayerSheet(Handle<TextureAtlas>);
@@ -38,7 +37,7 @@ struct Piece;
 struct Highlight;
 
 #[derive(Debug, Component)]
-pub struct GameAsset(pub Game);
+pub(crate) struct GameAsset(pub(crate) Game);
 
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
@@ -46,33 +45,35 @@ pub struct GameAsset(pub Game);
 /*-----------------------------------------------------------------------------------------------*/
 impl GameAsset {
     /// To get a reference to the inner game tuple element,
-    pub fn get(&self) -> &Game {
-        &self.0
-    }
+    pub(crate) fn get(&self) -> &Game { &self.0 }
 
     /// To get a mutable reference to the inner game tuple element,
-    pub fn get_mut(&mut self) -> &mut Game {
-        &mut self.0
-    }
+    pub(crate) fn get_mut(&mut self) -> &mut Game { &mut self.0 }
+
 }
 /*-----------------------------------------------------------------------------------------------*/
 
 /*████Plugin for GamePlugin████*/
 /*-----------------------------------------------------------------------------------------------*/
 impl Plugin for GamePlugin {
+
     fn build(&self, app: &mut App) {
-        app.add_startup_system_to_stage(StartupStage::Startup, init_game)
+        app .add_startup_system_to_stage(StartupStage::Startup, init_game)
             .add_startup_system_to_stage(StartupStage::Startup, load_sprite)
             .add_system(gametick);
     }
+
 }
 /*-----------------------------------------------------------------------------------------------*/
 
 /*████Game████*/
 /*-----------------------------------------------------------------------------------------------*/
 /// Initial game creation.
+// Temporary.
 fn init_game(mut commands: Commands) {
+
     let roll = (dice_roll() % 3_usize) % PLAYERS;
+
     commands.insert_resource(dbg!(GameAsset(Game::init(
         (0..PLAYERS)
             .into_iter()
@@ -88,21 +89,24 @@ fn init_game(mut commands: Commands) {
             })
             .collect::<Vec<Player>>()
     ))));
+
 }
 
 fn gametick(
-    mut commands: Commands,
-    sprite: Res<PlayerSheet>,
-    mut game: ResMut<GameAsset>,
-    dquery: Query<Entity, With<Piece>>,
-    hquery: Query<Entity, With<Highlight>>,
+    mut commands:   Commands,
+    mut game:       ResMut<GameAsset>,
+    sprite:         Res<PlayerSheet>,
+    dquery:         Query<Entity, With<Piece>>,
+    hquery:         Query<Entity, With<Highlight>>,
 ) {
-    if !game.get().update {
-        return;
-    }
+
+    if !game.get().update { return }
+
     draw_pieces(&mut commands, &sprite, &game, &dquery);
-    highlight(&mut commands, &game, &hquery);
+    highlight(  &mut commands,          &game, &hquery);
+
     game.get_mut().set_update_false();
+
 }
 
 /// Function to map quadrants to the player correctly ignoring the defender quadrant.
@@ -110,93 +114,117 @@ fn gametick(
 // the function as a whole. I really wish I could come up with a more clever way of working around
 // this problem.
 fn calcq(i: usize, roll: usize) -> usize {
+
     match i {
         i if i <= roll => i,
         i if i > roll => (i - 1) % 3,
         _ => panic!("Unexpected error when matching i and roll ({i}, {roll})."),
     }
+
 }
 
 /*-----------------------------------------------------------------------------------------------*/
 
 /*████Piece████*/
 /*-----------------------------------------------------------------------------------------------*/
-fn clear_pieces(commands: &mut Commands, query: &Query<Entity, With<Piece>>) {
+fn clear_pieces(
+    commands:   &mut Commands,
+    query:      &Query<Entity, With<Piece>>,
+) {
+
     for pieces in query.iter() {
         commands.entity(pieces).despawn();
     }
+
 }
 
 /// To draw the players.
 fn draw_pieces(
-    mut commands: &mut Commands,
-    sprite: &Res<PlayerSheet>,
-    game: &ResMut<GameAsset>,
-    query: &Query<Entity, With<Piece>>,
+    mut commands:   &mut Commands,
+    sprite:         &Res<PlayerSheet>,
+    game:           &ResMut<GameAsset>,
+    query:          &Query<Entity, With<Piece>>,
 ) {
-    if !game.get().update {
-        return;
-    }
+
     clear_pieces(&mut commands, &query);
+
     game.get().players.iter().for_each(|player| {
+
         player.pieces.iter().for_each(|piece| {
+
+            let row = player.team.as_usize();
+            let col = piece.piece_type.as_usize();
+
+            let piece_pos_x = piece.position.x as f32 * RESOLUTION;
+            let piece_pos_y = piece.position.y as f32 * RESOLUTION;
+
             let sprite = spawn_piece(
                 &mut commands,
                 &sprite,
-                (player.team.to_index() * 5) + piece.piece_type.to_index(),
-                Vec3::new(
-                    piece.position.x as f32 * RESOLUTION,
-                    piece.position.y as f32 * RESOLUTION,
-                    8.0,
-                ),
+                (row * PIECES_SPRITESHEET_WIDTH) + col,
+                Vec3::new(piece_pos_x, piece_pos_y, ZAxisLevel::Eight.as_f32()),
             );
-            commands
-                .entity(sprite)
-                .insert(Name::from("Piece"))
-                .insert(Piece);
+
+            commands.entity(sprite).insert(Name::from("Piece")).insert(Piece);
+
         })
+
     });
+
 }
 /*-----------------------------------------------------------------------------------------------*/
 
 /*████Highlight████*/
 /*-----------------------------------------------------------------------------------------------*/
-fn clear_highlight(commands: &mut Commands, query: &Query<Entity, With<Highlight>>) {
+fn clear_highlight(
+    commands:   &mut Commands,
+    query:      &Query<Entity, With<Highlight>>,
+) {
+
     for blocks in query.iter() {
         commands.entity(blocks).despawn();
     }
+
 }
 
 fn highlight(
-    mut commands: &mut Commands,
-    game: &ResMut<GameAsset>,
-    query: &Query<Entity, With<Highlight>>,
+    mut commands:   &mut Commands,
+    game:           &ResMut<GameAsset>,
+    query:          &Query<Entity, With<Highlight>>,
 ) {
-    if !game.get().update {
-        return;
-    }
+
     clear_highlight(&mut commands, &query);
-    for piece in game.get().player().pieces() {
+
+    let width   = TILESIZE.0 * RESOLUTION;
+    let height  = TILESIZE.1 * RESOLUTION;
+
+    for piece in game.get().current_player().pieces() {
+
+        let piece_pos_x = piece.position.x as f32 * RESOLUTION;
+        let piece_pos_y = piece.position.y as f32 * RESOLUTION;
+
         commands
             .spawn()
             .insert_bundle(SpriteBundle {
                 sprite: Sprite {
-                    color: HILITE_CLR,
-                    custom_size: Some(Vec2::new(TILESIZE.0 * RESOLUTION, TILESIZE.1 * RESOLUTION)),
+                    color: HILITE_COLOR,
+                    custom_size: Some(Vec2::new(width, height)),
                     ..default()
                 },
                 transform: Transform {
                     translation: Vec3::new(
-                        piece.position.x as f32 * RESOLUTION,
-                        piece.position.y as f32 * RESOLUTION,
-                        5.0,
+                        piece_pos_x,
+                        piece_pos_y,
+                        ZAxisLevel::Fifth.as_f32(),
                     ),
                     ..default()
                 },
                 ..default()
             })
             .insert(Highlight);
+
     }
+
 }
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -204,10 +232,11 @@ fn highlight(
 /*-----------------------------------------------------------------------------------------------*/
 /// To load the player sprites.
 fn load_sprite(
-    mut commands: Commands,
-    asset: Res<AssetServer>,
-    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+    mut commands:           Commands,
+    mut texture_atlases:    ResMut<Assets<TextureAtlas>>,
+    asset:                  Res<AssetServer>,
 ) {
+
     commands.insert_resource(PlayerSheet(texture_atlases.add(
         TextureAtlas::from_grid_with_padding(
             asset.load("spritesheet/chess_pieces_sheet.png"),
@@ -218,19 +247,24 @@ fn load_sprite(
             Vec2::splat(0.0),
         ),
     )));
+
 }
 
 fn spawn_piece(
-    commands: &mut Commands,
-    tile: &PlayerSheet,
-    index: usize,
-    translation: Vec3,
+    commands:       &mut Commands,
+    tile:           &PlayerSheet,
+    index:          usize,
+    translation:    Vec3,
 ) -> Entity {
+
+    let width  = TILESIZE.0 * RESOLUTION;
+    let height = TILESIZE.1 * RESOLUTION;
+
     commands
         .spawn_bundle(SpriteSheetBundle {
             sprite: TextureAtlasSprite {
                 index,
-                custom_size: Some(Vec2::new(TILESIZE.0 * RESOLUTION, TILESIZE.1 * RESOLUTION)),
+                custom_size: Some(Vec2::new(width, height)),
                 ..default()
             },
             texture_atlas: tile.0.clone(),
@@ -241,5 +275,6 @@ fn spawn_piece(
             ..default()
         })
         .id()
+
 }
 /*-----------------------------------------------------------------------------------------------*/
