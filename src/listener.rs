@@ -102,7 +102,6 @@ fn hover_listener(
     clear_picker(&mut commands, &pickers);
 
     let (m_x, m_y) = (cursor.x, cursor.y);
-
     if !hovered_position_in_player_pieces(m_x, m_y, &game) { return }
 
     let hover = spawn_square_sprite(
@@ -153,10 +152,9 @@ fn click_listener(
     paths_query:    Query<Entity, With<Paths>>,
 ) {
 
-    let (m_x,   m_y ) =  (cursor.x, cursor.y);
-
-    if !position_in_board_bounds(               m_x, m_y)  { return }
-    if          !click.just_pressed(MouseButton::Left   )  { return }
+    let (m_x, m_y) = (cursor.x, cursor.y);
+    if !position_in_board_bounds(m_x,   m_y )   { return } // So I can sleep peacefully at night.
+    if !click.just_pressed(MouseButton::Left)   { return }
 
     clear_click(&mut commands, &clicks);
 
@@ -165,12 +163,8 @@ fn click_listener(
         true  => {
 
             game.get_mut().set_picked_false();
-            clear_possible_piece_paths(&mut commands, &paths_query);
-            paths.clear();
 
-            if {
-                game.get().current_player().piece_index_from_xy_f32(m_x, m_y).is_err()
-            } {
+            if paths.contains(m_x, m_y) {
 
                 let pos = game.get().current_player().current_chosen_piece_index();
 
@@ -179,6 +173,10 @@ fn click_listener(
                     .next_player();
 
             }
+
+            clear_possible_piece_paths(&mut commands, &paths_query);
+            paths.clear();
+
         },
 
         false => {

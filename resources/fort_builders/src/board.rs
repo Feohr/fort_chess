@@ -24,23 +24,23 @@ use crate::Error;
 
 // Board tile borders.
 /// Board's right most x axis length.
-pub const X_MAX: i32 = 8_i32;
+pub const X_MAX: i32 =  8_i32;
 /// Board's left most x acis length.
 pub const X_MIN: i32 = -8_i32;
 /// Board's top most y axis length.
-pub const Y_MAX: i32 = 8_i32;
+pub const Y_MAX: i32 =  8_i32;
 /// Board's down most y axis length.
 pub const Y_MIN: i32 = -2_i32;
 
 // Camera view over the board.
 /// Board's right most length in view.
-pub const RGT: i32 = 12_i32;
+pub const RGT: i32 =  12_i32;
 /// Board's left most length in view.
 pub const LFT: i32 = -13_i32;
 /// Board's top most length in view.
-pub const TOP: i32 = 10_i32;
+pub const TOP: i32 =  10_i32;
 /// Board's bottom most length in view.
-pub const BTM: i32 = -4_i32;
+pub const BTM: i32 =  -4_i32;
 
 /*████Local Constants████*/
 /*-----------------------------------------------------------------------------------------------*/

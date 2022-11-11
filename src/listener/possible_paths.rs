@@ -4,25 +4,22 @@
 
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
-use bevy::prelude::{
-        Color, Commands, Component, Entity, Query, ResMut, Vec3, With,
-};
+mod pawn;
+mod rook;
+
+use crate::{listener::spawn_square_sprite, ZAxisLevel, RESOLUTION};
+use bevy::prelude::{Color, Commands, Component, Entity, Query, ResMut, Vec3, With};
 use fort_builders::{
-    pieces::PieceType,
-    board::{
-       Quadrant, position_in_q1_bounds, position_in_q2_bounds,
-       position_in_q3_bounds, position_in_board_bounds,
-    },
+    board::{position_in_q1_bounds, position_in_q2_bounds, position_in_q3_bounds, Quadrant},
     game::Game,
-    player::PlayerAction,
+    pieces::PieceType,
 };
-use crate::{
-    RESOLUTION, ZAxisLevel,
-    listener::spawn_square_sprite,
-};
+use pawn::analyse_pawn_paths;
+use rook::analyse_rook_paths;
 
 const PPATHS_COLOR_EMPTY: Color = Color::rgb(0.9, 0.9, 0.6);
 const PPATHS_COLOR_PIECE: Color = Color::ORANGE_RED;
+const STEP              : f32   = 1.0;
 
 #[derive(Debug, Component)]
 pub struct PossiblePaths {
@@ -35,73 +32,47 @@ pub struct Paths;
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
 pub fn possible_piece_paths(
-    x:                  f32,
-    y:                  f32,
-    _piece_type:         PieceType,
-    game:               &Game,
+    x:          f32,
+    y:          f32,
+    piece_type: PieceType,
+    game:       &Game,
 ) -> Vec<(f32, f32)> {
 
-    let path_analysis: fn(f32, f32, &Game) -> Vec<(f32, f32)> = analyse_rook_paths;
+    let path_analysis = possible_paths_closure_from_piece_type(piece_type);
 
     match Quadrant::from_xy(x, y).unwrap() {
-        Quadrant::Q1 => {
+
+        Quadrant::Q1 =>
             path_analysis(x, y, game)
                 .into_iter()
                 .filter(|(x, y)| position_in_q1_bounds(*x, *y))
-                .collect::<Vec<(f32, f32)>>()
-        },
-        Quadrant::Q2 => {
+                .collect::<Vec<(f32, f32)>>(),
+
+        Quadrant::Q2 =>
             path_analysis(x, y, game)
                 .into_iter()
                 .filter(|(x, y)| position_in_q2_bounds(*x, *y))
-                .collect::<Vec<(f32, f32)>>()
-        },
-        Quadrant::Q3 => {
+                .collect::<Vec<(f32, f32)>>(),
+
+        Quadrant::Q3 =>
             path_analysis(x, y, game)
                 .into_iter()
                 .filter(|(x, y)| position_in_q3_bounds(*x, *y))
-                .collect::<Vec<(f32, f32)>>()
-        },
+                .collect::<Vec<(f32, f32)>>(),
+
     }
 
 }
 
-fn analyse_rook_paths(x: f32, y: f32, game: &Game) -> Vec<(f32, f32)> {
+fn possible_paths_closure_from_piece_type(
+    piece_type: PieceType,
+) -> Box<dyn Fn(f32, f32, &Game) -> Vec<(f32, f32)>> {
 
-    let mut _possiblepaths: Vec<(f32, f32)> = Vec::new();
-
-    // Steps Along +ve X-axis.
-    iter_rook_path_step_analysis(x, y, | x, _y| { *x += 1.0 }, game, &mut _possiblepaths);
-    // Steps Along -ve X-axis.
-    iter_rook_path_step_analysis(x, y, | x, _y| { *x -= 1.0 }, game, &mut _possiblepaths);
-    // Steps Along +ve Y-axis.
-    iter_rook_path_step_analysis(x, y, |_x,  y| { *y += 1.0 }, game, &mut _possiblepaths);
-    // Steps Along -ve Y-axis.
-    iter_rook_path_step_analysis(x, y, |_x,  y| { *y -= 1.0 }, game, &mut _possiblepaths);
-
-    return _possiblepaths;
-
-}
-
-fn iter_rook_path_step_analysis<F>(
-    mut _x:         f32,
-    mut _y:         f32,
-    step:           F,
-    game:           &Game,
-    _possiblepaths: &mut Vec<(f32, f32)>,
-) where
-        F: Fn(&mut f32, &mut f32),
-{
-    loop {
-
-        step(&mut _x, &mut _y);
-
-        if game.current_player().piece_index_from_xy_f32(_x, _y).is_ok()        { break }
-
-        _possiblepaths.push((_x, _y));
-
-        if !position_in_board_bounds(_x, _y) || game.check_piece_in_pos(_x, _y) { break }
-
+    match piece_type {
+        PieceType::Rook => Box::from(analyse_rook_paths),
+        PieceType::Pawn => Box::from(analyse_pawn_paths),
+        // Empty closure placeholder.
+        _ => Box::new(|_x: f32, _y: f32, _g: &Game| Vec::new()),
     }
 
 }
@@ -119,11 +90,15 @@ impl PossiblePaths {
 
     pub fn get(&self) -> &Vec<(f32, f32)> { &self.paths }
 
+    pub fn contains(&self, x: f32, y: f32) -> bool {
+        self.get().contains(&(x, y))
+    }
+
 }
 
 pub fn clear_possible_piece_paths(
-    commands:   &mut Commands,
-    paths:      &Query<Entity, With<Paths>>,
+    commands: &mut Commands,
+    paths: &Query<Entity, With<Paths>>,
 ) {
 
     for path in paths {
@@ -157,7 +132,10 @@ pub fn draw_possible_piece_paths(
 
 }
 
-pub fn update_possible_piece_paths(game: &Game, paths: &mut ResMut<PossiblePaths>) {
+pub fn update_possible_piece_paths(
+    game: &Game,
+    paths: &mut ResMut<PossiblePaths>,
+) {
 
     let (piece_pos_x, piece_pos_y, piece_type) = {
 

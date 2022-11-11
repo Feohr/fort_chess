@@ -58,9 +58,9 @@ impl GameAsset {
 impl Plugin for GamePlugin {
 
     fn build(&self, app: &mut App) {
-        app .add_startup_system_to_stage(StartupStage::Startup, init_game)
-            .add_startup_system_to_stage(StartupStage::Startup, load_sprite)
-            .add_system(gametick);
+        app .add_startup_system_to_stage(StartupStage::Startup, init_game   )
+            .add_startup_system_to_stage(StartupStage::Startup, load_sprite )
+            .add_system(                                        gametick    );
     }
 
 }

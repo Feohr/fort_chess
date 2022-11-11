@@ -196,10 +196,9 @@ impl GameAction for Game {
     /// To update player pieces position every turn.
     fn update_position(&mut self, x: i32, y: i32, pos: usize) -> Result<(), Error> {
 
-        Ok(match self.players[self.turn].update_piece(x, y, pos)? {
-            true => self.set_update_true(),
-            false => (),
-        })
+        self.players[self.turn].update_piece(x, y, pos)?; 
+
+        Ok(self.set_update_true())
 
     }
 }

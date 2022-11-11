@@ -111,7 +111,9 @@ pub fn dice_roll() -> usize {
 /// Used to fix the zero axis 'issue' in the board.
 pub fn decrement_if_positive<T>(x: T) -> T
 where
-    T: std::cmp::PartialOrd<T> + std::ops::Sub<Output = T> + From<u16>,
+    T:      std::cmp::PartialOrd<T>
+        +   std::ops::Sub<Output = T>
+        +   From<u16>,
 {
 
     match x > From::from(0) {
