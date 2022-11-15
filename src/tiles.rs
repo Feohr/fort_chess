@@ -2,12 +2,6 @@
 //!
 //! To hold the logic that draws the board to the screen. Runs one time at the beginning of the
 //! game.
-//!
-//! ##Contents:
-//! -   TilePlugin.
-//! -   TileSheet.
-//! -   BREADTH.
-
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
 use crate::{RESOLUTION, SPRITESIZE, TILESIZE, ZAxisLevel};
@@ -23,18 +17,26 @@ use fort_builders::{
 /// Holds the breadth size of the board.
 const BREADTH: i32 = 2;
 
+/// Struct to hold the tile texture atlas.
 struct TileSheet(Handle<TextureAtlas>);
 
+/// Plugin to handle board drawing systems.
+pub(crate) struct TilePlugin;
+
+/// To denote the type of tile.
 #[derive(PartialEq, Eq)]
 enum TileSpriteSheetIndex {
+    /// Light color tile inside the board.
     Light,
+    /// Dark color tile inside the board.
     Dark,
+    /// The board border.
     Border,
+    /// The outer shell of the middle of the board.
     FortOuter,
+    /// The inner most part of the middle of the board.
     FortInner,
 }
-
-pub(crate) struct TilePlugin;
 
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
@@ -42,6 +44,7 @@ pub(crate) struct TilePlugin;
 /*-----------------------------------------------------------------------------------------------*/
 impl Plugin for TilePlugin {
 
+    /// [`Plugin`] implementation for [`TilePlugin`].
     fn build(&self, app: &mut App) {
         app .add_startup_system_to_stage(StartupStage::PreStartup,  load_tile   )
             .add_startup_system_to_stage(StartupStage::Startup,     draw_board  )
@@ -56,6 +59,7 @@ impl Plugin for TilePlugin {
 /*-----------------------------------------------------------------------------------------------*/
 impl TileSpriteSheetIndex {
 
+    /// Returns the corresponding [`TileSpriteSheetIndex`] variant from usize.
     fn from_usize(from: usize) -> Self {
 
         match from {
@@ -69,6 +73,7 @@ impl TileSpriteSheetIndex {
 
     }
 
+    /// Converts a given [`TileSpriteSheetIndex`] variant to corresponding usize value.
     fn as_usize(&self) -> usize {
 
         match self {
@@ -84,9 +89,16 @@ impl TileSpriteSheetIndex {
 }
 /*-----------------------------------------------------------------------------------------------*/
 
+/// To decide if a position should have a dark or a light tile. Used to alternate tiles for a
+/// chess pattern.
+///
+/// Returns [`TileSpriteSheetIndex::Dark'] or [`TileSpriteSheetIndex::Light`] tile depending on the
+/// tiles. Returns Dark for even tiles and Light for odd tiles until the x value is less than zero.
+/// After `x > 0`, the tiles are then switched with even as Light for even and Dark for odd tiles.
+/// That is the use of the "XOR" if you were wondering.
 fn dark_or_light_tile_index(x: i32, y: i32) -> TileSpriteSheetIndex {
 
-    TileSpriteSheetIndex::from_usize({
+   TileSpriteSheetIndex::from_usize({
         (
 
             match x > 0 {
@@ -110,7 +122,15 @@ fn dark_or_light_tile_index(x: i32, y: i32) -> TileSpriteSheetIndex {
 
 /*████Drawing the Board████*/
 /*-----------------------------------------------------------------------------------------------*/
-/// Drawing the board.
+
+/// To Draw the board.
+///
+/// Iterates from [`X_MIN`] to [`X_MAX`] and from [`Y_MIN`] to [`Y_MAX`] as it generates the board
+///
+/// with the power of mathematics. The one issue I do have is with the *Zeroeth* axis as that
+/// produced odd number of tiles at each axis.
+// I chose to decrement x and y values if they are greater than zero. Not the most elegant solution
+// and far from being the best one as apparent from the trouble I go through everytime I refactor.
 fn draw_board(
     mut commands:   Commands,
     tile:           Res<TileSheet>,
@@ -120,14 +140,19 @@ fn draw_board(
 
         (Y_MIN..=Y_MAX).for_each(|mut y| {
 
-            if !{ y == 0
+            // If x value as well as y value are less than BREADTH value then it won't be drawn
+            // as that is the center of the board where the fort will reside.
+            // if x value as well as y value is greater than BREADTH, then a tile won't be
+            // drawn as that will come outside the board bounds.
+            // Y == 0 column is ignored to remove the extra zeroeth column.
+            if !{   y == 0
             ||  (
-                    x.abs() <= BREADTH
-                &&  y.abs() <= BREADTH
+                    x.abs() <=  BREADTH
+                &&  y.abs() <=  BREADTH
                 )
             ||  (
-                    x.abs() > BREADTH
-                &&  y.abs() > BREADTH
+                    x.abs() >   BREADTH
+                &&  y.abs() >   BREADTH
             )}  {
 
                     // To get rid of the zeroeth line.
@@ -154,7 +179,9 @@ fn draw_board(
 
 }
 
-/// Drawing the border of the board.
+/// To Draw the border of the board.
+///
+/// This is essentially just the same as *draw_board* but with bounds incremented to form a border.
 fn draw_border(
     mut commands:   Commands,
     tile:           Res<TileSheet>,
@@ -164,9 +191,16 @@ fn draw_border(
 
         ((Y_MIN - 1)..=(Y_MAX + 1)).for_each(|mut y| {
 
+            // Exactly the same as draw_board fucntion but with one column and row extra padding
+            // for the border.
             if !{   y == 0
-            ||  (   x.abs() > BREADTH + 1
-                &&  y.abs() > BREADTH + 1
+            ||  (
+                    x.abs() <=  BREADTH
+                &&  y.abs() <=  BREADTH
+                )
+            ||  (
+                    x.abs() >   BREADTH + 1
+                &&  y.abs() >   BREADTH + 1
             )}  {
 
                     // To get rid of the zeroeth line.
@@ -194,11 +228,14 @@ fn draw_border(
 }
 
 /// To draw the fort.
+///
+/// Follows the similar logic as other "drawing" functions.
 fn draw_fort(
     mut commands:   Commands,
     tile:           Res<TileSheet>,
 ) {
 
+    // Draws the fort in the BREADTH side square.
     (-BREADTH..=BREADTH).for_each(|x| {
 
         (-BREADTH..BREADTH).for_each(|y| {
@@ -220,6 +257,7 @@ fn draw_fort(
 
     });
 
+    // Draws the middle most part which is BREADTH - 1 size square.
     ((-BREADTH + 1)..=(BREADTH - 1)).for_each(|x| {
 
         ((-BREADTH + 1)..(BREADTH - 1)).for_each(|y| {
@@ -247,13 +285,16 @@ fn draw_fort(
 /*████Drawing the Board████*/
 /*-----------------------------------------------------------------------------------------------*/
 /// To load the tile asset.
+///
+/// To load the tile resource `.png` from assets folder. This folder needs to exist with the
+/// executable binary otherwise the game won't have the asset.
 fn load_tile(
     mut commands:           Commands,
     asset:                  Res<AssetServer>,
     mut texture_atlases:    ResMut<Assets<TextureAtlas>>,
 ) {
 
-    commands.insert_resource(TileSheet(texture_atlases.add(
+   commands.insert_resource(TileSheet(texture_atlases.add(
         TextureAtlas::from_grid_with_padding(
             asset.load("spritesheet/tile_sheet.png"),
             Vec2::splat(SPRITESIZE),
@@ -268,12 +309,14 @@ fn load_tile(
 
 /// To spawn a tile.
 ///
-/// Index:
+/// ### Index:
 /// 0.  Tile dark.
 /// 1.  Tile Light.
 /// 2.  Tile Border.
 /// 3.  Fort Exterior.
 /// 4.  Fort Interior.
+///
+/// This is a helper function to spawn a tile from the given input.
 fn spawn_tile(
     commands:       &mut Commands,
     tile:           &TileSheet,
@@ -291,9 +334,10 @@ fn spawn_tile(
                 custom_size: Some(Vec2::new(width, height)),
                 ..default()
             },
+            // Creates a copy of the texture everytime a tile is created.
             texture_atlas: tile.0.clone(),
             transform: Transform {
-                translation: translation,
+                translation,
                 ..default()
             },
             ..default()

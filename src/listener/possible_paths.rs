@@ -1,121 +1,117 @@
 //! possible paths module.
 //!
 //! Handles the logic for piece possible paths and their movements.
-
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
+//  Modules //
+//----------//
 mod pawn;
 mod rook;
+mod knight;
+//----------//
 
 use crate::{listener::spawn_square_sprite, ZAxisLevel, RESOLUTION};
 use bevy::prelude::{Color, Commands, Component, Entity, Query, ResMut, Vec3, With};
 use fort_builders::{
-    board::{position_in_q1_bounds, position_in_q2_bounds, position_in_q3_bounds, Quadrant},
     game::Game,
     pieces::PieceType,
 };
 use pawn::analyse_pawn_paths;
 use rook::analyse_rook_paths;
+use knight::analyse_knight_paths;
 
-const PPATHS_COLOR_EMPTY: Color = Color::rgb(0.9, 0.9, 0.6);
-const PPATHS_COLOR_PIECE: Color = Color::ORANGE_RED;
-const STEP              : f32   = 1.0;
+/// The color of the __PossiblePaths__ that do not have a piece.
+const PPATHS_COLOR_EMPTY:   Color   = Color::rgb(0.9, 0.9, 0.6);
+/// The color of __PossiblePaths__ that have a piece.
+const PPATHS_COLOR_PIECE:   Color   = Color::ORANGE_RED;
+/// The step size which just holds 1.0 as the value. Not necessary but I do a lot of unnecessary
+/// stuff.
+const STEP:                 f32     = 1.0;
 
+/// Type to hold a vector of tuple with `f32` x and y positions.
+type PositionVectorf32 = Vec<(f32, f32)>;
+
+/// A resource to hold a vector with PossiblePaths of each piece.
 #[derive(Debug, Component)]
 pub struct PossiblePaths {
-    pub(crate) paths: Vec<(f32, f32)>,
+    pub(crate) paths: PositionVectorf32,
 }
 
+/// A component to denote enitity with Path.
 #[derive(Component)]
 pub struct Paths;
 
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
-pub fn possible_piece_paths(
+/// To detect possible paths of a piece.
+pub(crate) fn possible_piece_paths(
     x:          f32,
     y:          f32,
     piece_type: PieceType,
     game:       &Game,
-) -> Vec<(f32, f32)> {
+) -> PositionVectorf32 {
 
-    let path_analysis = possible_paths_closure_from_piece_type(piece_type);
-
-    match Quadrant::from_xy(x, y).unwrap() {
-
-        Quadrant::Q1 =>
-            path_analysis(x, y, game)
-                .into_iter()
-                .filter(|(x, y)| position_in_q1_bounds(*x, *y))
-                .collect::<Vec<(f32, f32)>>(),
-
-        Quadrant::Q2 =>
-            path_analysis(x, y, game)
-                .into_iter()
-                .filter(|(x, y)| position_in_q2_bounds(*x, *y))
-                .collect::<Vec<(f32, f32)>>(),
-
-        Quadrant::Q3 =>
-            path_analysis(x, y, game)
-                .into_iter()
-                .filter(|(x, y)| position_in_q3_bounds(*x, *y))
-                .collect::<Vec<(f32, f32)>>(),
-
-    }
-
-}
-
-fn possible_paths_closure_from_piece_type(
-    piece_type: PieceType,
-) -> Box<dyn Fn(f32, f32, &Game) -> Vec<(f32, f32)>> {
-
-    match piece_type {
-        PieceType::Rook => Box::from(analyse_rook_paths),
-        PieceType::Pawn => Box::from(analyse_pawn_paths),
+    // fetches an appropriate closure to perform over a certain piece so that we can get the
+    // respective possible paths.
+    let path_analysis = match piece_type {
+        PieceType::Rook     => analyse_rook_paths,
+        PieceType::Pawn     => analyse_pawn_paths,
+        PieceType::Knight   => analyse_knight_paths,
         // Empty closure placeholder.
-        _ => Box::new(|_x: f32, _y: f32, _g: &Game| Vec::new()),
-    }
+        _ => |_x: f32, _y: f32, _g: &Game| Vec::new(),
+    };
+
+    // Returning the collected paths vec.
+    path_analysis(x, y, game)
 
 }
+/*-----------------------------------------------------------------------------------------------*/
 
 /*████PossiblePaths████*/
 /*-----------------------------------------------------------------------------------------------*/
 impl PossiblePaths {
 
-    fn update_paths(&mut self, mut paths: Vec<(f32, f32)>) {
-        self.clear();
-        self.paths = paths.drain(0..).collect::<Vec<(f32, f32)>>();
-    }
+    /// Calculates and updates the paths value to render.
+    fn update_paths(&mut self, _paths: PositionVectorf32) { self.paths = _paths }
 
-    pub fn clear(&mut self) { self.paths.clear() }
+    /// Empties the paths vector.
+    pub(crate) fn clear(&mut self) { self.paths.clear() }
 
-    pub fn get(&self) -> &Vec<(f32, f32)> { &self.paths }
+    /// Returns a reference to the internal vector.
+    pub(crate) fn get(&self) -> &PositionVectorf32 { &self.paths }
 
-    pub fn contains(&self, x: f32, y: f32) -> bool {
+    /// searches the paths to see if the position exists.
+    pub(crate) fn contains(&self, x: f32, y: f32) -> bool {
         self.get().contains(&(x, y))
     }
 
 }
 
-pub fn clear_possible_piece_paths(
+/// Clears all [`PossiblePaths`] entities.
+pub(crate) fn clear_possible_piece_paths(
     commands: &mut Commands,
     paths: &Query<Entity, With<Paths>>,
 ) {
 
+    // Iterates over Paths entities and despawns.
     for path in paths {
         commands.entity(path).despawn();
     }
 
 }
 
-pub fn draw_possible_piece_paths(
+/// To draw the paths whenever a piece is chosen.
+pub(crate) fn draw_possible_piece_paths(
     commands:       &mut Commands,
     paths:          &PossiblePaths,
     paths_query:    &Query<Entity, With<Paths>>,
     game:           &Game,
 ) {
 
+    // Clean up.
     clear_possible_piece_paths(commands, paths_query);
 
+    // Iterate over paths and draw a red tile where there is a piece else draw a yellow piece.
     for step in paths.get().iter() {
 
         let (step_x, step_y) = (step.0 * RESOLUTION, step.1 * RESOLUTION);
@@ -132,11 +128,14 @@ pub fn draw_possible_piece_paths(
 
 }
 
-pub fn update_possible_piece_paths(
+/// To update the possible paths whenever a piece is chosen. The paths are derived from
+/// `possible_piece_paths` function that returns a vector of position tuples.
+pub(crate) fn update_possible_piece_paths(
     game: &Game,
     paths: &mut ResMut<PossiblePaths>,
 ) {
 
+    // Exctracting piece position and type from game.
     let (piece_pos_x, piece_pos_y, piece_type) = {
 
         let piece = game.current_player().current_chosen_piece();
@@ -149,6 +148,7 @@ pub fn update_possible_piece_paths(
 
     };
 
+    // Updating the paths.
     paths.update_paths(possible_piece_paths(
         piece_pos_x,
         piece_pos_y,
@@ -158,6 +158,8 @@ pub fn update_possible_piece_paths(
 
 }
 
+/// To detect if a position has a piece and return the appropriate color. For position with pieces
+/// it returns Red else Yellow.
 fn piece_in_step_detection(x: f32, y: f32, game: &Game) -> Color {
 
     match game.check_piece_in_pos(x, y) {

@@ -3,12 +3,6 @@
 //! To handle game functionalities like start, update and win/lose/draw.
 //! Holds the GameAsset which is the instance of the current game data object.
 //! It also is responsible for drawing the pieces to the board.
-//!
-//! ## Contents:
-//! -   GamePlugin.
-//! -   GameAsset.
-//! -   Piece.
-
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
 use crate::{RESOLUTION, SPRITESIZE, TILESIZE, ZAxisLevel};
@@ -20,22 +14,29 @@ use fort_builders::{
     player::{Player, Team},
 };
 
+// Temporary holder for number of players.
 const PLAYERS: usize = 3;
+/// Highlight color to display the current player pieces.
 const HILITE_COLOR: Color = Color::rgba(0.6, 0.6, 0.6, 0.3);
+/// The width of the pieces sprite sheet.
 const PIECES_SPRITESHEET_WIDTH: usize = 5_usize;
 
-/// The GamePlugin that holds piece drawing information.
+/// The game Plugin that holds piece drawing information.
 pub(crate) struct GamePlugin;
 
+/// To handle [`Player`] texture.
 #[derive(Component)]
 struct PlayerSheet(Handle<TextureAtlas>);
 
+/// To distinguish piece entity.
 #[derive(Component)]
 struct Piece;
 
+/// To distinguish highlight entity.
 #[derive(Component)]
 struct Highlight;
 
+/// To hold [`Game`] resource.
 #[derive(Debug, Component)]
 pub(crate) struct GameAsset(pub(crate) Game);
 
@@ -44,6 +45,7 @@ pub(crate) struct GameAsset(pub(crate) Game);
 /*████GameAsset████*/
 /*-----------------------------------------------------------------------------------------------*/
 impl GameAsset {
+
     /// To get a reference to the inner game tuple element,
     pub(crate) fn get(&self) -> &Game { &self.0 }
 
@@ -57,6 +59,7 @@ impl GameAsset {
 /*-----------------------------------------------------------------------------------------------*/
 impl Plugin for GamePlugin {
 
+    /// [`Plugin`] implementation for [`GamePlugin`].
     fn build(&self, app: &mut App) {
         app .add_startup_system_to_stage(StartupStage::Startup, init_game   )
             .add_startup_system_to_stage(StartupStage::Startup, load_sprite )
@@ -68,8 +71,8 @@ impl Plugin for GamePlugin {
 
 /*████Game████*/
 /*-----------------------------------------------------------------------------------------------*/
-/// Initial game creation.
-// Temporary.
+/// Initial game creation. In future, this will be handled a bit differently to facilitate variable
+/// game players.
 fn init_game(mut commands: Commands) {
 
     let roll = (dice_roll() % 3_usize) % PLAYERS;
@@ -92,6 +95,8 @@ fn init_game(mut commands: Commands) {
 
 }
 
+/// Runs every frame of the game to check if the board needs to update graphics. Draws pieces as
+/// well as highlights.
 fn gametick(
     mut commands:   Commands,
     mut game:       ResMut<GameAsset>,
@@ -100,11 +105,13 @@ fn gametick(
     hquery:         Query<Entity, With<Highlight>>,
 ) {
 
+    // If no need for update, return.
     if !game.get().update { return }
 
     draw_pieces(&mut commands, &sprite, &game, &dquery);
     highlight(  &mut commands,          &game, &hquery);
 
+    // Setting the update as false to put latch back.
     game.get_mut().set_update_false();
 
 }
@@ -127,6 +134,8 @@ fn calcq(i: usize, roll: usize) -> usize {
 
 /*████Piece████*/
 /*-----------------------------------------------------------------------------------------------*/
+/// To clear all the pieces in a scene. Iterate over entity with [`Piece`] component and despawn
+/// them.
 fn clear_pieces(
     commands:   &mut Commands,
     query:      &Query<Entity, With<Piece>>,
@@ -138,18 +147,27 @@ fn clear_pieces(
 
 }
 
-/// To draw the players.
+/// call to draw the player [`Piece`]s.
+///
+/// Iterating over each player and drawing all the pieces once again. *row* and *col* correspond
+/// to the player sheet resource. Hence each position along the columns correspond to the piece
+/// type which is added to offset to it. The team corresponds to the rows and it is multiplied
+/// with the spritesheet width to jump between the rows. The constant PIECE_SPRITESHEET_WIDTH is
+/// nothing but the number of chess piece types i.e. 5.
 fn draw_pieces(
-    mut commands:   &mut Commands,
+    commands:   &mut Commands,
     sprite:         &Res<PlayerSheet>,
     game:           &ResMut<GameAsset>,
     query:          &Query<Entity, With<Piece>>,
 ) {
 
-    clear_pieces(&mut commands, &query);
+    // Clean up.
+    clear_pieces(commands, query);
 
+    // For each player.
     game.get().players.iter().for_each(|player| {
 
+        // For each piece.
         player.pieces.iter().for_each(|piece| {
 
             let row = player.team.as_usize();
@@ -159,12 +177,13 @@ fn draw_pieces(
             let piece_pos_y = piece.position.y as f32 * RESOLUTION;
 
             let sprite = spawn_piece(
-                &mut commands,
-                &sprite,
+                commands,
+                sprite,
                 (row * PIECES_SPRITESHEET_WIDTH) + col,
                 Vec3::new(piece_pos_x, piece_pos_y, ZAxisLevel::Eight.as_f32()),
             );
 
+            // Spawn.
             commands.entity(sprite).insert(Name::from("Piece")).insert(Piece);
 
         })
@@ -176,24 +195,30 @@ fn draw_pieces(
 
 /*████Highlight████*/
 /*-----------------------------------------------------------------------------------------------*/
+/// To clear all the highlight entities from the scene.
 fn clear_highlight(
     commands:   &mut Commands,
     query:      &Query<Entity, With<Highlight>>,
 ) {
 
+    // Iterates over Highlight entities and despawns them.
     for blocks in query.iter() {
         commands.entity(blocks).despawn();
     }
 
 }
 
+/// To Draw highlight over the current player [`Piece`].
+///
+/// Iterating over the current active player and highlighting. The highlight size is [`TILESIZE`].
 fn highlight(
-    mut commands:   &mut Commands,
+    commands:   &mut Commands,
     game:           &ResMut<GameAsset>,
     query:          &Query<Entity, With<Highlight>>,
 ) {
 
-    clear_highlight(&mut commands, &query);
+    // Clean up.
+    clear_highlight(commands, query);
 
     let width   = TILESIZE.0 * RESOLUTION;
     let height  = TILESIZE.1 * RESOLUTION;
@@ -203,6 +228,7 @@ fn highlight(
         let piece_pos_x = piece.position.x as f32 * RESOLUTION;
         let piece_pos_y = piece.position.y as f32 * RESOLUTION;
 
+        // Spawn.
         commands
             .spawn()
             .insert_bundle(SpriteBundle {
@@ -230,7 +256,11 @@ fn highlight(
 
 /*████PlayerSheet████*/
 /*-----------------------------------------------------------------------------------------------*/
-/// To load the player sprites.
+/// To load the [`Player`] sprites.
+///
+/// To insert the chess piece sprite resource. There needs to be an asset folder at runtime for
+/// the binary to load the player pieces asset. Otherwise it won't be possible for the pieces to
+/// load.
 fn load_sprite(
     mut commands:           Commands,
     mut texture_atlases:    ResMut<Assets<TextureAtlas>>,
@@ -250,6 +280,7 @@ fn load_sprite(
 
 }
 
+/// Simple helper function to spawn [`Piece`] sprites. Sprite size is [`TILESIZE`].
 fn spawn_piece(
     commands:       &mut Commands,
     tile:           &PlayerSheet,
@@ -260,6 +291,7 @@ fn spawn_piece(
     let width  = TILESIZE.0 * RESOLUTION;
     let height = TILESIZE.1 * RESOLUTION;
 
+    // Spawn.
     commands
         .spawn_bundle(SpriteSheetBundle {
             sprite: TextureAtlasSprite {
@@ -269,7 +301,7 @@ fn spawn_piece(
             },
             texture_atlas: tile.0.clone(),
             transform: Transform {
-                translation: translation,
+                translation,
                 ..default()
             },
             ..default()

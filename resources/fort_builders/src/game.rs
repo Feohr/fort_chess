@@ -1,7 +1,6 @@
 //! # game module
 //!
 //! Game module to initialize, stop and exit the game.
-
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
 use crate::pieces::Piece;
@@ -9,10 +8,6 @@ use crate::player::{Player, PlayerAction};
 use crate::Error;
 
 /// A struct to create a game object.
-///
-/// ## Contents
-/// -   players: players vector
-/// -   status": state of the game
 #[derive(Debug)]
 pub struct Game {
     /// To hold the player information.
@@ -29,17 +24,14 @@ pub struct Game {
 }
 
 /// To handle operations over the Game.
-///
-/// ## Contents:
-/// -   hunt:   searches for pieces to kill and kills them.
-/// -   update: updates the given player piece with x nd y value.
-/// -   next:   gets the player index who's turn it is.
 pub trait GameAction {
+
     fn hunt(&mut self) -> Result<Option<Player>, Error>;
 
     fn next_player(&mut self);
 
     fn update_position(&mut self, x: i32, y: i32, pos: usize) -> Result<(), Error>;
+
 }
 
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
@@ -47,9 +39,10 @@ pub trait GameAction {
 /*████Game████*/
 /*-----------------------------------------------------------------------------------------------*/
 impl Game {
+
     /// To initialize game object.
     ///
-    /// Takes player1 and player2 argument to create a __Game__ struct.
+    /// Takes player1 and player2 argument to create a [`Game`] ustruct.
     ///
     /// In future, the function should handle two extra optional player argument.
     /// Omitted presently to avoid complexity.
@@ -85,10 +78,6 @@ impl Game {
     ///
     /// Takes x and y values and iterates over all the players in the games to decide which
     /// particular piece is present and removes that piece to return it.
-    ///
-    /// This function does not check if there are more than one pieces at a position.
-    /// This function will kill all the pieces at a position.
-    /// Shouldn't cause unwanted issues as there can only be one piece at a position at any given time.
     pub fn piece_in_pos(&mut self, x: i32, y: i32) -> Result<Option<Piece>, Error> {
 
         Piece::in_board_range(x, y)?;
@@ -103,6 +92,12 @@ impl Game {
 
     }
 
+    /// Iterates through each piece in a player and searches for a position. If that position
+    /// exists then returns true else returns false.
+    ///
+    /// Takes `f32` x and y position values and [`binary_search`] the position in the given pieces.
+    ///
+    /// [`binary_search`]: slice::binary_search
     pub fn check_piece_in_pos(&self, x: f32, y: f32) -> bool {
 
         for player in self.players.iter() {
@@ -115,42 +110,45 @@ impl Game {
 
     }
 
-    /// To change the game state to __true__.
+    /// To change the game state to `true`.
     ///
-    /// Takes __self__ reference and changes status to __true__.
+    /// Takes `self` reference and changes status to `true`.
     ///
-    /// **Idempotent function**
+    /// `Idempotent function`
     pub fn set_update_true(&mut self) { self.update = true }
 
-    /// To change the game update state to __false__.
+    /// To change the game update state to `false`.
     ///
-    /// Takes __self__ reference and changes status to __false__.
+    /// Takes `self` reference and changes status to `false`.
     ///
-    /// **Idempotent function**
+    /// `Idempotent function`
     pub fn set_update_false(&mut self) { self.update = false }
 
-    /// To change the game picked state to __true__.
+    /// To change the game picked state to `true`.
     ///
-    /// Takes __self__ reference and changes picked to __true__.
+    /// Takes `self` reference and changes picked to `true`.
     ///
-    /// **Idempotent function**
+    /// `Idempotent function`
     pub fn set_picked_true(&mut self) { self.picked = true }
 
-    /// To change the game picked state to __false__.
+    /// To change the game picked state to `false`.
     ///
-    /// Takes __self__ reference and changes picked to __false__.
+    /// Takes `self` reference and changes picked to `false`.
     ///
-    /// **Idempotent function**
+    /// `Idempotent function`
     pub fn set_picked_false(&mut self) { self.picked = false }
 
     /// Return the players length.
+    ///
+    /// Takes `self` reference and returns a usize length of players.
     pub fn player_count(&self) -> usize { self.players.len() }
 
-    /// To return the current __Player__ struct.
+    /// To return the current [`Player`] struct.
     pub fn current_player(&self) -> &Player { &self.players[self.turn] }
 
     /// Mutable reference to the player.
     pub fn current_player_mut(&mut self) -> &mut Player { &mut self.players[self.turn] }
+
 }
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -170,7 +168,6 @@ impl GameAction for Game {
             )   || !player.is_play {
 
                 let kill = self.kill(index)?;
-
                 return Ok(Some(kill));
 
             }
@@ -183,7 +180,7 @@ impl GameAction for Game {
 
     /// Changes the turn value to indiacate which player turn it is.
     ///
-    /// Adds value to turn and changes to 0 if the value exceeds players vector len.
+    /// Adds value to turn and changes to 0 if the value exceeds players vector len - 1.
     fn next_player(&mut self) {
 
         match self.turn < self.players.len() - 1 {
@@ -196,9 +193,12 @@ impl GameAction for Game {
     /// To update player pieces position every turn.
     fn update_position(&mut self, x: i32, y: i32, pos: usize) -> Result<(), Error> {
 
+        // updating the piece.
         self.players[self.turn].update_piece(x, y, pos)?; 
+        // To trigger draw.
+        self.set_update_true();
 
-        Ok(self.set_update_true())
+        Ok(())
 
     }
 }

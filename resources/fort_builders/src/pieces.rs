@@ -1,19 +1,16 @@
 //! # pieces module
 //!
 //! Holds the data and functions corresponding to the chess pieces.
-
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
 mod piece_alignment;
 
-// use crate::Error;
 use crate::{
     board::{Quadrant, X_MAX, X_MIN, Y_MAX, Y_MIN},
     RED, RST,
 };
 use piece_alignment::{piece_type, position_from_quadrant};
 use thiserror::Error;
-
 use std::fmt;
 
 /// Piece error enum.
@@ -53,17 +50,10 @@ pub enum Error {
     VectorNonSingular(usize),
 }
 
-/// To determine the piece type.
+/// To determine the [`Piece`] type.
 ///
 /// All the possible chess pieces to be used in game.
 /// Does not contain king as this variation doesn't have it.
-///
-/// ## Contents:
-/// -   Rook
-/// -   Minister
-/// -   Queen
-/// -   Pawn
-/// -   Knight
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub enum PieceType {
     Rook,     // 0
@@ -77,10 +67,6 @@ pub enum PieceType {
 ///
 /// The x value corresponds to the x axis.
 /// Similarly, the y value corresponds to the y axis.
-///
-/// ## Contents:
-/// -   x:  the x-axis value.
-/// -   y:  the y-axis value.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub struct Position {
     /// The x-axis value.
@@ -91,10 +77,6 @@ pub struct Position {
 }
 
 /// Piece struct that holds the type and the position of each piece.
-///
-/// ## Contents:
-/// -   piece_type: holds the type of the piece via __PieceType__ enum.
-/// -   position:   holds the position of the piece via __Position__ struct.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub struct Piece {
     /// To hold the type information for the piece.
@@ -109,12 +91,16 @@ pub struct Piece {
 /*████PieceType████*/
 /*-----------------------------------------------------------------------------------------------*/
 impl fmt::Debug for PieceType {
+
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:<8}", self.as_str())
     }
+
 }
 
 impl<'a> PieceType {
+
+    /// Takes self reference and returns the corresponding [`PieceType`] value as a `&str`.
     fn as_str(&self) -> &'a str {
 
         match self {
@@ -126,9 +112,15 @@ impl<'a> PieceType {
         }
 
     }
+
 }
 
 impl PieceType {
+
+    /// Returns a [`Result`] type with [`PieceType`] by taking in a `u8` value to correspond with
+    /// it.
+    ///
+    /// [`Result`]: std::result::Result
     fn from_index(index: u8) -> Result<PieceType, Error> {
 
         match index {
@@ -142,6 +134,7 @@ impl PieceType {
 
     }
 
+    /// Takes a self reference and returns a `usize` value that corresponds to the type.
     pub fn as_usize(&self) -> usize {
 
         match self {
@@ -153,6 +146,7 @@ impl PieceType {
         }
 
     }
+
 }
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -165,7 +159,7 @@ impl fmt::Debug for Position {
 }
 
 impl Position {
-    /// To create a position struct.
+    /// To create a [`Position`] struct.
     ///
     /// Takes the x and y value, checks if it is inside the board and creates the struct.
     #[inline]
@@ -188,11 +182,11 @@ impl fmt::Debug for Piece {
 }
 
 impl Piece {
-    /// To create a new piece type.
+
+    /// To create a new [`Piece`] type.
     ///
     /// Takes the positional arguments along with type argument to return a new piece type.
-    /// x and y correspond to the x and y coordinates. The piece argument corresponds to the
-    /// type.
+    /// x and y correspond to the x and y coordinates. The piece argument corresponds to the type.
     pub fn from(x: i32, y: i32, piece: PieceType) -> Result<Piece, Error> {
 
         Ok(Piece {
@@ -202,7 +196,7 @@ impl Piece {
 
     }
 
-    /// Function used to initialize the pieces vector.
+    /// Function used to initialize the [`Piece`] vector.
     pub(crate) fn init_pieces(
         is_defender:        bool,
         quadrant:           Quadrant,
@@ -223,9 +217,9 @@ impl Piece {
 
     }
 
-    /// To update the Position of the piece.
+    /// To update the [`Position`] of the [`Piece`].
     ///
-    /// Takes x and y value and chan    ges the position to the given value.
+    /// Takes x and y value and changes the position to the given value.
     /// Returns error if the new position is out of range.
     pub(crate) fn update_pos(&mut self, x: i32, y: i32) -> Result<(), Error> {
 
@@ -240,8 +234,8 @@ impl Piece {
 
     /// To check wether a vector index is valid.
     ///
-    /// There can be a maximum of 24 pieces inside a player pieces vec. Anything more than that is an
-    /// error.
+    /// There can be a maximum of 24 [`Piece`] inside a player pieces vec. Anything more than that
+    /// is an error.
     pub(crate) fn is_valid_index(pos: usize, is_defender: bool) -> Result<(), Error> {
 
         match match is_defender {
@@ -254,9 +248,9 @@ impl Piece {
 
     }
 
-    /// To check if the position is inside the piece vector bounds.
+    /// To check if the [`Position`] is inside the [`Piece`] vector bounds.
     ///
-    /// takes a usize value and checks the vector size with the length of the pieces vec.
+    /// takes a `usize` value and checks the vector size with the length of the pieces `vec`.
     pub(crate) fn is_in_bounds(pos: usize, len: usize) -> Result<(), Error> {
 
         match pos < len {
@@ -266,9 +260,9 @@ impl Piece {
 
     }
 
-    /// To check if a position value is inside the board.
+    /// To check if a [`Position`] value is inside the board.
     ///
-    /// This function is used to check if a particular position is inside the board.
+    /// This function is used to check if a particular [`Position`] is inside the board.
     pub(crate) fn in_board_range(x: i32, y: i32) -> Result<(), Error> {
 
         match (x <= X_MAX && x >= X_MIN) && (y <= Y_MAX && y >= Y_MIN) {

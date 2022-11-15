@@ -2,13 +2,15 @@
 //!
 //! Holds the entry point and the interface to interact with the below library.
 //! handles initialization, run and execution of the game.
-
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
+// Modules      //
+//--------------//
 pub mod board;
 pub mod game;
 pub mod pieces;
 pub mod player;
+//--------------//
 
 use game::Game;
 use player::Player;
@@ -62,7 +64,7 @@ pub enum Error {
 
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
-/// Takes a Player  vector and checks for the number of winners.
+/// Takes a [`player::Player`] vector and checks for the number of winners.
 fn results(mut winners: Vec<Player>) -> Result<Option<Player>, Error> {
 
     match winners.len() {
@@ -75,7 +77,7 @@ fn results(mut winners: Vec<Player>) -> Result<Option<Player>, Error> {
 
 /// To check the winner of the game and close it.
 ///
-/// Result enum with the winner player. If the return value is __None__ then the game is a draw.
+/// Result enum with the winner player. If the return value is `None` then the game is a draw.
 pub fn exit(game: Game) -> Result<Option<Player>, Error> {
 
     let winners: Vec<Player> = game
@@ -109,6 +111,8 @@ pub fn dice_roll() -> usize {
 
 /// Function to take in a number and reduce exactly 1 from it if it is greater than 0.
 /// Used to fix the zero axis 'issue' in the board.
+///
+/// Works for `u8`, `usize`, `u16`, `u32`.
 pub fn decrement_if_positive<T>(x: T) -> T
 where
     T:      std::cmp::PartialOrd<T>
