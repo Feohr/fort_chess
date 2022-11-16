@@ -39,11 +39,13 @@ use crate::listener::possible_paths::{STEP, PositionVectorf32};
 /// the defender along the `positive x-axis`.
 pub(crate) fn analyse_pawn_paths(x: f32, y: f32, game: &Game) -> PositionVectorf32 {
 
+    // Initializing paths.
     let mut _possiblepaths: PositionVectorf32 = Vec::new();
 
     let quadrant    = Quadrant::from_xy(x, y).unwrap();
     let is_defender = game.current_player().is_defender;
 
+    // Getting the quadrant information and mapping the appropriate closure to calculate.
     let pawn_closure = match is_defender {
         true  =>    match quadrant {
                         Quadrant::Q1 => | x: &mut f32, _y: &mut f32| *x -= STEP,

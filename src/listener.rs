@@ -292,16 +292,17 @@ fn spawn_square_sprite(
     translation:    Vec3,
 ) -> Entity {
 
-    // Spawning a TILEDRAW size sprite when called.
-    let width  = TILEDRAW.0 * RESOLUTION;
-    let height = TILEDRAW.1 * RESOLUTION;
-
     commands
         .spawn()
         .insert_bundle(SpriteBundle {
             sprite: Sprite {
                 color,
-                custom_size: Some(Vec2::new(width, height)),
+                custom_size: Some(Vec2::new(
+                        //width.
+                        TILEDRAW.0 * RESOLUTION,
+                        //height.
+                        TILEDRAW.1 * RESOLUTION,
+                )),
                 ..default()
             },
             transform: Transform {

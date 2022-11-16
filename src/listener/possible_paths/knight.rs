@@ -9,14 +9,20 @@ use fort_builders::{
     game::Game,
     player::PlayerAction,
 };
-use crate::listener::possible_paths::{STEP, PositionVectorf32};
+use crate::listener::possible_paths::PositionVectorf32;
 
-/// To hold the value of `360`.
-const FULL_CIRCLE:  usize   = 360;
-/// To get the circle scan increment step.
-const CIRCLE_STEP:  usize   = 30;
-/// To get the radius of the circle scanner.
-const RADIUS:       f32     = STEP * 2.0;
+mod circle {
+
+    /// The circle's min angle value that holds `0`.
+    pub(crate) const ANGLE_START:   usize   = 0;
+    /// To hold the value of `360`.
+    pub(crate) const ANGLE_END:     usize   = 360;
+    /// To get the circle scan increment step.
+    pub(crate) const ANGLE_STEP:    usize   = 30;
+    /// To get the radius of the circle scanner.
+    pub(crate) const RADIUS:        f32     = 2.0;
+
+}
 
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
@@ -36,19 +42,24 @@ const RADIUS:       f32     = STEP * 2.0;
 ///
 /// To ignore the middle "cross" path like the knights in chess, we simply check if either x or y
 /// is same as the `circle_x` or `circle_y` respectively. Which means that the the angle is either
-/// `90` or '270' degress or '180' or '360'/'0' degrees. These are the angles we are supposed to
-/// skip, hence we do.
+/// `90`, `270`, `180` or `360`/`0` degrees. These are the angles we are supposed to skip, hence we
+/// do.
 ///
 /// Any positions with the pieces of the same team are also skipped.
 pub(crate) fn analyse_knight_paths(x: f32, y: f32, game: &Game) -> PositionVectorf32 {
 
+    // Paths vector initialize.
     let mut _possiblepaths: PositionVectorf32 = Vec::new();
 
-    for theta in (0..FULL_CIRCLE).step_by(CIRCLE_STEP) {
+    // Looping from 0 to 360 with 30 as the step.
+    for theta in (circle::ANGLE_START..circle::ANGLE_END).step_by(circle::ANGLE_STEP) {
 
-        let path_x = ((theta as f32).to_radians().sin() * RADIUS).round() + x;
-        let path_y = ((theta as f32).to_radians().cos() * RADIUS).round() + y;
+        // Getting the circumeference x and y values.
+        let path_x = ((theta as f32).to_radians().sin() * circle::RADIUS).round() + x;
+        let path_y = ((theta as f32).to_radians().cos() * circle::RADIUS).round() + y;
 
+        // Checking if they are either equal to the piece's x and y value or if the position
+        // consists of a piece from the same team.
         if path_x == x.round()
         || path_y == y.round()
         || game.current_player().piece_index_from_xy_f32(path_x, path_y).is_ok() { continue }
@@ -57,14 +68,15 @@ pub(crate) fn analyse_knight_paths(x: f32, y: f32, game: &Game) -> PositionVecto
 
     }
 
-    let filter_function = match Quadrant::from_xy(x, y).unwrap() {
-        Quadrant::Q1 => position_in_q1_bounds,
-        Quadrant::Q2 => position_in_q2_bounds,
-        Quadrant::Q3 => position_in_q3_bounds,
-    };
-
+    // Return.
     _possiblepaths  .into_iter()
-                    .filter(|(x, y)| filter_function(*x, *y))
+                    .filter(|(_x, _y)| (
+                    // Fetching the appropriate filter function based on the x and y location.
+                    match Quadrant::from_xy(x, y).unwrap() {
+                        Quadrant::Q1 => position_in_q1_bounds,
+                        Quadrant::Q2 => position_in_q2_bounds,
+                        Quadrant::Q3 => position_in_q3_bounds,
+                    })(*_x, *_y))
                     .collect::<PositionVectorf32>()
 
 }

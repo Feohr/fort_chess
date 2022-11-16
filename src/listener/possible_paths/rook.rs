@@ -21,11 +21,14 @@ pub(crate) fn analyse_rook_paths(x: f32, y: f32, game: &Game) -> PositionVectorf
     // Vector to hold the PossiblePaths positional tuples.
     let mut _possiblepaths: PositionVectorf32 = Vec::new();
 
-    // Paths for rook.
-    iter_rook_path_step_analysis(x, y, |x, _y| *x += STEP, game, &mut _possiblepaths);
-    iter_rook_path_step_analysis(x, y, |x, _y| *x -= STEP, game, &mut _possiblepaths);
-    iter_rook_path_step_analysis(x, y, |_x, y| *y += STEP, game, &mut _possiblepaths);
-    iter_rook_path_step_analysis(x, y, |_x, y| *y -= STEP, game, &mut _possiblepaths);
+    // Along positive x-axis.
+    iter_rook_path_step_analysis(x, y, |_x, _y| *_x += STEP, game, &mut _possiblepaths);
+    // Along negative x-axis.
+    iter_rook_path_step_analysis(x, y, |_x, _y| *_x -= STEP, game, &mut _possiblepaths);
+    // Along positive y-axis.
+    iter_rook_path_step_analysis(x, y, |_x, _y| *_y += STEP, game, &mut _possiblepaths);
+    // Along negative y-axis.
+    iter_rook_path_step_analysis(x, y, |_x, _y| *_y -= STEP, game, &mut _possiblepaths);
 
     // Return.
     _possiblepaths
@@ -43,16 +46,20 @@ fn iter_rook_path_step_analysis<F>(
     game:           &Game,
     _possiblepaths: &mut PositionVectorf32,
 ) where
-    F: Fn(&mut f32, &mut f32),
+        F: Fn(&mut f32, &mut f32),
 {
 
-   loop {
+    // Loop over a direction until we hit the same team player, enemy player and add that to path
+    // or go out of bounds.
+    loop {
 
+        // Step.
         step(&mut _x, &mut _y);
 
         if !position_in_board_bounds(_x, _y)
         || game.current_player().piece_index_from_xy_f32(_x, _y).is_ok() { break }
 
+        // Push.
         _possiblepaths.push((_x, _y));
 
         if game.check_piece_in_pos(_x, _y) { break }

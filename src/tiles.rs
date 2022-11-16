@@ -15,7 +15,7 @@ use fort_builders::{
 };
 
 /// Holds the breadth size of the board.
-const BREADTH: i32 = 2;
+pub(crate) const BREADTH: i32 = 2;
 
 /// Struct to hold the tile texture atlas.
 struct TileSheet(Handle<TextureAtlas>);
@@ -92,10 +92,9 @@ impl TileSpriteSheetIndex {
 /// To decide if a position should have a dark or a light tile. Used to alternate tiles for a
 /// chess pattern.
 ///
-/// Returns [`TileSpriteSheetIndex::Dark'] or [`TileSpriteSheetIndex::Light`] tile depending on the
+/// Returns [`TileSpriteSheetIndex::Dark`] or [`TileSpriteSheetIndex::Light`] tile depending on the
 /// tiles. Returns Dark for even tiles and Light for odd tiles until the x value is less than zero.
-/// After `x > 0`, the tiles are then switched with even as Light for even and Dark for odd tiles.
-/// That is the use of the "XOR" if you were wondering.
+/// After `x > 0`, the tiles are then switched with Light for even and Dark for odd tiles.
 fn dark_or_light_tile_index(x: i32, y: i32) -> TileSpriteSheetIndex {
 
    TileSpriteSheetIndex::from_usize({
@@ -161,10 +160,10 @@ fn draw_board(
                     let tile = spawn_tile(
                         &mut commands,
                         &tile,
-                        dark_or_light_tile_index(x, y).as_usize(),
+                        dark_or_light_tile_index(x, y),
                         Vec3::new(
-                            decrement_if_positive(x) as f32 * RESOLUTION,
-                            y as f32 * RESOLUTION,
+                            decrement_if_positive(x)    as f32 * RESOLUTION,
+                            y                           as f32 * RESOLUTION,
                             ZAxisLevel::Second.as_f32(),
                         ),
                     );
@@ -209,7 +208,7 @@ fn draw_border(
                     let tile = spawn_tile(
                         &mut commands,
                         &tile,
-                        TileSpriteSheetIndex::Border.as_usize(),
+                        TileSpriteSheetIndex::Border,
                         Vec3::new(
                             decrement_if_positive(x)    as f32 * RESOLUTION,
                             y                           as f32 * RESOLUTION,
@@ -243,7 +242,7 @@ fn draw_fort(
             let tile = spawn_tile(
                 &mut commands,
                 &tile,
-                TileSpriteSheetIndex::FortOuter.as_usize(),
+                TileSpriteSheetIndex::FortOuter,
                 Vec3::new(
                     decrement_if_positive(x)    as f32 * RESOLUTION,
                     y                           as f32 * RESOLUTION,
@@ -262,10 +261,10 @@ fn draw_fort(
 
         ((-BREADTH + 1)..(BREADTH - 1)).for_each(|y| {
 
-            let tile = spawn_tile(
+            let tile = &spawn_tile(
                 &mut commands,
                 &tile,
-                TileSpriteSheetIndex::FortInner.as_usize(),
+                TileSpriteSheetIndex::FortInner,
                 Vec3::new(
                     decrement_if_positive(x)    as f32 * RESOLUTION,
                     y                           as f32 * RESOLUTION,
@@ -273,7 +272,7 @@ fn draw_fort(
                 ),
             );
 
-            commands.entity(tile).insert(Name::new("Fort Interior"));
+            commands.entity(*tile).insert(Name::new("Fort Interior"));
 
         })
 
@@ -320,18 +319,20 @@ fn load_tile(
 fn spawn_tile(
     commands:       &mut Commands,
     tile:           &TileSheet,
-    index:          usize,
+    index:          TileSpriteSheetIndex,
     translation:    Vec3,
 ) -> Entity {
-
-    let width  = TILESIZE.0 * RESOLUTION;
-    let height = TILESIZE.1 * RESOLUTION;
 
     commands
         .spawn_bundle(SpriteSheetBundle {
             sprite: TextureAtlasSprite {
-                index,
-                custom_size: Some(Vec2::new(width, height)),
+                index: index.as_usize(),
+                custom_size: Some(Vec2::new(
+                        // width.
+                        TILESIZE.0 * RESOLUTION,
+                        // height.
+                        TILESIZE.1 * RESOLUTION,
+                )),
                 ..default()
             },
             // Creates a copy of the texture everytime a tile is created.

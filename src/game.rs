@@ -15,11 +15,11 @@ use fort_builders::{
 };
 
 // Temporary holder for number of players.
-const PLAYERS: usize = 3;
-/// Highlight color to display the current player pieces.
-const HILITE_COLOR: Color = Color::rgba(0.6, 0.6, 0.6, 0.3);
+const PLAYERS:                  usize = 3;
 /// The width of the pieces sprite sheet.
 const PIECES_SPRITESHEET_WIDTH: usize = 5_usize;
+/// Highlight color to display the current player pieces.
+const HILITE_COLOR:             Color = Color::rgba(0.6, 0.6, 0.6, 0.3);
 
 /// The game Plugin that holds piece drawing information.
 pub(crate) struct GamePlugin;
@@ -156,9 +156,9 @@ fn clear_pieces(
 /// nothing but the number of chess piece types i.e. 5.
 fn draw_pieces(
     commands:   &mut Commands,
-    sprite:         &Res<PlayerSheet>,
-    game:           &ResMut<GameAsset>,
-    query:          &Query<Entity, With<Piece>>,
+    sprite:     &Res<PlayerSheet>,
+    game:       &ResMut<GameAsset>,
+    query:      &Query<Entity, With<Piece>>,
 ) {
 
     // Clean up.
@@ -170,17 +170,22 @@ fn draw_pieces(
         // For each piece.
         player.pieces.iter().for_each(|piece| {
 
-            let row = player.team.as_usize();
-            let col = piece.piece_type.as_usize();
-
-            let piece_pos_x = piece.position.x as f32 * RESOLUTION;
-            let piece_pos_y = piece.position.y as f32 * RESOLUTION;
-
             let sprite = spawn_piece(
                 commands,
                 sprite,
-                (row * PIECES_SPRITESHEET_WIDTH) + col,
-                Vec3::new(piece_pos_x, piece_pos_y, ZAxisLevel::Eight.as_f32()),
+                (
+                        // Row.
+                        player.team.as_usize()  * PIECES_SPRITESHEET_WIDTH
+                        // Column.
+                )   +   piece.piece_type.as_usize(),
+                Vec3::new(
+                    //piece_pos_x.
+                    piece.position.x as f32     *               RESOLUTION,
+                    //piece_pos_y.
+                    piece.position.y as f32     *               RESOLUTION,
+                    //Z level.
+                    ZAxisLevel::Eight.as_f32(),
+                ),
             );
 
             // Spawn.
@@ -213,20 +218,14 @@ fn clear_highlight(
 /// Iterating over the current active player and highlighting. The highlight size is [`TILESIZE`].
 fn highlight(
     commands:   &mut Commands,
-    game:           &ResMut<GameAsset>,
-    query:          &Query<Entity, With<Highlight>>,
+    game:       &ResMut<GameAsset>,
+    query:      &Query<Entity, With<Highlight>>,
 ) {
 
     // Clean up.
     clear_highlight(commands, query);
 
-    let width   = TILESIZE.0 * RESOLUTION;
-    let height  = TILESIZE.1 * RESOLUTION;
-
     for piece in game.get().current_player().pieces() {
-
-        let piece_pos_x = piece.position.x as f32 * RESOLUTION;
-        let piece_pos_y = piece.position.y as f32 * RESOLUTION;
 
         // Spawn.
         commands
@@ -234,13 +233,21 @@ fn highlight(
             .insert_bundle(SpriteBundle {
                 sprite: Sprite {
                     color: HILITE_COLOR,
-                    custom_size: Some(Vec2::new(width, height)),
+                    custom_size: Some(Vec2::new(
+                            //width.
+                            TILESIZE.0          * RESOLUTION,
+                            //height.
+                            TILESIZE.1          * RESOLUTION,
+                    )),
                     ..default()
                 },
                 transform: Transform {
                     translation: Vec3::new(
-                        piece_pos_x,
-                        piece_pos_y,
+                        //piece_pos_x.
+                        piece.position.x as f32 * RESOLUTION,
+                        //piece_pos_y.
+                        piece.position.y as f32 * RESOLUTION,
+                        // Z Level.
                         ZAxisLevel::Fifth.as_f32(),
                     ),
                     ..default()
@@ -288,15 +295,17 @@ fn spawn_piece(
     translation:    Vec3,
 ) -> Entity {
 
-    let width  = TILESIZE.0 * RESOLUTION;
-    let height = TILESIZE.1 * RESOLUTION;
-
     // Spawn.
     commands
         .spawn_bundle(SpriteSheetBundle {
             sprite: TextureAtlasSprite {
                 index,
-                custom_size: Some(Vec2::new(width, height)),
+                custom_size: Some(Vec2::new(
+                        // width.
+                        TILESIZE.0 * RESOLUTION,
+                        // height.
+                        TILESIZE.1 * RESOLUTION,
+                )),
                 ..default()
             },
             texture_atlas: tile.0.clone(),

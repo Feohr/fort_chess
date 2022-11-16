@@ -8,6 +8,8 @@
 mod pawn;
 mod rook;
 mod knight;
+mod minister;
+mod queen;
 //----------//
 
 use crate::{listener::spawn_square_sprite, ZAxisLevel, RESOLUTION};
@@ -19,13 +21,14 @@ use fort_builders::{
 use pawn::analyse_pawn_paths;
 use rook::analyse_rook_paths;
 use knight::analyse_knight_paths;
+use minister::analyse_minister_paths;
+use queen::analyse_queen_paths;
 
-/// The color of the __PossiblePaths__ that do not have a piece.
+/// The color of the [`PossiblePaths`] that do not have a piece.
 const PPATHS_COLOR_EMPTY:   Color   = Color::rgb(0.9, 0.9, 0.6);
-/// The color of __PossiblePaths__ that have a piece.
-const PPATHS_COLOR_PIECE:   Color   = Color::ORANGE_RED;
-/// The step size which just holds 1.0 as the value. Not necessary but I do a lot of unnecessary
-/// stuff.
+/// The color of [`PossiblePaths`] that have a piece.
+const PPATHS_COLOR_PIECE:   Color   = Color::PURPLE;
+/// The step size just holds 1.0 as the value. Not necessary but I do a lot of unnecessary stuff.
 const STEP:                 f32     = 1.0;
 
 /// Type to hold a vector of tuple with `f32` x and y positions.
@@ -53,16 +56,17 @@ pub(crate) fn possible_piece_paths(
 
     // fetches an appropriate closure to perform over a certain piece so that we can get the
     // respective possible paths.
-    let path_analysis = match piece_type {
-        PieceType::Rook     => analyse_rook_paths,
-        PieceType::Pawn     => analyse_pawn_paths,
-        PieceType::Knight   => analyse_knight_paths,
-        // Empty closure placeholder.
-        _ => |_x: f32, _y: f32, _g: &Game| Vec::new(),
-    };
+    (
+        match piece_type {
+            PieceType::Rook     => analyse_rook_paths,
+            PieceType::Pawn     => analyse_pawn_paths,
+            PieceType::Knight   => analyse_knight_paths,
+            PieceType::Minister => analyse_minister_paths,
+            PieceType::Queen    => analyse_queen_paths,
+        }
 
-    // Returning the collected paths vec.
-    path_analysis(x, y, game)
+    // executing the function.
+    )(x, y, game)
 
 }
 /*-----------------------------------------------------------------------------------------------*/
@@ -114,12 +118,17 @@ pub(crate) fn draw_possible_piece_paths(
     // Iterate over paths and draw a red tile where there is a piece else draw a yellow piece.
     for step in paths.get().iter() {
 
-        let (step_x, step_y) = (step.0 * RESOLUTION, step.1 * RESOLUTION);
-
         let step_block = spawn_square_sprite(
             commands,
-            piece_in_step_detection(step.0, step.1, game),
-            Vec3::new(step_x, step_y, ZAxisLevel::Seventh.as_f32()),
+            piece_in_step_detection(step, game),
+            Vec3::new(
+                // step_x.
+                step.0 * RESOLUTION,
+                // step_y.
+                step.1 * RESOLUTION,
+                // Z leve.
+                ZAxisLevel::Seventh.as_f32(),
+            ),
         );
 
         commands.entity(step_block).insert(Paths);
@@ -160,9 +169,9 @@ pub(crate) fn update_possible_piece_paths(
 
 /// To detect if a position has a piece and return the appropriate color. For position with pieces
 /// it returns Red else Yellow.
-fn piece_in_step_detection(x: f32, y: f32, game: &Game) -> Color {
+fn piece_in_step_detection(step: &(f32, f32), game: &Game) -> Color {
 
-    match game.check_piece_in_pos(x, y) {
+    match game.check_piece_in_pos(step.0, step.1) {
         true  => PPATHS_COLOR_PIECE,
         false => PPATHS_COLOR_EMPTY,
     }
