@@ -4,6 +4,7 @@
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
 use crate::board::Quadrant;
+use crate::pieces::ENEMY_COUNT;
 
 /// Type to abstract the position tuple.
 type PositionVectori32 = Vec<(i32, i32)>;
@@ -76,14 +77,14 @@ fn enemy_type() -> PieceTypeVectoru8 {
 /// [`PieceType`]: crate::pieces::PieceType
 fn defender_type(quadrant_active: usize) -> PieceTypeVectoru8 {
 
-    (1..quadrant_active)
+    if quadrant_active > 4_usize {
+        panic!("There can't be more than 4 players. index: {quadrant_active}.")
+    }
+
+    vec![4, 1, 2, 0, 3, 3, 3, 3]
         .into_iter()
-        .flat_map(|i| match i {
-            1 => vec![4, 1, 2, 0, 3, 3, 3, 3],
-            2 => vec![4, 2, 1, 4, 3, 3, 3, 3],
-            3 => vec![0, 1, 2, 4, 3, 3, 3, 3],
-            _ => panic!("There can't be more than 4 players. index: {i}."),
-        })
+        .cycle()
+        .take(ENEMY_COUNT * quadrant_active)
         .collect::<PieceTypeVectoru8>()
 
 }
@@ -109,19 +110,17 @@ pub(crate) fn piece_type(is_defender: bool, quadrant_active: usize) -> PieceType
 ///
 /// [`Position`]: crate::pieces::Position
 pub(crate) fn position_from_quadrant(
-    is_defender:        bool,
+    // is_defender:        bool,
     quadrant:           &Quadrant,
     quadrant_active:    usize,
 ) -> PositionVectori32 {
 
-    match is_defender {
-        true  => defender_position(quadrant_active),
-        false => match quadrant {
-            Quadrant::Q1 => enemy_position_q1(),
-            Quadrant::Q2 => enemy_position_q2(),
-            Quadrant::Q3 => enemy_position_q3(),
-        },
-    }
+        match quadrant {
+            Quadrant::Q1     => enemy_position_q1(),
+            Quadrant::Q2     => enemy_position_q2(),
+            Quadrant::Q3     => enemy_position_q3(),
+            Quadrant::NoQuad => defender_position(quadrant_active),
+        }
 
 }
 /*-----------------------------------------------------------------------------------------------*/

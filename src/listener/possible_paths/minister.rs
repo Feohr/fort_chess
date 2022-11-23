@@ -5,7 +5,7 @@
 
 use fort_builders::{
     board::{position_in_q1_bounds, position_in_q2_bounds, position_in_q3_bounds, Quadrant},
-    game::Game,
+    game::{Game, GameAction},
     player::PlayerAction,
 };
 use crate::{
@@ -69,14 +69,17 @@ pub(crate) fn analyse_minister_paths(x: f32, y: f32, game: &Game) -> PositionVec
                         Quadrant::Q1 => position_in_q1_bounds,
                         Quadrant::Q2 => position_in_q2_bounds,
                         Quadrant::Q3 => position_in_q3_bounds,
+                        _            => panic!(
+                            "Cannot analyse minister paths for pieces in \'NoQuad\' Quadrant."
+                        ),
                     })(*_x, *_y))
                     .collect::<PositionVectorf32>()
 
 }
 
 fn minister_step_analysis<F>(
-    x:          f32,
-    y:          f32,
+    x:              f32,
+    y:              f32,
     step:           F,
     game:           &Game,
     _possiblepaths: &mut PositionVectorf32,

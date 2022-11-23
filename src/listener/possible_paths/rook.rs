@@ -6,7 +6,7 @@
 
 use fort_builders::{
     board::position_in_board_bounds,
-    game::Game,
+    game::{Game, GameAction},
     player::PlayerAction,
 };
 use crate::listener::possible_paths::{STEP, PositionVectorf32};

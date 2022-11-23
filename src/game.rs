@@ -5,42 +5,92 @@
 //! It also is responsible for drawing the pieces to the board.
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
-use crate::{RESOLUTION, SPRITESIZE, TILESIZE, ZAxisLevel};
-use bevy::prelude::*;
+mod draw_piece;
+mod highlight;
+mod player_name;
+
+use crate::SPRITESIZE;
+use bevy::{
+    prelude::{
+        Entity, With, Commands, Res, ResMut, Component, Vec2, Handle, TextureAtlas, StartupStage,
+        App, Assets, AssetServer, Plugin, Query,
+    }
+};
 use fort_builders::{
-    board::Quadrant,
+    board::{Quadrant, q1_outer_bound_pos, q2_outer_bound_pos, q3_outer_bound_pos},
     dice_roll,
-    game::Game,
+    game::{Game, GameAction},
     player::{Player, Team},
 };
+use draw_piece::draw_pieces;
+use draw_piece::Piece;
+use highlight::highlight_active_pieces;
+use highlight::Highlight;
+use player_name::display_player_names;
+use player_name::PlayerName;
+use player_name::PlayerNameBoxVec;
 
 // Temporary holder for number of players.
-const PLAYERS:                  usize = 3;
-/// The width of the pieces sprite sheet.
-const PIECES_SPRITESHEET_WIDTH: usize = 5_usize;
-/// Highlight color to display the current player pieces.
-const HILITE_COLOR:             Color = Color::rgba(0.6, 0.6, 0.6, 0.3);
+const PLAYER_COUNT: usize = 4;
 
 /// The game Plugin that holds piece drawing information.
 pub(crate) struct GamePlugin;
 
 /// To handle [`Player`] texture.
 #[derive(Component)]
-struct PlayerSheet(Handle<TextureAtlas>);
-
-/// To distinguish piece entity.
-#[derive(Component)]
-struct Piece;
-
-/// To distinguish highlight entity.
-#[derive(Component)]
-struct Highlight;
+pub(crate) struct PlayerSheet(Handle<TextureAtlas>);
 
 /// To hold [`Game`] resource.
 #[derive(Debug, Component)]
 pub(crate) struct GameAsset(pub(crate) Game);
 
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
+
+/*████Plugin for GamePlugin████*/
+/*-----------------------------------------------------------------------------------------------*/
+impl Plugin for GamePlugin {
+
+    /// [`Plugin`] implementation for [`GamePlugin`].
+    fn build(&self, app: &mut App) {
+        app .add_startup_system_to_stage(StartupStage::PreStartup, init_game                )
+            .add_startup_system_to_stage(StartupStage::PreStartup, load_sprite              )
+            .add_startup_system_to_stage(StartupStage::Startup,    init_player_name_box_vec )
+            .add_system(                                           game_update_tick         );
+    }
+
+}
+/*-----------------------------------------------------------------------------------------------*/
+
+/*████Init Player Name Box████*/
+/*-----------------------------------------------------------------------------------------------*/
+fn init_player_name_box_vec(
+    mut commands:   Commands,
+    game:           Res<GameAsset>,
+) {
+
+    let mut player_name = PlayerNameBoxVec::new();
+    let mut outer_check_fn_iter = [
+        q1_outer_bound_pos,
+        q2_outer_bound_pos,
+        q3_outer_bound_pos,
+    ].into_iter();
+
+    for player in game.get().players.iter() {
+
+        let (x, y) = if player.is_defender {
+            (-1, 0)
+        } else {
+            (outer_check_fn_iter.next().unwrap())()
+        };
+
+        player_name.push(player.name.clone(), player.team, x, y);
+
+    }
+
+    commands.insert_resource(player_name);
+
+}
+/*-----------------------------------------------------------------------------------------------*/
 
 /*████GameAsset████*/
 /*-----------------------------------------------------------------------------------------------*/
@@ -55,38 +105,26 @@ impl GameAsset {
 }
 /*-----------------------------------------------------------------------------------------------*/
 
-/*████Plugin for GamePlugin████*/
-/*-----------------------------------------------------------------------------------------------*/
-impl Plugin for GamePlugin {
-
-    /// [`Plugin`] implementation for [`GamePlugin`].
-    fn build(&self, app: &mut App) {
-        app .add_startup_system_to_stage(StartupStage::Startup, init_game   )
-            .add_startup_system_to_stage(StartupStage::Startup, load_sprite )
-            .add_system(                                        gametick    );
-    }
-
-}
-/*-----------------------------------------------------------------------------------------------*/
-
 /*████Game████*/
 /*-----------------------------------------------------------------------------------------------*/
 /// Initial game creation. In future, this will be handled a bit differently to facilitate variable
 /// game players.
 fn init_game(mut commands: Commands) {
 
-    let roll = (dice_roll() % 3_usize) % PLAYERS;
+    let dice_roll = (dice_roll() % 3_usize) % PLAYER_COUNT;
+    let mut quadrant = [Quadrant::Q1, Quadrant::Q2, Quadrant::Q3].into_iter();
 
     commands.insert_resource(dbg!(GameAsset(Game::init(
-        (0..PLAYERS)
+        (usize::MIN..PLAYER_COUNT)
             .into_iter()
-            .map(|i| {
+            .map(|index| {
+                let is_defender = dice_roll == index;
                 Player::from(
-                    format!("player {}", i + 1),
-                    Team::from_index(i).unwrap(),
-                    roll == i,
-                    PLAYERS,
-                    Quadrant::from_index(calcq(i, roll)).unwrap(),
+                    format!("Mohd Rehaan{}", index + 1_usize),
+                    Team::from_index(index).unwrap(),
+                    is_defender,
+                    PLAYER_COUNT,
+                    if is_defender { Quadrant::NoQuad } else { quadrant.next().unwrap() },
                 )
                 .unwrap()
             })
@@ -97,165 +135,43 @@ fn init_game(mut commands: Commands) {
 
 /// Runs every frame of the game to check if the board needs to update graphics. Draws pieces as
 /// well as highlights.
-fn gametick(
+fn game_update_tick(
     mut commands:   Commands,
     mut game:       ResMut<GameAsset>,
+    asset:          Res<AssetServer>,
     sprite:         Res<PlayerSheet>,
+    mut pname:      ResMut<PlayerNameBoxVec>,
     dquery:         Query<Entity, With<Piece>>,
     hquery:         Query<Entity, With<Highlight>>,
+    pnquery:        Query<Entity, With<PlayerName>>,
 ) {
 
     // If no need for update, return.
     if !game.get().update { return }
 
-    draw_pieces(&mut commands, &sprite, &game, &dquery);
-    highlight(  &mut commands,          &game, &hquery);
+    clean_up_lost_players(game.get_mut(), &mut pname);
+
+    draw_pieces(            &mut commands, &sprite, &game, &dquery);
+    highlight_active_pieces(&mut commands, &game,          &hquery);
+    display_player_names(   &mut commands, &pname,         &pnquery, &asset);
 
     // Setting the update as false to put latch back.
     game.get_mut().set_update_false();
 
 }
 
-/// Function to map quadrants to the player correctly ignoring the defender quadrant.
-// The whole recurring theme seems to be that I am not satisfied by the logic/implementation of
-// the function as a whole. I really wish I could come up with a more clever way of working around
-// this problem.
-fn calcq(i: usize, roll: usize) -> usize {
-
-    match i {
-        i if i <= roll => i,
-        i if i > roll => (i - 1) % 3,
-        _ => panic!("Unexpected error when matching i and roll ({i}, {roll})."),
-    }
-
-}
-
-/*-----------------------------------------------------------------------------------------------*/
-
-/*████Piece████*/
-/*-----------------------------------------------------------------------------------------------*/
-/// To clear all the pieces in a scene. Iterate over entity with [`Piece`] component and despawn
-/// them.
-fn clear_pieces(
-    commands:   &mut Commands,
-    query:      &Query<Entity, With<Piece>>,
+/// Looks for players and kills them at every iteration.
+fn clean_up_lost_players(
+    game:   &mut Game,
+    pname:  &mut ResMut<PlayerNameBoxVec>,
 ) {
 
-    for pieces in query.iter() {
-        commands.entity(pieces).despawn();
-    }
+    let _dead = game.hunt();
 
-}
+    if !_dead.is_empty() { dbg!(&_dead); }
 
-/// call to draw the player [`Piece`]s.
-///
-/// Iterating over each player and drawing all the pieces once again. *row* and *col* correspond
-/// to the player sheet resource. Hence each position along the columns correspond to the piece
-/// type which is added to offset to it. The team corresponds to the rows and it is multiplied
-/// with the spritesheet width to jump between the rows. The constant PIECE_SPRITESHEET_WIDTH is
-/// nothing but the number of chess piece types i.e. 5.
-fn draw_pieces(
-    commands:   &mut Commands,
-    sprite:     &Res<PlayerSheet>,
-    game:       &ResMut<GameAsset>,
-    query:      &Query<Entity, With<Piece>>,
-) {
-
-    // Clean up.
-    clear_pieces(commands, query);
-
-    // For each player.
-    game.get().players.iter().for_each(|player| {
-
-        // For each piece.
-        player.pieces.iter().for_each(|piece| {
-
-            let sprite = spawn_piece(
-                commands,
-                sprite,
-                (
-                        // Row.
-                        player.team.as_usize()  * PIECES_SPRITESHEET_WIDTH
-                        // Column.
-                )   +   piece.piece_type.as_usize(),
-                Vec3::new(
-                    //piece_pos_x.
-                    piece.position.x as f32     *               RESOLUTION,
-                    //piece_pos_y.
-                    piece.position.y as f32     *               RESOLUTION,
-                    //Z level.
-                    ZAxisLevel::Eight.as_f32(),
-                ),
-            );
-
-            // Spawn.
-            commands.entity(sprite).insert(Name::from("Piece")).insert(Piece);
-
-        })
-
-    });
-
-}
-/*-----------------------------------------------------------------------------------------------*/
-
-/*████Highlight████*/
-/*-----------------------------------------------------------------------------------------------*/
-/// To clear all the highlight entities from the scene.
-fn clear_highlight(
-    commands:   &mut Commands,
-    query:      &Query<Entity, With<Highlight>>,
-) {
-
-    // Iterates over Highlight entities and despawns them.
-    for blocks in query.iter() {
-        commands.entity(blocks).despawn();
-    }
-
-}
-
-/// To Draw highlight over the current player [`Piece`].
-///
-/// Iterating over the current active player and highlighting. The highlight size is [`TILESIZE`].
-fn highlight(
-    commands:   &mut Commands,
-    game:       &ResMut<GameAsset>,
-    query:      &Query<Entity, With<Highlight>>,
-) {
-
-    // Clean up.
-    clear_highlight(commands, query);
-
-    for piece in game.get().current_player().pieces() {
-
-        // Spawn.
-        commands
-            .spawn()
-            .insert_bundle(SpriteBundle {
-                sprite: Sprite {
-                    color: HILITE_COLOR,
-                    custom_size: Some(Vec2::new(
-                            //width.
-                            TILESIZE.0          * RESOLUTION,
-                            //height.
-                            TILESIZE.1          * RESOLUTION,
-                    )),
-                    ..default()
-                },
-                transform: Transform {
-                    translation: Vec3::new(
-                        //piece_pos_x.
-                        piece.position.x as f32 * RESOLUTION,
-                        //piece_pos_y.
-                        piece.position.y as f32 * RESOLUTION,
-                        // Z Level.
-                        ZAxisLevel::Fifth.as_f32(),
-                    ),
-                    ..default()
-                },
-                ..default()
-            })
-            .insert(Highlight);
-
+    for player in _dead.into_iter() {
+        pname.pop(player.team);
     }
 
 }
@@ -284,38 +200,6 @@ fn load_sprite(
             Vec2::splat(0.0),
         ),
     )));
-
-}
-
-/// Simple helper function to spawn [`Piece`] sprites. Sprite size is [`TILESIZE`].
-fn spawn_piece(
-    commands:       &mut Commands,
-    tile:           &PlayerSheet,
-    index:          usize,
-    translation:    Vec3,
-) -> Entity {
-
-    // Spawn.
-    commands
-        .spawn_bundle(SpriteSheetBundle {
-            sprite: TextureAtlasSprite {
-                index,
-                custom_size: Some(Vec2::new(
-                        // width.
-                        TILESIZE.0 * RESOLUTION,
-                        // height.
-                        TILESIZE.1 * RESOLUTION,
-                )),
-                ..default()
-            },
-            texture_atlas: tile.0.clone(),
-            transform: Transform {
-                translation,
-                ..default()
-            },
-            ..default()
-        })
-        .id()
 
 }
 /*-----------------------------------------------------------------------------------------------*/

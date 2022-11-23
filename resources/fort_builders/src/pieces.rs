@@ -13,6 +13,9 @@ use piece_alignment::{piece_type, position_from_quadrant};
 use thiserror::Error;
 use std::fmt;
 
+const DEFND_COUNT: usize = 24_usize;
+const ENEMY_COUNT: usize =  8_usize;
+
 /// Piece error enum.
 #[derive(Error, Debug)]
 pub enum Error {
@@ -93,7 +96,9 @@ pub struct Piece {
 impl fmt::Debug for PieceType {
 
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+
         write!(f, "{:<8}", self.as_str())
+
     }
 
 }
@@ -153,12 +158,17 @@ impl PieceType {
 /*████Position████*/
 /*-----------------------------------------------------------------------------------------------*/
 impl fmt::Debug for Position {
+
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+
         write!(f, "({:2}, {:2})", self.x, self.y)
+
     }
+
 }
 
 impl Position {
+
     /// To create a [`Position`] struct.
     ///
     /// Takes the x and y value, checks if it is inside the board and creates the struct.
@@ -170,15 +180,20 @@ impl Position {
         Ok(Position { x, y })
 
     }
+
 }
 /*-----------------------------------------------------------------------------------------------*/
 
 /*████Piece████*/
 /*-----------------------------------------------------------------------------------------------*/
 impl fmt::Debug for Piece {
+
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+
         write!(f, "[{:?} {:?}]", self.piece_type, self.position)
+
     }
+
 }
 
 impl Piece {
@@ -203,17 +218,29 @@ impl Piece {
         quadrant_active:    usize,
     ) -> Result<Vec<Piece>, Error> {
 
-        Ok(
-            position_from_quadrant(is_defender, &quadrant, quadrant_active)
-                .into_iter()
-                .zip(piece_type(is_defender, quadrant_active))
-                .flat_map(|(position, piece_type)| -> Result<Piece, Error> {
-                    let piece =
-                        Piece::from(position.0, position.1, PieceType::from_index(piece_type)?)?;
-                    Ok(piece)
-                })
-                .collect::<Vec<Piece>>(),
-        )
+        // An empty piece vector.
+        let mut pieces: Vec<Piece> = Vec::new();
+
+        // Zipping through the hardcoded positions and creating pieces.
+        for ((pos1, pos2), piece_type) in   position_from_quadrant(
+                                                &quadrant,
+                                                quadrant_active,
+                                            )
+                                            .into_iter()
+                                            .zip(piece_type(is_defender, quadrant_active))
+        {
+
+            // Pushing to the vec. Throws error if invalid piece type or position.
+            pieces.push(
+                Piece::from(
+                    pos1, pos2, PieceType::from_index(piece_type)?,
+                )?
+            ); 
+
+        }
+
+        // Return.
+        Ok(pieces)
 
     }
 
@@ -239,10 +266,10 @@ impl Piece {
     pub(crate) fn is_valid_index(pos: usize, is_defender: bool) -> Result<(), Error> {
 
         match match is_defender {
-            true => pos < 24,
-            false => pos < 8,
+            true  => pos < DEFND_COUNT,
+            false => pos < ENEMY_COUNT,
         } {
-            true => Ok(()),
+            true  => Ok(()),
             false => Err(Error::IllegalPieceVectorIndex(pos)),
         }
 

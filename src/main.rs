@@ -40,7 +40,7 @@ use listener::ListenerPlugin;
 use tiles::TilePlugin;
 
 /// The resolution of the game.
-pub(crate) const RESOLUTION: f32       = 4.0 / 3.0;
+pub(crate) const RESOLUTION: f32       = (4.0 / 3.0) * 20.0;
 /// Size of a single sprite.
 pub(crate) const SPRITESIZE: f32       = 32.0;
 /// Size of the tile/ elements relative to the spritesize.

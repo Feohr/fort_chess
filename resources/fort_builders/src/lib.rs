@@ -4,6 +4,8 @@
 //! handles initialization, run and execution of the game.
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
+#![feature(drain_filter)]
+
 // Modules      //
 //--------------//
 pub mod board;

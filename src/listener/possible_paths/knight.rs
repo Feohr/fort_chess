@@ -76,6 +76,9 @@ pub(crate) fn analyse_knight_paths(x: f32, y: f32, game: &Game) -> PositionVecto
                         Quadrant::Q1 => position_in_q1_bounds,
                         Quadrant::Q2 => position_in_q2_bounds,
                         Quadrant::Q3 => position_in_q3_bounds,
+                        _            => panic!(
+                            "Cannot analyse paths for a piece in \'NoQuad\' Quadrant."
+                        ),
                     })(*_x, *_y))
                     .collect::<PositionVectorf32>()
 

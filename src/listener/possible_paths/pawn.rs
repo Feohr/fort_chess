@@ -5,8 +5,8 @@
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
 use fort_builders::{
-    board::Quadrant,
-    game::Game,
+    board::{Quadrant, position_in_board_bounds},
+    game::{Game, GameAction},
     player::PlayerAction,
 };
 use crate::listener::possible_paths::{STEP, PositionVectorf32};
@@ -51,11 +51,13 @@ pub(crate) fn analyse_pawn_paths(x: f32, y: f32, game: &Game) -> PositionVectorf
                         Quadrant::Q1 => | x: &mut f32, _y: &mut f32| *x -= STEP,
                         Quadrant::Q2 => |_x: &mut f32,  y: &mut f32| *y += STEP,
                         Quadrant::Q3 => | x: &mut f32, _y: &mut f32| *x += STEP,
+                        _            => panic!("Position of the piece must have a qudrant."),
                     },
         false =>    match quadrant {
                         Quadrant::Q1 => | x: &mut f32, _y: &mut f32| *x += STEP,
                         Quadrant::Q2 => |_x: &mut f32,  y: &mut f32| *y -= STEP,
                         Quadrant::Q3 => | x: &mut f32, _y: &mut f32| *x -= STEP,
+                        _            => panic!("Position of the piece must have a qudrant."),
                     },
     };
 
@@ -107,11 +109,17 @@ fn iter_pawn_path_step_analysis<F>(
             // -ve X-axis Diagonal check.
             pawn_possible_path_if_piece_at_pos(_x - STEP, _y, game, _possiblepaths);
         },
+        _                          => {
+
+            panic!("Cannot analyse steps for \'Noquad\' quadrant pieces.")
+
+        },
     }
 
     // Check if there is a piece in the current position and return of true.
     // This is the straight path part of the pawn.
-    if game.check_piece_in_pos(_x, _y) { return }
+    // Also checks if the position is out of board bounds.
+    if game.check_piece_in_pos(_x, _y) || !position_in_board_bounds(_x, _y) { return }
 
     _possiblepaths.push((_x, _y));
 

@@ -5,38 +5,20 @@
 
 /// Module to handle possible piece paths logic.
 mod possible_paths;
+mod click;
+mod hover;
 
-use crate::game::GameAsset;
-use crate::{RESOLUTION, TILEDRAW, ZAxisLevel};
+use crate::{RESOLUTION, TILEDRAW};
 use bevy::{
-    input::Input,
     prelude::{
-        default, Color, Commands, Component, CursorMoved, Entity, EventReader, MouseButton, Query,
-        Res, ResMut, Sprite, SpriteBundle, Transform, Vec2, Vec3, Windows, With, Plugin, App,
+        default, Color, Commands, Component, CursorMoved, Entity, EventReader, Res, ResMut, Sprite,
+        SpriteBundle, Transform, Vec2, Vec3, Windows, Plugin, App,
     },
 };
-use fort_builders::{
-    board::{cursor_in_window, position_in_board_bounds},
-    game::GameAction,
-    player::PlayerAction,
-};
-use possible_paths::{
-    Paths, draw_possible_piece_paths,
-    clear_possible_piece_paths, update_possible_piece_paths, PossiblePaths,
-};
-
-/// Displays the hover color.
-const PICKER_COLOR: Color = Color::SILVER;
-/// Displays the clicked piece color.
-const CLICKS_COLOR: Color = Color::DARK_GRAY;
-
-/// Picker component to recognise [`Picker`] enities.
-#[derive(Component)]
-struct Picker;
-
-/// Click component to recognise [`Click`] entities.
-#[derive(Component)]
-struct Click;
+use fort_builders::board::cursor_in_window;
+use possible_paths::PossiblePaths;
+use click::click_listener;
+use hover::hover_listener;
 
 /// To hold the current cursor position.
 #[derive(Component)]
@@ -84,177 +66,7 @@ fn initialize_listener_objects(mut commands: Commands) {
 }
 /*-----------------------------------------------------------------------------------------------*/
 
-/*████Listner Logic████*/
-/*-----------------------------------------------------------------------------------------------*/
-/// Clear picker function to cleanup [`Picker`] entities.
-fn clear_picker(
-    commands:   &mut Commands,
-    pickers:    &Query<Entity, With<Picker>>,
-) {
-
-    // Iterate over all the entities that have the Picker component and despawn them.
-    for picker in pickers.iter() {
-        commands.entity(picker).despawn();
-    }
-
-}
-
-/// To check wether a given hovered position is inside player pieces.
-///
-/// Return a bool value that is checked at each [`CursorMoved`] event. If the cursor position is
-/// not a piece position then there won't be a light grey block displayed.
-fn hovered_position_in_player_pieces(
-    x:      f32,
-    y:      f32,
-    game:   &ResMut<GameAsset>,
-) -> bool {
-
-    // Does a binary search to find the piece.
-    game.get().current_player().piece_index_from_xy_f32(x, y).is_ok()
-
-}
-
-/// To display a light gray block over the piece where the mouse is hovering.
-///
-/// Early return if not in player pieces or inside board bounds.
-fn hover_listener(
-    mut commands:   Commands,
-    pickers:        Query<Entity, With<Picker>>,
-    game:           ResMut<GameAsset>,
-    cursor:         Res<CursorPosition>,
-) {
-
-    // Clean up.
-    clear_picker(&mut commands, &pickers);
-
-    let (m_x, m_y) = (cursor.x, cursor.y);
-    if !position_in_board_bounds(m_x, m_y)                  { return }
-    if !hovered_position_in_player_pieces(m_x, m_y, &game)  { return }
-
-    // Creating a hover tile.
-    let hover = spawn_square_sprite(
-        &mut commands,
-        PICKER_COLOR,
-        Vec3::new(
-            m_x * RESOLUTION,
-            m_y * RESOLUTION,
-            ZAxisLevel::Sixth.as_f32(),
-        ),
-    );
-
-    // Spawn.
-    commands.entity(hover).insert(Picker);
-
-}
-/*-----------------------------------------------------------------------------------------------*/
-
-/*████ClickListener Logic████*/
-/*-----------------------------------------------------------------------------------------------*/
-/// To clear [`Click`] enitities.
-fn clear_click(
-    commands:   &mut Commands,
-    clicks:     &Query<Entity, With<Click>>,
-) {
-
-    // Iterate over all the entities that have the Click component and despawn them.
-    for click in clicks.iter() {
-        commands.entity(click).despawn();
-    }
-
-}
-
-/// To listen for clicks and display a dark grey block where the cursor was clicked.
-///
-/// Capturing the cursor position and checking if the mouse is within the board bounds. Only
-/// then do we start checking for the accurate position inside the player pieces. Doesn't
-/// proceed if left mouse button is not not clicked.
-fn click_listener(
-    mut commands:   Commands,
-    mut game:       ResMut<GameAsset>,
-    mut paths:      ResMut<PossiblePaths>,
-    click:          Res<Input<MouseButton>>,
-    clicks:         Query<Entity, With<Click>>,
-    cursor:         Res<CursorPosition>,
-    paths_query:    Query<Entity, With<Paths>>,
-) {
-
-    let (m_x, m_y) = (cursor.x, cursor.y);
-    if !position_in_board_bounds(m_x, m_y)
-    || !click.just_pressed(MouseButton::Left) { return }
-
-    // Clean up.
-    clear_click(&mut commands, &clicks);
-
-    match game.get().picked {
-
-        // If a piece is already picked.
-        true  => {
-
-            game.get_mut().set_picked_false();
-
-            if paths.contains(m_x, m_y) {
-
-                let pos = game.get().current_player().current_chosen_piece_index();
-
-                game.get_mut()                                              //  Moved for clarity
-                    .update_position(m_x as i32, m_y as i32, pos).unwrap();     game.get_mut()
-                    .next_player();
-
-            }
-
-            // Clean up.
-            clear_possible_piece_paths(&mut commands, &paths_query);
-            paths.clear();
-
-        },
-
-        // If piece not picked.
-        false => {
-
-            // if a piece is inside the player pieces then process else do nothing 
-            if let Ok(index) = {
-                game.get().current_player().piece_index_from_xy_f32(m_x, m_y)
-            } {
-
-                let click = spawn_square_sprite(
-                    &mut commands,
-                    CLICKS_COLOR,
-                    Vec3::new(
-                        m_x * RESOLUTION,
-                        m_y * RESOLUTION,
-                        ZAxisLevel::Seventh.as_f32(),
-                    ),
-                );
-
-                // Spawn.
-                commands.entity(click).insert(Click);
-
-                // Setting game current chosen piece for reference as well as setting picked as
-                // true.
-                game.get_mut()
-                    .current_player_mut()                                   //  Moved for clarity
-                    .set_current_chosen_piece(index).unwrap();                  game.get_mut()
-                    .set_picked_true();
-
-                // Update the possible paths.
-                update_possible_piece_paths(game.get(), &mut paths);
-                draw_possible_piece_paths(
-                    &mut commands,
-                    &paths,
-                    &paths_query,
-                    game.get()
-                );
-
-            }
-
-        },
-
-    }
-
-}
-/*-----------------------------------------------------------------------------------------------*/
-
-/*████Main Listener Function████*/
+/*████Listener Function████*/
 /*-----------------------------------------------------------------------------------------------*/
 /// To update cursor position at each frame.
 ///
@@ -282,6 +94,18 @@ pub(crate) fn update_cursor_position(
 
 }
 /*-----------------------------------------------------------------------------------------------*/
+
+// /*████PlayerSkipButton████*/
+// /*-----------------------------------------------------------------------------------------------*/
+// fn skip_turn_button(
+//     mut commands:   Commands,
+//     mut game:       ResMut<GameAsset>,
+// ) {
+// 
+// 
+// 
+// }
+// /*-----------------------------------------------------------------------------------------------*/
 
 /*████Spawn Sprites████*/
 /*-----------------------------------------------------------------------------------------------*/

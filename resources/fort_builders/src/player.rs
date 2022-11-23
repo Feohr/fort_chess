@@ -17,12 +17,12 @@ use thiserror::Error;
 pub enum Error {
     /// If the name is too long or too short.
     #[error(
-        "{} The name is either too long or too short. Ideal length is (3 < name < 255). \
+        "{} The name is either too long or too short. Ideal length is (2 < name < 15). \
         Your name length: {0} {}",
         RED,
         RST
     )]
-    InvalidNameLength(usize),
+    InvalidNameLength(String, usize),
 
     /// If the position referenced is not present in the pieces vector.
     #[error(
@@ -87,24 +87,21 @@ pub struct Player {
     /// Indicates if the player is a winner.
     pub is_winner: bool,
 
-    /// Indicates if the player is still playing.
-    pub is_play: bool,
-
     /// Current position of the player piece in the vec.
     pub chosen_piece_index: usize,
 }
 
 /// A public trait to handle [`Player`] actions.
 pub trait PlayerAction {
+
     fn piece_index_from_xy_i32(&self, x: i32, y: i32) -> Result<usize, usize>;
 
     fn piece_index_from_xy_f32(&self, x: f32, y: f32) -> Result<usize, usize>;
 
     fn kill_piece(&mut self, pos: usize) -> Result<Piece, Error>;
 
-    fn update_piece(&mut self, x: i32, y: i32, pos: usize) -> Result<bool, Error>;
+    fn update_piece(&mut self, x: i32, y: i32) -> Result<bool, Error>;
 
-    fn kill_self(&mut self);
 }
 
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
@@ -164,6 +161,7 @@ impl Player {
     /// Used to initialize a new player based on the inputs.
     ///
     /// Takes the name, team and is_defender boolean value to create a [`Player`] struct.
+    #[inline(always)]
     pub fn from(
         name:               String,
         team:               Team,
@@ -172,16 +170,12 @@ impl Player {
         quadrant:           Quadrant,
     ) -> Result<Self, Error> {
 
-        // Is the name size valid?
-        Self::is_name_len_valid(name.len())?;
-
         Ok(Player {
-            name,
+            name:   Player::validate_name(name)?,
             pieces: Piece::init_pieces(is_defender, quadrant, quadrant_active)?,
             team,
             is_defender,
             is_winner: false,
-            is_play: true,
             chosen_piece_index: 0_usize,
         }
         .to_sorted())
@@ -195,60 +189,23 @@ impl Player {
     /// `Idempotent function`
     pub fn set_winner(&mut self) { self.is_winner = true }
 
-    /// Set not winner function.
-    ///
-    /// Changes the `is_winner` state to `false`.
-    ///
-    /// `Idempotent function`
-    pub fn set_not_winner(&mut self) { self.is_winner = false }
-
-    /// To set player as playing.
-    ///
-    /// will set the `is_play` value to `true`.
-    ///
-    /// `Idempotent function`
-    pub fn set_play(&mut self) { self.is_play = true }
-
-    /// Player not play function.
-    ///
-    /// will set the `is_play`  value to `false`.
-    ///
-    /// `Idempotent function`
-    pub fn set_not_play(&mut self) { self.is_play = false }
-
-    /// To check wether a index is even possible.
-    pub(crate) fn is_valid_player_index(pos: usize) -> Result<(), Error> {
-
-        match pos < 4_usize {
-            true => Ok(()),
-            false => Err(Error::IllegalPlayerVectorIndex(pos)),
-        }
-
-    }
-
-    /// To check if the position is less than the vector length.
-    pub(crate) fn is_in_bounds(pos: usize, len: usize) -> Result<(), Error> {
-
-        match pos < len {
-            true => Ok(()),
-            false => Err(Error::PlayerVectorIndexOutOfBounds(pos, len)),
-        }
-
-    }
-
     /// For sorting the pieces.
     ///
     /// TimeSorts the pieces based on their position value.
     fn sort_pieces(&mut self) {
+
         self.pieces.sort_by(|a, b| a.position.cmp(&b.position))
+
     }
 
     /// To sort and return the object.
     ///
     /// Used when intializing the player struct.
     fn to_sorted(mut self) -> Self {
+
         self.sort_pieces();
         self
+
     }
 
     /// To get the piece reference in the current player.
@@ -259,37 +216,35 @@ impl Player {
 
     /// A simple function to check if the name length is too big or too small.
     ///
-    /// returns false if the name length is invalid. The constraints are 3 > name_length < 255.
-    /// else returns true.
-    fn is_name_len_valid(len: usize) -> Result<(), Error> {
+    /// returns false if the name length is invalid. The constraints are 2 < name_length < 15.
+    fn validate_name(name: String) -> Result<String, Error> {
 
-        match len > 2 && len < 50 {
-            true => Ok(()),
-            false => Err(Error::InvalidNameLength(len)),
+        match (3..15).contains(&name.len()) {
+            true  => Ok(name),
+            false => Err(Error::InvalidNameLength(name.clone(), name.len())),
         }
 
     }
 
     /// To set the chosen piece position in the vec.
-    pub fn set_current_chosen_piece(&mut self, chosen_piece_index: usize) -> Result<(), Error> {
+    pub fn set_chosen_piece_index(&mut self, chosen_piece_index: usize) {
 
-        Piece::is_in_bounds(self.chosen_piece_index, self.pieces.len())?;
-
-        Ok(self.chosen_piece_index = chosen_piece_index)
+        self.chosen_piece_index = chosen_piece_index
 
     }
 
-    /// To get the chosen piece position.
-    pub fn current_chosen_piece_index(&self) -> usize { self.chosen_piece_index }
-
     /// To get the chosen piece reference.
     pub fn current_chosen_piece(&self) -> &Piece {
+
         &self.pieces[self.chosen_piece_index]
+
     }
 
     /// To get the chosen piece mutable reference.
     pub fn current_chosen_piece_mut(&mut self) -> &mut Piece {
+
         &mut self.pieces[self.chosen_piece_index]
+
     }
 
 }
@@ -308,7 +263,9 @@ impl PlayerAction for Player {
     ///
     /// [`pieces`]: crate::pieces
     fn piece_index_from_xy_f32(&self, x: f32, y: f32) -> Result<usize, usize> {
+
         self.piece_index_from_xy_i32(x as i32, y as i32)
+
     }
 
     /// To get position of the piece that is clicked in relevance to the vec.
@@ -320,12 +277,14 @@ impl PlayerAction for Player {
     ///
     /// [`pieces`]: crate::pieces
     fn piece_index_from_xy_i32(&self, x: i32, y: i32) -> Result<usize, usize> {
+
         self.pieces.binary_search_by(|piece| {
             piece.position.cmp(&Position {
                 x,
                 y,
             })
         })
+
     }
 
     /// To kill a piece inside the [`Player`] struct.
@@ -348,7 +307,9 @@ impl PlayerAction for Player {
     ///
     /// Takes x and y coordinates to update the piece at the position that is provided.
     /// returns a result type in case of errors.
-    fn update_piece(&mut self, x: i32, y: i32, pos: usize) -> Result<bool, Error> {
+    fn update_piece(&mut self, x: i32, y: i32) -> Result<bool, Error> {
+
+        let pos = self.chosen_piece_index;
 
         // Is the index a valid index?
         Piece::is_valid_index(pos, self.is_defender)?;
@@ -356,22 +317,14 @@ impl PlayerAction for Player {
         match self.pieces[pos].position.x == x && self.pieces[pos].position.y == y {
             true => Ok(false),
             false => {
-                self.pieces .get_mut(pos)
-                            .expect("cannot update piece as the position is not valid: {pos}.")
-                            .update_pos(x, y)?;
+                self.pieces.get_mut(pos)
+                           .expect("cannot update piece as the position is not valid: {pos}.")
+                           .update_pos(x, y)?;
                 self.sort_pieces();
                 Ok(true)
             },
         }
 
-    }
-
-    /// To kill itself.
-    ///
-    /// Suicide.
-    fn kill_self(&mut self) {
-        self.set_not_play();
-        self.set_not_winner();
     }
 
 }

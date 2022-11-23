@@ -15,7 +15,7 @@ mod queen;
 use crate::{listener::spawn_square_sprite, ZAxisLevel, RESOLUTION};
 use bevy::prelude::{Color, Commands, Component, Entity, Query, ResMut, Vec3, With};
 use fort_builders::{
-    game::Game,
+    game::{Game, GameAction},
     pieces::PieceType,
 };
 use pawn::analyse_pawn_paths;
@@ -35,7 +35,7 @@ const STEP:                 f32     = 1.0;
 type PositionVectorf32 = Vec<(f32, f32)>;
 
 /// A resource to hold a vector with PossiblePaths of each piece.
-#[derive(Debug, Component)]
+#[derive(Debug)]
 pub struct PossiblePaths {
     pub(crate) paths: PositionVectorf32,
 }
