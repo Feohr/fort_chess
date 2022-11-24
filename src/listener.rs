@@ -3,10 +3,13 @@
 //! Handles the main IO interaction by the player.
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
-/// Module to handle possible piece paths logic.
+//      Module      //
+//------------------//
 mod possible_paths;
 mod click;
 mod hover;
+mod skip_turn;
+//------------------//
 
 use crate::{RESOLUTION, TILEDRAW};
 use bevy::{
@@ -18,7 +21,8 @@ use bevy::{
 use fort_builders::board::cursor_in_window;
 use possible_paths::PossiblePaths;
 use click::click_listener;
-use hover::hover_listener;
+use hover::{hover_listener, clear_picker};
+use skip_turn::SkipButtonPlugin;
 
 /// To hold the current cursor position.
 #[derive(Component)]
@@ -39,7 +43,9 @@ impl Plugin for ListenerPlugin {
     /// [`Plugin`] implementation for [`ListenerPlugin`].
     fn build(&self, app: &mut App) {
         app .add_startup_system(    initialize_listener_objects )
+                    .add_plugin(    SkipButtonPlugin            )
                     .add_system(    update_cursor_position      )
+                    .add_system(    clear_picker                )
                     .add_system(    hover_listener              )
                     .add_system(    click_listener              );
     }
@@ -95,21 +101,10 @@ pub(crate) fn update_cursor_position(
 }
 /*-----------------------------------------------------------------------------------------------*/
 
-// /*████PlayerSkipButton████*/
-// /*-----------------------------------------------------------------------------------------------*/
-// fn skip_turn_button(
-//     mut commands:   Commands,
-//     mut game:       ResMut<GameAsset>,
-// ) {
-// 
-// 
-// 
-// }
-// /*-----------------------------------------------------------------------------------------------*/
-
 /*████Spawn Sprites████*/
 /*-----------------------------------------------------------------------------------------------*/
 /// To spawn a square [`TILEDRAW`] size block.
+#[inline]
 fn spawn_square_sprite(
     commands:       &mut Commands,
     color:          Color,

@@ -59,7 +59,7 @@ pub enum Error {
 /// Used to distinguish players from team to team.
 /// Each player must have a unique team.
 /// Maximum of only four players can play at a time.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Eq, PartialEq, Ord, PartialOrd, Clone, Debug)]
 pub enum Team {
     Red,    // 0
     Blue,   // 1
@@ -113,6 +113,7 @@ impl Team {
     /// To get a team corresponding to the index value.
     ///
     /// Takes a usize and returns a [`Team`] struct.
+    #[inline(always)]
     pub fn from_index(index: usize) -> Result<Self, Error> {
 
         match index {
@@ -128,6 +129,7 @@ impl Team {
     /// To turn a team enum value to a String value.
     ///
     /// Takes [`Team`] enum value and converts is to [`String`] value.
+    #[inline(always)]
     pub fn teamstr_from_team<'a>(team: Team) -> &'a str {
 
         match team {
@@ -193,33 +195,32 @@ impl Player {
     ///
     /// TimeSorts the pieces based on their position value.
     fn sort_pieces(&mut self) {
-
         self.pieces.sort_by(|a, b| a.position.cmp(&b.position))
-
     }
 
     /// To sort and return the object.
     ///
     /// Used when intializing the player struct.
     fn to_sorted(mut self) -> Self {
-
         self.sort_pieces();
         self
-
     }
 
     /// To get the piece reference in the current player.
+    #[inline]
     pub fn pieces(&self) -> &Vec<Piece> { &self.pieces }
 
     /// To get the pieces mutable reference in the current player.
+    #[inline]
     pub fn pieces_mut(&mut self) -> &mut Vec<Piece> { &mut self.pieces }
 
     /// A simple function to check if the name length is too big or too small.
     ///
     /// returns false if the name length is invalid. The constraints are 2 < name_length < 15.
+    #[inline(always)]
     fn validate_name(name: String) -> Result<String, Error> {
 
-        match (3..15).contains(&name.len()) {
+        match (3_usize..15_usize).contains(&name.len()) {
             true  => Ok(name),
             false => Err(Error::InvalidNameLength(name.clone(), name.len())),
         }
@@ -227,24 +228,21 @@ impl Player {
     }
 
     /// To set the chosen piece position in the vec.
+    #[inline]
     pub fn set_chosen_piece_index(&mut self, chosen_piece_index: usize) {
-
         self.chosen_piece_index = chosen_piece_index
-
     }
 
     /// To get the chosen piece reference.
+    #[inline]
     pub fn current_chosen_piece(&self) -> &Piece {
-
         &self.pieces[self.chosen_piece_index]
-
     }
 
     /// To get the chosen piece mutable reference.
+    #[inline]
     pub fn current_chosen_piece_mut(&mut self) -> &mut Piece {
-
         &mut self.pieces[self.chosen_piece_index]
-
     }
 
 }
@@ -262,10 +260,9 @@ impl PlayerAction for Player {
     /// that location.
     ///
     /// [`pieces`]: crate::pieces
+    #[inline]
     fn piece_index_from_xy_f32(&self, x: f32, y: f32) -> Result<usize, usize> {
-
         self.piece_index_from_xy_i32(x as i32, y as i32)
-
     }
 
     /// To get position of the piece that is clicked in relevance to the vec.
@@ -276,6 +273,7 @@ impl PlayerAction for Player {
     /// that location.
     ///
     /// [`pieces`]: crate::pieces
+    #[inline]
     fn piece_index_from_xy_i32(&self, x: i32, y: i32) -> Result<usize, usize> {
 
         self.pieces.binary_search_by(|piece| {

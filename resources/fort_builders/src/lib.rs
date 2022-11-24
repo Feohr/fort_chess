@@ -20,9 +20,9 @@ use std::time::SystemTime;
 use thiserror::Error;
 
 // To print red output.
-pub const RED: &str = "\x1b[31;1m";
+pub const RED   : &str = "\x1b[31;1m";
 // To reset stdout. i.e. white.
-pub const RST: &str = "\x1b[0m";
+pub const RST   : &str = "\x1b[0m";
 
 /// Error enum to handle errors across the lib.
 #[derive(Error, Debug)]
@@ -67,11 +67,12 @@ pub enum Error {
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
 /// Takes a [`player::Player`] vector and checks for the number of winners.
+#[inline(always)]
 fn results(mut winners: Vec<Player>) -> Result<Option<Player>, Error> {
 
     match winners.len() {
-        0 => Ok(None), // Draw
-        1 => Ok(Some(winners.remove(0))),
+        0_usize => Ok(None), // Draw
+        1_usize => Ok(Some(winners.remove(0))),
         _ => Err(Error::MoreThanOneWinner(winners.len())),
     }
 
@@ -80,6 +81,7 @@ fn results(mut winners: Vec<Player>) -> Result<Option<Player>, Error> {
 /// To check the winner of the game and close it.
 ///
 /// Result enum with the winner player. If the return value is `None` then the game is a draw.
+#[inline(always)]
 pub fn exit(game: Game) -> Result<Option<Player>, Error> {
 
     let winners: Vec<Player> = game
@@ -97,6 +99,7 @@ pub fn exit(game: Game) -> Result<Option<Player>, Error> {
 /// Simulates a dice roll to get a value between 1 to 6. In exceptional cases you might be
 /// constantly getting 1 as return value. This will happen if the system date is set before
 /// 01/01/1970 (Unix Epoch). Please regain sanity and change it back to the current date.
+#[inline(always)]
 pub fn dice_roll() -> usize {
 
     match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {

@@ -15,7 +15,11 @@ use fort_builders::{
 };
 
 /// Holds the breadth size of the board.
-pub(crate) const BREADTH: i32 = 2;
+pub(crate)  const BREADTH       : i32     = 2_i32;
+/// To hold the row size of the tile pieces.
+            const TILE_TYPE_ROW : usize   = 5_usize;
+/// To hold the col size of the tile pieces.
+            const TILE_TYPE_COL : usize   = 1_usize;
 
 /// Struct to hold the tile texture atlas.
 struct TileSheet(Handle<TextureAtlas>);
@@ -60,6 +64,7 @@ impl Plugin for TilePlugin {
 impl TileSpriteSheetIndex {
 
     /// Returns the corresponding [`TileSpriteSheetIndex`] variant from usize.
+    #[inline(always)]
     fn from_usize(from: usize) -> Self {
 
         match from {
@@ -95,12 +100,13 @@ impl TileSpriteSheetIndex {
 /// Returns [`TileSpriteSheetIndex::Dark`] or [`TileSpriteSheetIndex::Light`] tile depending on the
 /// tiles. Returns Dark for even tiles and Light for odd tiles until the x value is less than zero.
 /// After `x > 0`, the tiles are then switched with Light for even and Dark for odd tiles.
+#[inline(always)]
 fn dark_or_light_tile_index(x: i32, y: i32) -> TileSpriteSheetIndex {
 
    TileSpriteSheetIndex::from_usize({
         (
 
-            match x > 0 {
+            match x > 0_i32 {
                 true  => TileSpriteSheetIndex::Light,
                 false => TileSpriteSheetIndex::Dark,
             }
@@ -108,7 +114,7 @@ fn dark_or_light_tile_index(x: i32, y: i32) -> TileSpriteSheetIndex {
 
         ) ^ (
 
-            match (x + y) % 2 == 0 {
+            match (x + y) % 2_i32 == 0_i32 {
                 true  => TileSpriteSheetIndex::Dark,
                 false => TileSpriteSheetIndex::Light,
             }
@@ -144,7 +150,7 @@ fn draw_board(
             // if x value as well as y value is greater than BREADTH, then a tile won't be
             // drawn as that will come outside the board bounds.
             // Y == 0 column is ignored to remove the extra zeroeth column.
-            if !{   y == 0
+            if !{   y == 0_i32
             ||  (
                     x.abs() <=  BREADTH
                 &&  y.abs() <=  BREADTH
@@ -155,7 +161,7 @@ fn draw_board(
             )}  {
 
                     // To get rid of the zeroeth line.
-                    if y > 0 { y -= 1 }
+                    if y > 0_i32 { y -= 1_i32 }
 
                     let tile = spawn_tile(
                         &mut commands,
@@ -192,18 +198,18 @@ fn draw_border(
 
             // Exactly the same as draw_board fucntion but with one column and row extra padding
             // for the border.
-            if !{   y == 0
+            if !{   y == 0_i32
             ||  (
                     x.abs() <=  BREADTH
                 &&  y.abs() <=  BREADTH
                 )
             ||  (
-                    x.abs() >   BREADTH + 1
-                &&  y.abs() >   BREADTH + 1
+                    x.abs() >   BREADTH + 1_i32
+                &&  y.abs() >   BREADTH + 1_i32
             )}  {
 
                     // To get rid of the zeroeth line.
-                    if y > 0 { y -= 1 }
+                    if y > 0_i32 { y -= 1_i32 }
 
                     let tile = spawn_tile(
                         &mut commands,
@@ -257,9 +263,9 @@ fn draw_fort(
     });
 
     // Draws the middle most part which is BREADTH - 1 size square.
-    ((-BREADTH + 1)..=(BREADTH - 1)).for_each(|x| {
+    ((-BREADTH + 1_i32)..=(BREADTH - 1_i32)).for_each(|x| {
 
-        ((-BREADTH + 1)..(BREADTH - 1)).for_each(|y| {
+        ((-BREADTH + 1_i32)..(BREADTH - 1_32)).for_each(|y| {
 
             let tile = &spawn_tile(
                 &mut commands,
@@ -297,10 +303,10 @@ fn load_tile(
         TextureAtlas::from_grid_with_padding(
             asset.load("spritesheet/tile_sheet.png"),
             Vec2::splat(SPRITESIZE),
-            5, // Rows.
-            1, // Columns.
-            Vec2::splat(0.0),
-            Vec2::splat(0.0),
+            TILE_TYPE_ROW, // Rows.
+            TILE_TYPE_COL, // Columns.
+            Vec2::splat(0_f32),
+            Vec2::splat(0_f32),
         ),
     )));
 
@@ -316,6 +322,7 @@ fn load_tile(
 /// 4.  Fort Interior.
 ///
 /// This is a helper function to spawn a tile from the given input.
+#[inline]
 fn spawn_tile(
     commands:       &mut Commands,
     tile:           &TileSheet,

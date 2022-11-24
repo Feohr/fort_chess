@@ -27,6 +27,7 @@ fn clear_pieces(
     query:      &Query<Entity, With<Piece>>,
 ) {
 
+    // Iterate over the Pieces and despawn them.
     for pieces in query.iter() {
         commands.entity(pieces).despawn();
     }

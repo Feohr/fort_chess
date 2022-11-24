@@ -14,13 +14,13 @@ use crate::listener::possible_paths::PositionVectorf32;
 mod circle {
 
     /// The circle's min angle value that holds `0`.
-    pub(crate) const ANGLE_START:   usize   = 0;
+    pub(crate) const ANGLE_START    : usize = 0_usize;
     /// To hold the value of `360`.
-    pub(crate) const ANGLE_END:     usize   = 360;
+    pub(crate) const ANGLE_END      : usize = 360_usize;
     /// To get the circle scan increment step.
-    pub(crate) const ANGLE_STEP:    usize   = 30;
+    pub(crate) const ANGLE_STEP     : usize = 30_usize;
     /// To get the radius of the circle scanner.
-    pub(crate) const RADIUS:        f32     = 2.0;
+    pub(crate) const RADIUS         : f32   = 2_f32;
 
 }
 

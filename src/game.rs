@@ -5,9 +5,12 @@
 //! It also is responsible for drawing the pieces to the board.
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
+//  Module   //
+//-----------//
 mod draw_piece;
 mod highlight;
 mod player_name;
+//-----------//
 
 use crate::SPRITESIZE;
 use bevy::{
@@ -31,7 +34,9 @@ use player_name::PlayerName;
 use player_name::PlayerNameBoxVec;
 
 // Temporary holder for number of players.
-const PLAYER_COUNT: usize = 4;
+const PLAYER_COUNT      : usize = 4_usize;
+/// To hold the number of types of pieces.
+const PIECE_TYPE_COUNT  : usize = 5_usize;
 
 /// The game Plugin that holds piece drawing information.
 pub(crate) struct GamePlugin;
@@ -78,7 +83,7 @@ fn init_player_name_box_vec(
     for player in game.get().players.iter() {
 
         let (x, y) = if player.is_defender {
-            (-1, 0)
+            (-1_i32, 0_i32)
         } else {
             (outer_check_fn_iter.next().unwrap())()
         };
@@ -193,11 +198,11 @@ fn load_sprite(
     commands.insert_resource(PlayerSheet(texture_atlases.add(
         TextureAtlas::from_grid_with_padding(
             asset.load("spritesheet/chess_pieces_sheet.png"),
-            Vec2::splat(SPRITESIZE * 2.0),
-            5, // Rows.
-            5, // Columns.
-            Vec2::splat(0.0),
-            Vec2::splat(0.0),
+            Vec2::splat(SPRITESIZE * 2_f32),
+            PIECE_TYPE_COUNT, // Rows.
+            PIECE_TYPE_COUNT, // Columns.
+            Vec2::splat(0_f32),
+            Vec2::splat(0_f32),
         ),
     )));
 

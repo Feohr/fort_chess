@@ -39,16 +39,17 @@ use game::GamePlugin;
 use listener::ListenerPlugin;
 use tiles::TilePlugin;
 
-/// The resolution of the game.
-pub(crate) const RESOLUTION: f32       = (4.0 / 3.0) * 20.0;
 /// Size of a single sprite.
-pub(crate) const SPRITESIZE: f32       = 32.0;
-/// Size of the tile/ elements relative to the spritesize.
-pub(crate) const TILESIZE: (f32, f32)  = (0.99, 0.99);
+pub(crate) const SPRITESIZE             : f32         = 32_f32;
+/// The resolution of the game.
+pub(crate) const RESOLUTION             : f32         = (4_f32 / 3_f32) * SPRITESIZE;
+/// Size of the tile/elements relative
+/// to the spritesize.
+pub(crate) const TILESIZE               : (f32, f32)  = (0.99_f32, 0.99_f32);
 /// Size of highlighting block.
-pub(crate) const TILEDRAW: (f32, f32)  = (0.89, 0.89);
+pub(crate) const TILEDRAW               : (f32, f32)  = (0.89_f32, 0.89_f32);
 /// The background screen color.
-           const BKGRND_COLOR: Color   = Color::rgb(0.8, 0.8, 0.7);
+           const BKGRND_COLOR           : Color       = Color::SILVER;
 
 /// To hold Z-axis layer values. Each name corresponds to it's value in `f32`.
 #[allow(unused)]

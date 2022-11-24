@@ -13,8 +13,10 @@ use piece_alignment::{piece_type, position_from_quadrant};
 use thiserror::Error;
 use std::fmt;
 
-const DEFND_COUNT: usize = 24_usize;
-const ENEMY_COUNT: usize =  8_usize;
+/// To hold the number of maximum enemies at a given point for `defender`.
+const DEFND_COUNT   : usize = 24_usize;
+/// To hold the number of maximum enemies at a given point for `non-defender`.
+const ENEMY_COUNT   : usize =  8_usize;
 
 /// Piece error enum.
 #[derive(Error, Debug)]
@@ -96,9 +98,7 @@ pub struct Piece {
 impl fmt::Debug for PieceType {
 
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-
         write!(f, "{:<8}", self.as_str())
-
     }
 
 }
@@ -106,6 +106,7 @@ impl fmt::Debug for PieceType {
 impl<'a> PieceType {
 
     /// Takes self reference and returns the corresponding [`PieceType`] value as a `&str`.
+    #[inline]
     fn as_str(&self) -> &'a str {
 
         match self {
@@ -126,20 +127,22 @@ impl PieceType {
     /// it.
     ///
     /// [`Result`]: std::result::Result
+    #[inline(always)]
     fn from_index(index: u8) -> Result<PieceType, Error> {
 
         match index {
-            0 => Ok(PieceType::Rook),
-            1 => Ok(PieceType::Minister),
-            2 => Ok(PieceType::Queen),
-            3 => Ok(PieceType::Pawn),
-            4 => Ok(PieceType::Knight),
+            0_u8 => Ok(PieceType::Rook),
+            1_u8 => Ok(PieceType::Minister),
+            2_u8 => Ok(PieceType::Queen),
+            3_u8 => Ok(PieceType::Pawn),
+            4_u8 => Ok(PieceType::Knight),
             _ => Err(Error::InvalidPieceTypeIndex(index)),
         }
 
     }
 
     /// Takes a self reference and returns a `usize` value that corresponds to the type.
+    #[inline]
     pub fn as_usize(&self) -> usize {
 
         match self {
@@ -160,9 +163,7 @@ impl PieceType {
 impl fmt::Debug for Position {
 
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-
         write!(f, "({:2}, {:2})", self.x, self.y)
-
     }
 
 }
@@ -172,7 +173,7 @@ impl Position {
     /// To create a [`Position`] struct.
     ///
     /// Takes the x and y value, checks if it is inside the board and creates the struct.
-    #[inline]
+    #[inline(always)]
     pub(crate) fn from(x: i32, y: i32) -> Result<Self, Error> {
 
         Piece::in_board_range(x, y)?;
@@ -189,9 +190,7 @@ impl Position {
 impl fmt::Debug for Piece {
 
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-
         write!(f, "[{:?} {:?}]", self.piece_type, self.position)
-
     }
 
 }
@@ -202,16 +201,16 @@ impl Piece {
     ///
     /// Takes the positional arguments along with type argument to return a new piece type.
     /// x and y correspond to the x and y coordinates. The piece argument corresponds to the type.
+    #[inline(always)]
     pub fn from(x: i32, y: i32, piece: PieceType) -> Result<Piece, Error> {
-
         Ok(Piece {
             piece_type: piece,
             position: Position::from(x, y)?,
         })
-
     }
 
     /// Function used to initialize the [`Piece`] vector.
+    #[inline]
     pub(crate) fn init_pieces(
         is_defender:        bool,
         quadrant:           Quadrant,
@@ -248,6 +247,7 @@ impl Piece {
     ///
     /// Takes x and y value and changes the position to the given value.
     /// Returns error if the new position is out of range.
+    #[inline]
     pub(crate) fn update_pos(&mut self, x: i32, y: i32) -> Result<(), Error> {
 
         Self::in_board_range(x, y)?;
@@ -263,6 +263,7 @@ impl Piece {
     ///
     /// There can be a maximum of 24 [`Piece`] inside a player pieces vec. Anything more than that
     /// is an error.
+    #[inline(always)]
     pub(crate) fn is_valid_index(pos: usize, is_defender: bool) -> Result<(), Error> {
 
         match match is_defender {
@@ -278,6 +279,7 @@ impl Piece {
     /// To check if the [`Position`] is inside the [`Piece`] vector bounds.
     ///
     /// takes a `usize` value and checks the vector size with the length of the pieces `vec`.
+    #[inline(always)]
     pub(crate) fn is_in_bounds(pos: usize, len: usize) -> Result<(), Error> {
 
         match pos < len {
@@ -290,6 +292,7 @@ impl Piece {
     /// To check if a [`Position`] value is inside the board.
     ///
     /// This function is used to check if a particular [`Position`] is inside the board.
+    #[inline(always)]
     pub(crate) fn in_board_range(x: i32, y: i32) -> Result<(), Error> {
 
         match (x <= X_MAX && x >= X_MIN) && (y <= Y_MAX && y >= Y_MIN) {

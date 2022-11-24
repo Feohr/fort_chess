@@ -16,32 +16,49 @@ use fort_builders::{
     pieces::Position,
 };
 
+/// To hold the data of each player box.
 #[derive(Debug, PartialOrd, Ord, Eq, PartialEq)]
 pub(crate) struct PlayerNameTextBox {
     name:       String,
-    team:       usize,
+    team:       Team,
     position:   Position,
 }
 
+/// Parent object to hold the [`PlayerNameTextBox`] vec.
 #[derive(Debug)]
 pub(crate) struct PlayerNameBoxVec {
     boxes: Vec<PlayerNameTextBox>,
 }
 
+/// To denote a player name box entity.
 #[derive(Component)]
 pub(crate) struct PlayerName;
 
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
+/// Function to convert [`Team`] to [`Color`].
+#[inline(always)]
+fn color_from_team(team: Team) -> Color {
+
+    match team {
+        Team::Red       => Color::RED,
+        Team::Green     => Color::GREEN,
+        Team::Blue      => Color::BLUE,
+        Team::Yellow    => Color::YELLOW,
+    }
+
+}
+
 /*████PlayerNameTextBox████*/
 /*-----------------------------------------------------------------------------------------------*/
-impl<'a> PlayerNameTextBox {
+impl PlayerNameTextBox {
 
+    /// To create a [`PlayerNameTextBox`].
     #[inline(always)]
     pub(crate) fn create(name: String, team: Team, x: i32, y: i32) -> Self {
         PlayerNameTextBox {
             name,
-            team: team.as_usize(),
+            team,
             position: Position { x, y },
         }
     }
@@ -53,6 +70,7 @@ impl<'a> PlayerNameTextBox {
 /*-----------------------------------------------------------------------------------------------*/
 impl PlayerNameBoxVec {
 
+    /// To initialize the [`PlayerNameBoxVec`] object.
     #[inline(always)]
     pub(crate) fn new() -> Self {
         PlayerNameBoxVec {
@@ -60,44 +78,20 @@ impl PlayerNameBoxVec {
         }
     }
 
+    /// To push a [`PlayerNameTextBox`] to the vec.
     pub(crate) fn push(&mut self, name: String, team: Team, x: i32, y: i32) {
-
         self.boxes.push(PlayerNameTextBox::create(name, team, x, y))
-
     }
 
+    /// To find and pop the [`PlayerNameTextBox`] with the corresponding team.
     pub(crate) fn pop(&mut self, team: Team) {
 
         if let Ok(pos) =    self.boxes
                                 .binary_search_by(|pname|
-                                        pname.team.cmp(&team.as_usize())
+                                        pname.team.cmp(&team)
                                 )
         {
             self.boxes.remove(pos);
-        }
-
-    }
-
-}
-/*-----------------------------------------------------------------------------------------------*/
-
-/*████AsColor For Team████*/
-/*-----------------------------------------------------------------------------------------------*/
-trait AsColor {
-
-    fn as_color(&self) -> Color;
-
-}
-
-impl AsColor for Team {
-
-    fn as_color(&self) -> Color {
-
-        match self {
-            Team::Red    => Color::RED,
-            Team::Blue   => Color::BLUE,
-            Team::Green  => Color::GREEN,
-            Team::Yellow => Color::YELLOW,
         }
 
     }
@@ -124,26 +118,26 @@ pub(crate) fn display_player_names(
     commands:       &mut Commands,
     player_names:   &ResMut<PlayerNameBoxVec>,
     query:          &Query<Entity, With<PlayerName>>,
-    asset:          &Res<AssetServer>,
+    asset_server:   &Res<AssetServer>,
 ) {
 
     // Clean up.
     clear_player_names(commands, query);
 
-    let font = asset.load("fonts/fira-sans.extrabold.ttf");
+    let font = asset_server.load("fonts/fira-sans.extrabold.ttf");
 
     for player in player_names.boxes.iter() {
 
         commands.spawn_bundle(Text2dBundle {
             text_2d_bounds: Text2dBounds {
-                size: Vec2::splat(2.0 * RESOLUTION),
+                size: Vec2::splat(2_f32 * RESOLUTION),
             },
             text: Text::from_section(
                 player.name.as_str(),
                 TextStyle {
                     font: font.clone(),
-                    font_size: 0.5 * RESOLUTION,
-                    color: Team::from_index(player.team).unwrap().as_color(),
+                    font_size: 0.5_f32 * RESOLUTION,
+                    color: color_from_team(player.team),
                 },
             )
             .with_alignment(TextAlignment::CENTER_LEFT),

@@ -89,9 +89,11 @@ impl Game {
     pub fn set_picked_false(&mut self) { self.picked = false }
 
     /// To return the current [`Player`] struct.
+    #[inline]
     pub fn current_player(&self) -> &Player { &self.players[self.turn] }
 
     /// Mutable reference to the player.
+    #[inline]
     pub fn current_player_mut(&mut self) -> &mut Player { &mut self.players[self.turn] }
 
 }
@@ -105,6 +107,7 @@ impl GameAction for Game {
     ///
     /// function that takes self reference and searches for pieces that need to be killed at each
     /// iteration.
+    #[inline]
     fn hunt(&mut self) -> Vec<Player> {
 
         self.players
@@ -121,14 +124,15 @@ impl GameAction for Game {
     /// Adds value to turn and changes to 0 if the value exceeds players vector len - 1.
     fn next_player(&mut self) {
 
-        match self.turn < self.players.len() - 1 {
-            true  => self.turn += 1,
-            false => self.turn = 0,
+        match self.turn < self.players.len() - 1_usize {
+            true  => self.turn += 1_usize,
+            false => self.turn = 0_usize,
         }
 
     }
 
     /// To update player pieces position every turn.
+    #[inline]
     fn update_position(&mut self, x: i32, y: i32) -> Result<(), Error> {
 
         // updating the piece.
@@ -146,6 +150,7 @@ impl GameAction for Game {
     /// Takes `f32` x and y position values and [`binary_search`] the position in the given pieces.
     ///
     /// [`binary_search`]: slice::binary_search
+    #[inline]
     fn check_piece_in_pos(&self, x: f32, y: f32) -> bool {
 
         !self.players
@@ -160,6 +165,7 @@ impl GameAction for Game {
     ///
     /// Takes x and y values and iterates over all the players in the games to decide which
     /// particular piece is present and removes that piece to return it.
+    #[inline]
     fn remove_piece_in_pos(&mut self, x: f32, y: f32) -> Result<Option<Piece>, Error> {
 
         Piece::in_board_range(x as i32, y as i32)?;

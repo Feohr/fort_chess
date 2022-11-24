@@ -88,7 +88,7 @@ fn minister_step_analysis<F>(
 {
 
     // Looping over the breadth of a single quadrant.
-    for breadth in 1..(BREADTH * 2) {
+    for breadth in 1..(BREADTH * 2_i32) {
 
         // To get the x and y for this step.
         let (x, y) = step(x, y, breadth);

@@ -14,21 +14,25 @@ type PieceTypeVectoru8 = Vec<u8>;
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
 /// To return the defender position inside a board based on the number of players.
+#[inline(always)]
 fn defender_position(quadrant_active: usize) -> PositionVectori32 {
 
     (1..quadrant_active)
         .into_iter()
-        .flat_map(|i| match i {
-            1 => vec![
-                (-3, -2), (-3, -1), (-3,  0), (-3,  1), (-4, -2), (-4, -1), (-4,  0), (-4,  1),
+        .flat_map(|index| match index {
+            1_usize => vec![
+                (-3_i32, -2_i32), (-3_i32, -1_i32), (-3_i32,  0_i32), (-3_i32,  1_i32),
+                (-4_i32, -2_i32), (-4_i32, -1_i32), (-4_i32,  0_i32), (-4_i32,  1_i32),
             ],
-            2 => vec![
-                (-2,  2), (-1,  2), ( 0,  2), ( 1,  2), (-2,  3), (-1,  3), ( 0,  3), ( 1,  3),
+            2_usize => vec![
+                (-2_i32,  2_i32), (-1_i32,  2_i32), ( 0_i32,  2_i32), ( 1_i32,  2_i32),
+                (-2_i32,  3_i32), (-1_i32,  3_i32), ( 0_i32,  3_i32), ( 1_i32,  3_i32),
             ],
-            3 => vec![
-                ( 2,  1), ( 2,  0), ( 2, -1), ( 2, -2), ( 3,  1), ( 3,  0), ( 3, -1), ( 3, -2),
+            3_usize => vec![
+                ( 2_i32,  1_i32), ( 2_i32,  0_i32), ( 2_i32, -1_i32), ( 2_i32, -2_i32),
+                ( 3_i32,  1_i32), ( 3_i32,  0_i32), ( 3_i32, -1_i32), ( 3_i32, -2_i32),
             ],
-            _ => panic!("There can't be more than 4 players. index: {}.", i),
+            _ => panic!("There can't be more than 4 players. index: {}.", index),
         })
         .collect::<PositionVectori32>()
 
@@ -36,28 +40,34 @@ fn defender_position(quadrant_active: usize) -> PositionVectori32 {
 
 // The enemies.
 /// Returns the non-defender player positions in [`Quadrant::Q1`].
+#[inline(always)]
 fn enemy_position_q1() -> PositionVectori32 {
 
     vec![
-        (-7, -2), (-7, -1), (-7,  0), (-7,  1), (-8, -2), (-8, -1), (-8,  0), (-8,  1),
+        (-7_i32, -2_i32), (-7_i32, -1_i32), (-7_i32,  0_i32), (-7_i32,  1_i32),
+        (-8_i32, -2_i32), (-8_i32, -1_i32), (-8_i32,  0_i32), (-8_i32,  1_i32),
     ]
 
 }
 
 /// Returns the non-defender player positions in [`Quadrant::Q2`].
+#[inline(always)]
 fn enemy_position_q2() -> PositionVectori32 {
 
     vec![
-        (-2,  6), (-1,  6), ( 0,  6), ( 1,  6), (-2,  7), (-1,  7), ( 0,  7), ( 1,  7),
+        (-2_i32,  6_i32), (-1_i32,  6_i32), ( 0_i32,  6_i32), ( 1_i32,  6_i32),
+        (-2_i32,  7_i32), (-1_i32,  7_i32), ( 0_i32,  7_i32), ( 1_i32,  7_i32),
     ]
 
 }
 
 /// Returns the non-defender player positions in [`Quadrant::Q3`].
+#[inline(always)]
 fn enemy_position_q3() -> PositionVectori32 {
 
     vec![
-        ( 6,  1), ( 6,  0), ( 6, -1), ( 6, -2), ( 7,  1), ( 7,  0), ( 7, -1), ( 7, -2),
+        ( 6_i32,  1_i32), ( 6_i32,  0_i32), ( 6_i32, -1_i32), ( 6_i32, -2_i32),
+        ( 7_i32,  1_i32), ( 7_i32,  0_i32), ( 7_i32, -1_i32), ( 7_i32, -2_i32),
     ]
 
 }
@@ -66,22 +76,24 @@ fn enemy_position_q3() -> PositionVectori32 {
 /// Returns `u8` value vector that corresponds to the [`PieceType`] value for non-defender type.
 ///
 /// [`PieceType`]: crate::pieces::PieceType
+#[inline(always)]
 fn enemy_type() -> PieceTypeVectoru8 {
 
-    vec![3, 3, 3, 3, 4, 3, 3, 4]
+    vec![3_u8, 3_u8, 3_u8, 3_u8, 4_u8, 3_u8, 3_u8, 4_u8]
 
 }
 
 /// Returns `u8` value vector that corresponds to the [`PieceType`] value for defender type.
 ///
 /// [`PieceType`]: crate::pieces::PieceType
+#[inline(always)]
 fn defender_type(quadrant_active: usize) -> PieceTypeVectoru8 {
 
     if quadrant_active > 4_usize {
         panic!("There can't be more than 4 players. index: {quadrant_active}.")
     }
 
-    vec![4, 1, 2, 0, 3, 3, 3, 3]
+    vec![4_u8, 1_u8, 2_u8, 0_u8, 3_u8, 3_u8, 3_u8, 3_u8]
         .into_iter()
         .cycle()
         .take(ENEMY_COUNT * quadrant_active)
@@ -96,6 +108,7 @@ fn defender_type(quadrant_active: usize) -> PieceTypeVectoru8 {
 /// qudrant the player resides in.
 ///
 /// [`PieceType`]: crate::pieces::PieceType
+#[inline(always)]
 pub(crate) fn piece_type(is_defender: bool, quadrant_active: usize) -> PieceTypeVectoru8 {
 
     match is_defender {
@@ -109,8 +122,8 @@ pub(crate) fn piece_type(is_defender: bool, quadrant_active: usize) -> PieceType
 /// quadrant the player resides in.
 ///
 /// [`Position`]: crate::pieces::Position
+#[inline(always)]
 pub(crate) fn position_from_quadrant(
-    // is_defender:        bool,
     quadrant:           &Quadrant,
     quadrant_active:    usize,
 ) -> PositionVectori32 {

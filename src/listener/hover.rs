@@ -24,9 +24,9 @@ pub(crate) struct Picker;
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
 /// Clear picker function to cleanup [`Picker`] entities.
-fn clear_picker(
-    commands:   &mut Commands,
-    pickers:    &Query<Entity, With<Picker>>,
+pub(crate) fn clear_picker(
+    mut commands:   Commands,
+    pickers:        Query<Entity, With<Picker>>,
 ) {
 
     // Iterate over all the entities that have the Picker component and despawn them.
@@ -40,6 +40,7 @@ fn clear_picker(
 ///
 /// Return a bool value that is checked at each [`CursorMoved`] event. If the cursor position is
 /// not a piece position then there won't be a light grey block displayed.
+#[inline]
 fn hovered_position_in_player_pieces(
     x:      f32,
     y:      f32,
@@ -56,13 +57,9 @@ fn hovered_position_in_player_pieces(
 /// Early return if not in player pieces or inside board bounds.
 pub(crate) fn hover_listener(
     mut commands:   Commands,
-    pickers:        Query<Entity, With<Picker>>,
     game:           ResMut<GameAsset>,
     cursor:         Res<CursorPosition>,
 ) {
-
-    // Clean up.
-    clear_picker(&mut commands, &pickers);
 
     let (m_x, m_y) = (cursor.x, cursor.y);
     if  !position_in_board_bounds(m_x, m_y)

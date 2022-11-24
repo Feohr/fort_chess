@@ -25,11 +25,11 @@ use minister::analyse_minister_paths;
 use queen::analyse_queen_paths;
 
 /// The color of the [`PossiblePaths`] that do not have a piece.
-const PPATHS_COLOR_EMPTY:   Color   = Color::rgb(0.9, 0.9, 0.6);
+const PPATHS_COLOR_EMPTY    : Color = Color::rgb(0.9_f32, 0.9_f32, 0.6_f32);
 /// The color of [`PossiblePaths`] that have a piece.
-const PPATHS_COLOR_PIECE:   Color   = Color::PURPLE;
+const PPATHS_COLOR_PIECE    : Color = Color::PURPLE;
 /// The step size just holds 1.0 as the value. Not necessary but I do a lot of unnecessary stuff.
-const STEP:                 f32     = 1.0;
+const STEP                  : f32   = 1_f32;
 
 /// Type to hold a vector of tuple with `f32` x and y positions.
 type PositionVectorf32 = Vec<(f32, f32)>;
@@ -47,6 +47,7 @@ pub struct Paths;
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
 /// To detect possible paths of a piece.
+#[inline]
 pub(crate) fn possible_piece_paths(
     x:          f32,
     y:          f32,
@@ -69,7 +70,6 @@ pub(crate) fn possible_piece_paths(
     )(x, y, game)
 
 }
-/*-----------------------------------------------------------------------------------------------*/
 
 /*████PossiblePaths████*/
 /*-----------------------------------------------------------------------------------------------*/
@@ -169,6 +169,7 @@ pub(crate) fn update_possible_piece_paths(
 
 /// To detect if a position has a piece and return the appropriate color. For position with pieces
 /// it returns Red else Yellow.
+#[inline(always)]
 fn piece_in_step_detection(step: &(f32, f32), game: &Game) -> Color {
 
     match game.check_piece_in_pos(step.0, step.1) {
