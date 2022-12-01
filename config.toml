@@ -1,0 +1,3 @@
+# To set gl as wgpu backend.
+[env]
+WGPU_BACKEND = gl

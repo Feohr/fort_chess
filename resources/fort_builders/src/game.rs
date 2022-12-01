@@ -109,39 +109,32 @@ impl GameAction for Game {
     /// iteration.
     #[inline]
     fn hunt(&mut self) -> Vec<Player> {
-
         self.players
             .drain_filter(|player|
                     player.pieces.is_empty()
                 &&  !player.is_winner
             )
             .collect::<Vec<Player>>()
-
     }
 
     /// Changes the turn value to indiacate which player turn it is.
     ///
     /// Adds value to turn and changes to 0 if the value exceeds players vector len - 1.
     fn next_player(&mut self) {
-
         match self.turn < self.players.len() - 1_usize {
             true  => self.turn += 1_usize,
             false => self.turn = 0_usize,
         }
-
     }
 
     /// To update player pieces position every turn.
     #[inline]
     fn update_position(&mut self, x: i32, y: i32) -> Result<(), Error> {
-
         // updating the piece.
         self.players[self.turn].update_piece(x, y)?; 
         // To trigger draw.
         self.set_update_true();
-
         Ok(())
-
     }
 
     /// Iterates through each piece in a player and searches for a position. If that position
@@ -152,13 +145,11 @@ impl GameAction for Game {
     /// [`binary_search`]: slice::binary_search
     #[inline]
     fn check_piece_in_pos(&self, x: f32, y: f32) -> bool {
-
         !self.players
             .iter()
             .filter(|player| player.piece_index_from_xy_f32(x, y).is_ok())
             .collect::<Vec<&Player>>()
             .is_empty()
-
     }
 
     /// To know if the x and y holds a piece of another player.
@@ -167,17 +158,14 @@ impl GameAction for Game {
     /// particular piece is present and removes that piece to return it.
     #[inline]
     fn remove_piece_in_pos(&mut self, x: f32, y: f32) -> Result<Option<Piece>, Error> {
-
+        // To check if the piece is in board range.
         Piece::in_board_range(x as i32, y as i32)?;
-
         for player in self.players.iter_mut() {
             if let Ok(index) = player.piece_index_from_xy_f32(x, y) {
                 return Ok(Some(player.kill_piece(index)?))
             }
         }
-
         Ok(None)
-
     }
 
 }

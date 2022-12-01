@@ -3,7 +3,7 @@
 //! module to hold board specific values like dimensions etc.
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
-use crate::Error;
+use crate::{Error, BREADTH};
 
 // Board tile borders.
 /// Board's right most `x axis` length.
@@ -37,7 +37,7 @@ pub const YMINF : f32 = Y_MIN as f32;
 pub const YMAXF : f32 = Y_MAX as f32;
 /// Holds the empty value that needs to be deleted from each size to form the board shape.
     const EMPTY : f32 = 6_f32;
-/// To get the actual board bounds excluding the border.
+/// to get the actual board bounds excluding the border.
     const BOARD : f32 = EMPTY - 1_f32;
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -61,14 +61,23 @@ pub enum Quadrant {
 
 /*████Quadrant Outer Bounds████*/
 /*-----------------------------------------------------------------------------------------------*/
+/// Gets the outer bound of the board q1.
 #[inline(always)]
-pub fn q1_outer_bound_pos() -> (i32, i32) { (X_MIN - 4_i32, 0_i32) }
+pub fn q1_outer_bound_pos() -> (i32, i32) {
+    (X_MIN - 4_i32, 0_i32)
+}
 
+/// Gets the outer bound of the board q2.
 #[inline(always)]
-pub fn q2_outer_bound_pos() -> (i32, i32) { (-1_i32, Y_MAX + 1_i32) }
+pub fn q2_outer_bound_pos() -> (i32, i32) {
+    (-1_i32, Y_MAX + 1_i32)
+}
 
+/// Gets the outer bound of the board q3.
 #[inline(always)]
-pub fn q3_outer_bound_pos() -> (i32, i32) { (X_MAX + 1_i32, 0_i32) }
+pub fn q3_outer_bound_pos() -> (i32, i32) {
+    (X_MAX + 1_i32, 0_i32)
+}
 /*-----------------------------------------------------------------------------------------------*/
 
 /*████Quadrant████*/
@@ -78,27 +87,23 @@ impl Quadrant {
     /// To get a [`Quadrant`] value from index of usize.
     #[inline(always)]
     pub fn from_index(index: usize) -> Result<Self, Error> {
-
         match index {
             0_usize => Ok(Quadrant::Q1),
             1_usize => Ok(Quadrant::Q2),
             2_usize => Ok(Quadrant::Q3),
             _ => Err(Error::InvalidQuadrantIndex(index)),
         }
-
     }
 
     /// To get a [`Quadrant`] value from x and y values of `f32` type.
     #[inline(always)]
     pub fn from_xy(x: f32, y: f32) -> Result<Self, Error> {
-
+        // Checking in each quadrant and returning the specific one.
         if position_in_q1_bounds(x, y) { return Ok(Quadrant::Q1) }
         if position_in_q2_bounds(x, y) { return Ok(Quadrant::Q2) }
         if position_in_q3_bounds(x, y) { return Ok(Quadrant::Q3) }
-
         // If the position is out of bounds.
         Err(Error::PositionNotInQuadrant(x as i32, y as i32))
-
     }
 
 }
@@ -150,18 +155,36 @@ pub fn position_in_board_bounds(x: f32, y: f32) -> bool {
 /*-----------------------------------------------------------------------------------------------*/
 /// To get the screen width as `f32`.
 #[inline(always)]
-fn full_width() -> f32 { (LFT.abs() + RGT) as f32 }
+fn full_width() -> f32 {
+    (LFT.abs() + RGT) as f32
+}
 
 /// To get the screen height as `f32`.
 #[inline(always)]
-fn full_height() -> f32 { (BTM.abs() + TOP) as f32 }
+fn full_height() -> f32 {
+    (BTM.abs() + TOP) as f32
+}
 
 /// To get the cursor position relative to the camera screen.
 #[inline(always)]
 pub fn cursor_in_window(c_x: f32, c_y: f32, height: f32, width: f32) -> (f32, f32) {
     (
-        (((c_x / width) * full_width()) + (LFT as f32)).round(),
+        (((c_x / width ) * full_width() ) + (LFT as f32)).round(),
         (((c_y / height) * full_height()) + (BTM as f32)).round(),
     )
+}
+/*-----------------------------------------------------------------------------------------------*/
+
+/*████Position in Opposite Side Logic████*/
+/*-----------------------------------------------------------------------------------------------*/
+pub(crate) fn check_in_opposite_defender(x: i32, y: i32) -> bool {
+        x <= X_MIN
+    ||  x >= X_MAX - 1_i32
+    ||  y >= Y_MAX - 1_i32
+}
+
+pub(crate) fn check_in_opposite_enemy(x: i32, y: i32) -> bool {
+        (x >= -BREADTH - 1_i32 && x < BREADTH + 1_i32)
+    &&   y.abs() <= BREADTH
 }
 /*-----------------------------------------------------------------------------------------------*/

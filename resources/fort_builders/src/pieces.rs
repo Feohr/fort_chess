@@ -95,6 +95,7 @@ pub struct Piece {
 
 /*████PieceType████*/
 /*-----------------------------------------------------------------------------------------------*/
+#[doc(hidden)]
 impl fmt::Debug for PieceType {
 
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -108,7 +109,6 @@ impl<'a> PieceType {
     /// Takes self reference and returns the corresponding [`PieceType`] value as a `&str`.
     #[inline]
     fn as_str(&self) -> &'a str {
-
         match self {
             PieceType::Rook     => "Rook",
             PieceType::Minister => "Minister",
@@ -116,7 +116,6 @@ impl<'a> PieceType {
             PieceType::Pawn     => "Pawn",
             PieceType::Knight   => "Knight",
         }
-
     }
 
 }
@@ -129,7 +128,6 @@ impl PieceType {
     /// [`Result`]: std::result::Result
     #[inline(always)]
     fn from_index(index: u8) -> Result<PieceType, Error> {
-
         match index {
             0_u8 => Ok(PieceType::Rook),
             1_u8 => Ok(PieceType::Minister),
@@ -138,13 +136,11 @@ impl PieceType {
             4_u8 => Ok(PieceType::Knight),
             _ => Err(Error::InvalidPieceTypeIndex(index)),
         }
-
     }
 
     /// Takes a self reference and returns a `usize` value that corresponds to the type.
     #[inline]
     pub fn as_usize(&self) -> usize {
-
         match self {
             PieceType::Rook     => 0_usize,
             PieceType::Minister => 1_usize,
@@ -152,7 +148,6 @@ impl PieceType {
             PieceType::Pawn     => 3_usize,
             PieceType::Knight   => 4_usize,
         }
-
     }
 
 }
@@ -160,6 +155,7 @@ impl PieceType {
 
 /*████Position████*/
 /*-----------------------------------------------------------------------------------------------*/
+#[doc(hidden)]
 impl fmt::Debug for Position {
 
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -175,11 +171,9 @@ impl Position {
     /// Takes the x and y value, checks if it is inside the board and creates the struct.
     #[inline(always)]
     pub(crate) fn from(x: i32, y: i32) -> Result<Self, Error> {
-
+        // Checking if the poisition is in the board range.
         Piece::in_board_range(x, y)?;
-
         Ok(Position { x, y })
-
     }
 
 }
@@ -187,6 +181,7 @@ impl Position {
 
 /*████Piece████*/
 /*-----------------------------------------------------------------------------------------------*/
+#[doc(hidden)]
 impl fmt::Debug for Piece {
 
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -216,10 +211,8 @@ impl Piece {
         quadrant:           Quadrant,
         quadrant_active:    usize,
     ) -> Result<Vec<Piece>, Error> {
-
         // An empty piece vector.
         let mut pieces: Vec<Piece> = Vec::new();
-
         // Zipping through the hardcoded positions and creating pieces.
         for ((pos1, pos2), piece_type) in   position_from_quadrant(
                                                 &quadrant,
@@ -228,19 +221,15 @@ impl Piece {
                                             .into_iter()
                                             .zip(piece_type(is_defender, quadrant_active))
         {
-
             // Pushing to the vec. Throws error if invalid piece type or position.
             pieces.push(
                 Piece::from(
                     pos1, pos2, PieceType::from_index(piece_type)?,
                 )?
             ); 
-
         }
-
         // Return.
         Ok(pieces)
-
     }
 
     /// To update the [`Position`] of the [`Piece`].
@@ -249,14 +238,12 @@ impl Piece {
     /// Returns error if the new position is out of range.
     #[inline]
     pub(crate) fn update_pos(&mut self, x: i32, y: i32) -> Result<(), Error> {
-
+        // Checking if the position is in the board range.
         Self::in_board_range(x, y)?;
-
         Ok({
             self.position.x = x;
             self.position.y = y;
         })
-
     }
 
     /// To check wether a vector index is valid.
@@ -265,7 +252,6 @@ impl Piece {
     /// is an error.
     #[inline(always)]
     pub(crate) fn is_valid_index(pos: usize, is_defender: bool) -> Result<(), Error> {
-
         match match is_defender {
             true  => pos < DEFND_COUNT,
             false => pos < ENEMY_COUNT,
@@ -273,7 +259,6 @@ impl Piece {
             true  => Ok(()),
             false => Err(Error::IllegalPieceVectorIndex(pos)),
         }
-
     }
 
     /// To check if the [`Position`] is inside the [`Piece`] vector bounds.
@@ -281,12 +266,10 @@ impl Piece {
     /// takes a `usize` value and checks the vector size with the length of the pieces `vec`.
     #[inline(always)]
     pub(crate) fn is_in_bounds(pos: usize, len: usize) -> Result<(), Error> {
-
         match pos < len {
             true => Ok(()),
             false => Err(Error::PieceVectorIndexOutOfBounds(pos, len)),
         }
-
     }
 
     /// To check if a [`Position`] value is inside the board.
@@ -294,12 +277,11 @@ impl Piece {
     /// This function is used to check if a particular [`Position`] is inside the board.
     #[inline(always)]
     pub(crate) fn in_board_range(x: i32, y: i32) -> Result<(), Error> {
-
         match (x <= X_MAX && x >= X_MIN) && (y <= Y_MAX && y >= Y_MIN) {
             true => Ok(()),
             false => return Err(Error::IllegalPosition(x, y)),
         }
-
     }
+
 }
 /*-----------------------------------------------------------------------------------------------*/

@@ -10,16 +10,15 @@ use bevy::prelude::{
     SpriteSheetBundle, StartupStage, TextureAtlas, TextureAtlasSprite, Transform, Vec2, Vec3,
 };
 use fort_builders::{
+    BREADTH,
     board::{X_MAX, X_MIN, Y_MAX, Y_MIN},
     decrement_if_positive,
 };
 
-/// Holds the breadth size of the board.
-pub(crate)  const BREADTH       : i32     = 2_i32;
 /// To hold the row size of the tile pieces.
-            const TILE_TYPE_ROW : usize   = 5_usize;
+const TILE_TYPE_ROW : usize   = 5_usize;
 /// To hold the col size of the tile pieces.
-            const TILE_TYPE_COL : usize   = 1_usize;
+const TILE_TYPE_COL : usize   = 1_usize;
 
 /// Struct to hold the tile texture atlas.
 struct TileSheet(Handle<TextureAtlas>);
@@ -66,7 +65,6 @@ impl TileSpriteSheetIndex {
     /// Returns the corresponding [`TileSpriteSheetIndex`] variant from usize.
     #[inline(always)]
     fn from_usize(from: usize) -> Self {
-
         match from {
             0_usize => TileSpriteSheetIndex::Light,
             1_usize => TileSpriteSheetIndex::Dark,
@@ -75,12 +73,10 @@ impl TileSpriteSheetIndex {
             4_usize => TileSpriteSheetIndex::FortInner,
             _       => panic!("TileSpriteSheetIndex cannot have index greater than 4."),
         }
-
     }
 
     /// Converts a given [`TileSpriteSheetIndex`] variant to corresponding usize value.
     fn as_usize(&self) -> usize {
-
         match self {
             TileSpriteSheetIndex::Light     => 0_usize,
             TileSpriteSheetIndex::Dark      => 1_usize,
@@ -88,7 +84,6 @@ impl TileSpriteSheetIndex {
             TileSpriteSheetIndex::FortOuter => 3_usize,
             TileSpriteSheetIndex::FortInner => 4_usize,
         }
-
     }
 
 }
@@ -102,27 +97,21 @@ impl TileSpriteSheetIndex {
 /// After `x > 0`, the tiles are then switched with Light for even and Dark for odd tiles.
 #[inline(always)]
 fn dark_or_light_tile_index(x: i32, y: i32) -> TileSpriteSheetIndex {
-
    TileSpriteSheetIndex::from_usize({
         (
-
             match x > 0_i32 {
                 true  => TileSpriteSheetIndex::Light,
                 false => TileSpriteSheetIndex::Dark,
             }
             .as_usize()
-
         ) ^ (
-
             match (x + y) % 2_i32 == 0_i32 {
                 true  => TileSpriteSheetIndex::Dark,
                 false => TileSpriteSheetIndex::Light,
             }
             .as_usize()
-
         )
     })
-
 }
 
 /*████Drawing the Board████*/
@@ -142,9 +131,7 @@ fn draw_board(
 ) {
 
     (X_MIN..=X_MAX).for_each(|x| {
-
         (Y_MIN..=Y_MAX).for_each(|mut y| {
-
             // If x value as well as y value are less than BREADTH value then it won't be drawn
             // as that is the center of the board where the fort will reside.
             // if x value as well as y value is greater than BREADTH, then a tile won't be
@@ -159,10 +146,8 @@ fn draw_board(
                     x.abs() >   BREADTH
                 &&  y.abs() >   BREADTH
             )}  {
-
                     // To get rid of the zeroeth line.
                     if y > 0_i32 { y -= 1_i32 }
-
                     let tile = spawn_tile(
                         &mut commands,
                         &tile,
@@ -173,13 +158,9 @@ fn draw_board(
                             ZAxisLevel::Second.as_f32(),
                         ),
                     );
-
                     commands.entity(tile).insert(Name::new("Tile"));
-
             }
-
         })
-
     });
 
 }
@@ -193,9 +174,7 @@ fn draw_border(
 ) {
 
     ((X_MIN - 1)..=(X_MAX + 1)).for_each(|x| {
-
         ((Y_MIN - 1)..=(Y_MAX + 1)).for_each(|mut y| {
-
             // Exactly the same as draw_board fucntion but with one column and row extra padding
             // for the border.
             if !{   y == 0_i32
@@ -207,10 +186,8 @@ fn draw_border(
                     x.abs() >   BREADTH + 1_i32
                 &&  y.abs() >   BREADTH + 1_i32
             )}  {
-
                     // To get rid of the zeroeth line.
                     if y > 0_i32 { y -= 1_i32 }
-
                     let tile = spawn_tile(
                         &mut commands,
                         &tile,
@@ -221,13 +198,9 @@ fn draw_border(
                             ZAxisLevel::First.as_f32(),
                         ),
                     );
-
                     commands.entity(tile).insert(Name::new("Border"));
-
             }
-
         })
-
     });
 
 }
@@ -237,17 +210,15 @@ fn draw_border(
 /// Follows the similar logic as other "drawing" functions.
 fn draw_fort(
     mut commands:   Commands,
-    tile:           Res<TileSheet>,
+    tile_sheet:     Res<TileSheet>,
 ) {
 
     // Draws the fort in the BREADTH side square.
     (-BREADTH..=BREADTH).for_each(|x| {
-
         (-BREADTH..BREADTH).for_each(|y| {
-
             let tile = spawn_tile(
                 &mut commands,
-                &tile,
+                &tile_sheet,
                 TileSpriteSheetIndex::FortOuter,
                 Vec3::new(
                     decrement_if_positive(x)    as f32 * RESOLUTION,
@@ -255,21 +226,16 @@ fn draw_fort(
                     ZAxisLevel::Third.as_f32(),
                 ),
             );
-
             commands.entity(tile).insert(Name::new("Fort Exterior"));
-
         })
-
     });
 
     // Draws the middle most part which is BREADTH - 1 size square.
     ((-BREADTH + 1_i32)..=(BREADTH - 1_i32)).for_each(|x| {
-
-        ((-BREADTH + 1_i32)..(BREADTH - 1_32)).for_each(|y| {
-
-            let tile = &spawn_tile(
+        ((-BREADTH + 1_i32)..(BREADTH - 1_i32)).for_each(|y| {
+            let tile = spawn_tile(
                 &mut commands,
-                &tile,
+                &tile_sheet,
                 TileSpriteSheetIndex::FortInner,
                 Vec3::new(
                     decrement_if_positive(x)    as f32 * RESOLUTION,
@@ -277,11 +243,8 @@ fn draw_fort(
                     ZAxisLevel::Fourth.as_f32(),
                 ),
             );
-
-            commands.entity(*tile).insert(Name::new("Fort Interior"));
-
+            commands.entity(tile).insert(Name::new("Fort Interior"));
         })
-
     });
 
 }
@@ -329,7 +292,6 @@ fn spawn_tile(
     index:          TileSpriteSheetIndex,
     translation:    Vec3,
 ) -> Entity {
-
     commands
         .spawn_bundle(SpriteSheetBundle {
             sprite: TextureAtlasSprite {
@@ -351,6 +313,5 @@ fn spawn_tile(
             ..default()
         })
         .id()
-
 }
 /*-----------------------------------------------------------------------------------------------*/

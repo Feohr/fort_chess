@@ -3,7 +3,7 @@
 //! Handles the logic to draw pieces onto the screen.
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
-use crate::{RESOLUTION, TILESIZE, ZAxisLevel};
+use crate::{RESOLUTION, TILESIZE, ZAxisLevel, despawn_entity};
 use bevy::prelude::{
     Entity, With, Commands, Res, ResMut, TextureAtlasSprite, SpriteSheetBundle, Component, Query,
     Vec3, Vec2, Transform, Name, default,
@@ -19,21 +19,6 @@ const PIECES_SPRITESHEET_WIDTH: usize = 5_usize;
 pub(crate) struct Piece;
 
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
-
-/// To clear all the pieces in a scene. Iterate over entity with [`Piece`] component and despawn
-/// them.
-fn clear_pieces(
-    commands:   &mut Commands,
-    query:      &Query<Entity, With<Piece>>,
-) {
-
-    // Iterate over the Pieces and despawn them.
-    for pieces in query.iter() {
-        commands.entity(pieces).despawn();
-    }
-
-}
-
 /// call to draw the player [`Piece`]s.
 ///
 /// Iterating over each player and drawing all the pieces once again. *row* and *col* correspond
@@ -49,37 +34,34 @@ pub(crate) fn draw_pieces(
 ) {
 
     // Clean up.
-    clear_pieces(commands, query);
-
+    despawn_entity(commands, query);
     // For each player.
-    game.get().players.iter().for_each(|player| {
-
-        // For each piece.
-        player.pieces.iter().for_each(|piece| {
-
-            let sprite = spawn_piece(
-                commands,
-                sprite,
-                (
-                        // Row.
-                        player.team.as_usize()  * PIECES_SPRITESHEET_WIDTH
-                        // Column.
-                )   +   piece.piece_type.as_usize(),
-                Vec3::new(
-                    //piece_pos_x.
-                    piece.position.x as f32     * RESOLUTION,
-                    //piece_pos_y.
-                    piece.position.y as f32     * RESOLUTION,
-                    //Z level.
-                    ZAxisLevel::Eight.as_f32(),
-                ),
-            );
-
-            // Spawn.
-            commands.entity(sprite).insert(Name::from("Piece")).insert(Piece);
-
-        })
-
+    game
+        .get().players
+        .iter()
+        .for_each(|player| {
+            // For each piece.
+            player.pieces.iter().for_each(|piece| {
+                let sprite = spawn_piece(
+                    commands,
+                    sprite,
+                    (
+                            // Row.
+                            player.team.as_usize()  * PIECES_SPRITESHEET_WIDTH
+                            // Column.
+                    )   +   piece.piece_type.as_usize(),
+                    Vec3::new(
+                        //piece_pos_x.
+                        piece.position.x as f32     * RESOLUTION,
+                        //piece_pos_y.
+                        piece.position.y as f32     * RESOLUTION,
+                        //Z level.
+                        ZAxisLevel::Eight.as_f32(),
+                    ),
+                );
+                // Spawn.
+                commands.entity(sprite).insert(Name::from("Piece")).insert(Piece);
+            })
     });
 
 }
@@ -91,8 +73,6 @@ fn spawn_piece(
     index:          usize,
     translation:    Vec3,
 ) -> Entity {
-
-    // Spawn.
     commands
         .spawn_bundle(SpriteSheetBundle {
             sprite: TextureAtlasSprite {
@@ -113,6 +93,5 @@ fn spawn_piece(
             ..default()
         })
         .id()
-
 }
 /*-----------------------------------------------------------------------------------------------*/

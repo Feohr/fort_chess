@@ -30,9 +30,9 @@ pub(crate) fn clear_picker(
 ) {
 
     // Iterate over all the entities that have the Picker component and despawn them.
-    for picker in pickers.iter() {
-        commands.entity(picker).despawn();
-    }
+    pickers
+        .iter()
+        .for_each(|picker| commands.entity(picker).despawn())
 
 }
 
@@ -46,10 +46,8 @@ fn hovered_position_in_player_pieces(
     y:      f32,
     game:   &ResMut<GameAsset>,
 ) -> bool {
-
     // Does a binary search to find the piece.
     game.get().current_player().piece_index_from_xy_f32(x, y).is_ok()
-
 }
 
 /// To display a light gray block over the piece where the mouse is hovering.
@@ -61,10 +59,10 @@ pub(crate) fn hover_listener(
     cursor:         Res<CursorPosition>,
 ) {
 
+    // Checking for early return.
     let (m_x, m_y) = (cursor.x, cursor.y);
     if  !position_in_board_bounds(m_x, m_y)
     ||  !hovered_position_in_player_pieces(m_x, m_y, &game)  { return }
-
     // Creating a hover tile.
     let hover = spawn_square_sprite(
         &mut commands,
@@ -75,7 +73,6 @@ pub(crate) fn hover_listener(
             ZAxisLevel::Sixth.as_f32(),
         ),
     );
-
     // Spawn.
     commands.entity(hover).insert(Picker);
 

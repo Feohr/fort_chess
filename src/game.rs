@@ -30,13 +30,15 @@ use draw_piece::Piece;
 use highlight::highlight_active_pieces;
 use highlight::Highlight;
 use player_name::display_player_names;
+use player_name::highlight_player_name;
 use player_name::PlayerName;
 use player_name::PlayerNameBoxVec;
+use player_name::PlayerNameOutline;
 
 // Temporary holder for number of players.
-const PLAYER_COUNT      : usize = 4_usize;
+pub(crate) const PLAYER_COUNT       : usize = 3_usize;
 /// To hold the number of types of pieces.
-const PIECE_TYPE_COUNT  : usize = 5_usize;
+const PIECE_TYPE_COUNT              : usize = 5_usize;
 
 /// The game Plugin that holds piece drawing information.
 pub(crate) struct GamePlugin;
@@ -68,11 +70,13 @@ impl Plugin for GamePlugin {
 
 /*████Init Player Name Box████*/
 /*-----------------------------------------------------------------------------------------------*/
+/// Simple function to initialize player name struct vec.
 fn init_player_name_box_vec(
     mut commands:   Commands,
     game:           Res<GameAsset>,
 ) {
 
+    // Initilization.
     let mut player_name = PlayerNameBoxVec::new();
     let mut outer_check_fn_iter = [
         q1_outer_bound_pos,
@@ -80,18 +84,18 @@ fn init_player_name_box_vec(
         q3_outer_bound_pos,
     ].into_iter();
 
+    // Iterating through players and creating text boxes,
     for player in game.get().players.iter() {
-
+        // Get the x and y positions based on if the piece is_defender.
         let (x, y) = if player.is_defender {
             (-1_i32, 0_i32)
         } else {
             (outer_check_fn_iter.next().unwrap())()
         };
-
+        // Push to player name vec.
         player_name.push(player.name.clone(), player.team, x, y);
-
     }
-
+    // Inserting the resource.
     commands.insert_resource(player_name);
 
 }
@@ -116,16 +120,17 @@ impl GameAsset {
 /// game players.
 fn init_game(mut commands: Commands) {
 
+    // Initialization.
     let dice_roll = (dice_roll() % 3_usize) % PLAYER_COUNT;
     let mut quadrant = [Quadrant::Q1, Quadrant::Q2, Quadrant::Q3].into_iter();
-
+    // Inserting the game resource.
     commands.insert_resource(dbg!(GameAsset(Game::init(
         (usize::MIN..PLAYER_COUNT)
             .into_iter()
             .map(|index| {
                 let is_defender = dice_roll == index;
                 Player::from(
-                    format!("Mohd Rehaan{}", index + 1_usize),
+                    format!("Player {}", index + 1_usize),
                     Team::from_index(index).unwrap(),
                     is_defender,
                     PLAYER_COUNT,
@@ -149,17 +154,18 @@ fn game_update_tick(
     dquery:         Query<Entity, With<Piece>>,
     hquery:         Query<Entity, With<Highlight>>,
     pnquery:        Query<Entity, With<PlayerName>>,
+    pnhquery:       Query<Entity, With<PlayerNameOutline>>,
 ) {
 
     // If no need for update, return.
     if !game.get().update { return }
-
+    // Deleting lost players.
     clean_up_lost_players(game.get_mut(), &mut pname);
-
+    // Update draw functions.
     draw_pieces(            &mut commands, &sprite, &game, &dquery);
     highlight_active_pieces(&mut commands, &game,          &hquery);
     display_player_names(   &mut commands, &pname,         &pnquery, &asset);
-
+    highlight_player_name(  &mut commands, &pname,  &game, &pnhquery);
     // Setting the update as false to put latch back.
     game.get_mut().set_update_false();
 
@@ -171,13 +177,14 @@ fn clean_up_lost_players(
     pname:  &mut ResMut<PlayerNameBoxVec>,
 ) {
 
+    // Getting the lost players,
     let _dead = game.hunt();
-
+    // For debugging.
     if !_dead.is_empty() { dbg!(&_dead); }
-
-    for player in _dead.into_iter() {
-        pname.pop(player.team);
-    }
+    // Iterating through and poping the corresponding player_name text box.
+    _dead
+        .into_iter()
+        .for_each(|player| pname.pop(player.team))
 
 }
 /*-----------------------------------------------------------------------------------------------*/

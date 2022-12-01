@@ -4,14 +4,12 @@
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
 use fort_builders::{
+    BREADTH,
     board::{position_in_q1_bounds, position_in_q2_bounds, position_in_q3_bounds, Quadrant},
     game::{Game, GameAction},
     player::PlayerAction,
 };
-use crate::{
-    tiles::BREADTH,
-    listener::possible_paths::PositionVectorf32,
-};
+use crate::listener::possible_paths::PositionVectorf32;
 
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
@@ -24,10 +22,8 @@ use crate::{
 /// There remaining positions are then filtered out based on the qudrant that the piece lies
 /// inside.
 pub(crate) fn analyse_minister_paths(x: f32, y: f32, game: &Game) -> PositionVectorf32 {
-
     // Initializing possible paths vector.
     let mut _possiblepaths: PositionVectorf32 = Vec::new();
-
     // Along +ve X and +ve y diagonal.
     minister_step_analysis(
         x, y,   |x, y, breadth| {
@@ -60,7 +56,6 @@ pub(crate) fn analyse_minister_paths(x: f32, y: f32, game: &Game) -> PositionVec
                 },
         game, &mut _possiblepaths,
     );
-
     // Return.
     _possiblepaths  .into_iter()
                     .filter(|(_x, _y)| (
@@ -74,7 +69,6 @@ pub(crate) fn analyse_minister_paths(x: f32, y: f32, game: &Game) -> PositionVec
                         ),
                     })(*_x, *_y))
                     .collect::<PositionVectorf32>()
-
 }
 
 fn minister_step_analysis<F>(
@@ -89,19 +83,14 @@ fn minister_step_analysis<F>(
 
     // Looping over the breadth of a single quadrant.
     for breadth in 1..(BREADTH * 2_i32) {
-
         // To get the x and y for this step.
         let (x, y) = step(x, y, breadth);
-
         // If the same team piece exists at the step stop.
         if game.current_player().piece_index_from_xy_f32(x, y).is_ok()  { break }
-
         // Push.
         _possiblepaths.push((x, y));
-
         // If there was an enemy piece at the position then stop.
         if game.check_piece_in_pos(x, y)                                { break }
-
     }
 
 }

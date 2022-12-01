@@ -8,7 +8,7 @@
 mod possible_paths;
 mod click;
 mod hover;
-mod skip_turn;
+mod button;
 //------------------//
 
 use crate::{RESOLUTION, TILEDRAW};
@@ -22,7 +22,7 @@ use fort_builders::board::cursor_in_window;
 use possible_paths::PossiblePaths;
 use click::click_listener;
 use hover::{hover_listener, clear_picker};
-use skip_turn::SkipButtonPlugin;
+use button::FortButtonPlugin;
 
 /// To hold the current cursor position.
 #[derive(Component)]
@@ -43,7 +43,7 @@ impl Plugin for ListenerPlugin {
     /// [`Plugin`] implementation for [`ListenerPlugin`].
     fn build(&self, app: &mut App) {
         app .add_startup_system(    initialize_listener_objects )
-                    .add_plugin(    SkipButtonPlugin            )
+                    .add_plugin(    FortButtonPlugin            )
                     .add_system(    update_cursor_position      )
                     .add_system(    clear_picker                )
                     .add_system(    hover_listener              )
@@ -89,7 +89,6 @@ pub(crate) fn update_cursor_position(
     let Some(window) = windows.get_primary()    else { return };
     // Updating cursor position at each frame.
     let Some(cursor) = events.iter().next()     else { return };
-
     // Updating the position struct.
     (position.x, position.y) = cursor_in_window(
         cursor.position.x,
@@ -110,7 +109,6 @@ fn spawn_square_sprite(
     color:          Color,
     translation:    Vec3,
 ) -> Entity {
-
     commands
         .spawn()
         .insert_bundle(SpriteBundle {
@@ -131,6 +129,5 @@ fn spawn_square_sprite(
             ..default()
         })
         .id()
-
 }
 /*-----------------------------------------------------------------------------------------------*/

@@ -19,10 +19,12 @@ use player::Player;
 use std::time::SystemTime;
 use thiserror::Error;
 
+/// Holds the breadth size of the board.
+pub const BREADTH   : i32   = 2_i32;
 // To print red output.
-pub const RED   : &str = "\x1b[31;1m";
+pub const RED       : &str  = "\x1b[31;1m";
 // To reset stdout. i.e. white.
-pub const RST   : &str = "\x1b[0m";
+pub const RST       : &str  = "\x1b[0m";
 
 /// Error enum to handle errors across the lib.
 #[derive(Error, Debug)]
@@ -69,13 +71,11 @@ pub enum Error {
 /// Takes a [`player::Player`] vector and checks for the number of winners.
 #[inline(always)]
 fn results(mut winners: Vec<Player>) -> Result<Option<Player>, Error> {
-
     match winners.len() {
         0_usize => Ok(None), // Draw
         1_usize => Ok(Some(winners.remove(0))),
         _ => Err(Error::MoreThanOneWinner(winners.len())),
     }
-
 }
 
 /// To check the winner of the game and close it.
@@ -83,7 +83,6 @@ fn results(mut winners: Vec<Player>) -> Result<Option<Player>, Error> {
 /// Result enum with the winner player. If the return value is `None` then the game is a draw.
 #[inline(always)]
 pub fn exit(game: Game) -> Result<Option<Player>, Error> {
-
     let winners: Vec<Player> = game
         .players
         .into_iter()
@@ -91,7 +90,6 @@ pub fn exit(game: Game) -> Result<Option<Player>, Error> {
         .collect::<Vec<Player>>();
 
     results(winners)
-
 }
 
 /// To get a random value between 1 and 6.
@@ -101,9 +99,8 @@ pub fn exit(game: Game) -> Result<Option<Player>, Error> {
 /// 01/01/1970 (Unix Epoch). Please regain sanity and change it back to the current date.
 #[inline(always)]
 pub fn dice_roll() -> usize {
-
     match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
-        Ok(n) => (n.as_secs() % 6_u64) as usize,
+        Ok(n)  => (n.as_secs() % 6_u64) as usize,
         Err(_) => {
             // You should not be reaching this but if you do then your computer date is stuck
             // before the 70's.
@@ -111,7 +108,6 @@ pub fn dice_roll() -> usize {
             1_usize
         }
     }
-
 }
 
 /// Function to take in a number and reduce exactly 1 from it if it is greater than 0.
@@ -124,12 +120,10 @@ where
         +   std::ops::Sub<Output = T>
         +   From<u16>,
 {
-
     match x > From::from(0) {
-        true => x - From::from(1),
+        true  => x - From::from(1),
         false => x,
     }
-
 }
 
 /*████Tests██████████████████████████████████████████████████████████████████████████████████████*/

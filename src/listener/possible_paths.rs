@@ -12,7 +12,10 @@ mod minister;
 mod queen;
 //----------//
 
-use crate::{listener::spawn_square_sprite, ZAxisLevel, RESOLUTION};
+use crate::{
+    ZAxisLevel, RESOLUTION, despawn_entity,
+    listener::spawn_square_sprite,
+};
 use bevy::prelude::{Color, Commands, Component, Entity, Query, ResMut, Vec3, With};
 use fort_builders::{
     game::{Game, GameAction},
@@ -54,7 +57,6 @@ pub(crate) fn possible_piece_paths(
     piece_type: PieceType,
     game:       &Game,
 ) -> PositionVectorf32 {
-
     // fetches an appropriate closure to perform over a certain piece so that we can get the
     // respective possible paths.
     (
@@ -65,10 +67,8 @@ pub(crate) fn possible_piece_paths(
             PieceType::Minister => analyse_minister_paths,
             PieceType::Queen    => analyse_queen_paths,
         }
-
     // executing the function.
     )(x, y, game)
-
 }
 
 /*████PossiblePaths████*/
@@ -91,19 +91,6 @@ impl PossiblePaths {
 
 }
 
-/// Clears all [`PossiblePaths`] entities.
-pub(crate) fn clear_possible_piece_paths(
-    commands: &mut Commands,
-    paths: &Query<Entity, With<Paths>>,
-) {
-
-    // Iterates over Paths entities and despawns.
-    for path in paths {
-        commands.entity(path).despawn();
-    }
-
-}
-
 /// To draw the paths whenever a piece is chosen.
 pub(crate) fn draw_possible_piece_paths(
     commands:       &mut Commands,
@@ -113,11 +100,10 @@ pub(crate) fn draw_possible_piece_paths(
 ) {
 
     // Clean up.
-    clear_possible_piece_paths(commands, paths_query);
+    despawn_entity(commands, paths_query);
 
     // Iterate over paths and draw a red tile where there is a piece else draw a yellow piece.
     for step in paths.get().iter() {
-
         let step_block = spawn_square_sprite(
             commands,
             piece_in_step_detection(step, game),
@@ -130,9 +116,7 @@ pub(crate) fn draw_possible_piece_paths(
                 ZAxisLevel::Seventh.as_f32(),
             ),
         );
-
         commands.entity(step_block).insert(Paths);
-
     }
 
 }
@@ -146,15 +130,13 @@ pub(crate) fn update_possible_piece_paths(
 
     // Exctracting piece position and type from game.
     let (piece_pos_x, piece_pos_y, piece_type) = {
-
-        let piece = game.current_player().current_chosen_piece();
-
+        // Fucking tired of these unwraps everywhere. Bevy needs proper Error handling.
+        let piece = game.current_player().current_chosen_piece().unwrap();
         (
             piece.position.x as f32,
             piece.position.y as f32,
             piece.piece_type,
         )
-
     };
 
     // Updating the paths.
@@ -171,11 +153,9 @@ pub(crate) fn update_possible_piece_paths(
 /// it returns Red else Yellow.
 #[inline(always)]
 fn piece_in_step_detection(step: &(f32, f32), game: &Game) -> Color {
-
     match game.check_piece_in_pos(step.0, step.1) {
         true  => PPATHS_COLOR_PIECE,
         false => PPATHS_COLOR_EMPTY,
     }
-
 }
 /*-----------------------------------------------------------------------------------------------*/
