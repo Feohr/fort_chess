@@ -3,7 +3,11 @@
 //! Handles the logic to draw pieces onto the screen.
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
-use crate::{RESOLUTION, TILESIZE, ZAxisLevel, despawn_entity};
+use crate::{
+    RESOLUTION, TILESIZE, ZAxisLevel,
+    despawn_entity::DespawnEntity,
+};
+
 use bevy::prelude::{
     Entity, With, Commands, Res, ResMut, TextureAtlasSprite, SpriteSheetBundle, Component, Query,
     Vec3, Vec2, Transform, Name, default,
@@ -34,7 +38,7 @@ pub(crate) fn draw_pieces(
 ) {
 
     // Clean up.
-    despawn_entity(commands, query);
+    commands.despawn_entity(query);
     // For each player.
     game
         .get().players

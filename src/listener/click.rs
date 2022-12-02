@@ -4,7 +4,7 @@
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
 use crate::{
-    RESOLUTION, ZAxisLevel, despawn_entity,
+    RESOLUTION, ZAxisLevel,
     listener::{
         CursorPosition,
         possible_paths::{
@@ -12,6 +12,7 @@ use crate::{
         },
         spawn_square_sprite,
     },
+    despawn_entity::DespawnEntity,
     game::GameAsset,
 };
 use bevy::{
@@ -55,7 +56,7 @@ pub(crate) fn click_listener(
     let game = game.get_mut();
 
     // Clean up.
-    despawn_entity(&mut commands, &clicks);
+    commands.despawn_entity(&clicks);
 
     // Matching to see if a piece is picked.
     match game.picked {
@@ -69,7 +70,7 @@ pub(crate) fn click_listener(
             }
             game.set_picked_false();
             // Clean up.
-            despawn_entity(&mut commands, &paths_query);
+            commands.despawn_entity(&paths_query);
             paths.clear();
         },
         // If piece not picked.

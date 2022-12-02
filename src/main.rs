@@ -19,13 +19,14 @@ extern crate fort_builders;
 mod game;
 mod listener;
 mod tiles;
+mod despawn_entity;
 /*------------*/
 
 use bevy::{
     input::{keyboard::KeyCode, Input},
     prelude::{
         default, App, Camera2dBundle, ClearColor, Color, Commands, DefaultPlugins, Res,
-        ResMut, WindowDescriptor, Windows, Component, Entity, Query, With,
+        ResMut, WindowDescriptor, Windows,
     },
     render::camera::{OrthographicProjection, ScalingMode, WindowOrigin},
     window::WindowMode,
@@ -152,20 +153,6 @@ fn set_panic_hook_fmt() {
             info.message().expect("No error message found."),
         );
     }));
-
-}
-
-/// To despawn entities recursively whenever called.
-#[inline]
-pub(crate) fn despawn_entity<T: Component>(
-    commands:   &mut Commands,
-    query:      &Query<Entity, With<T>>,
-) {
-
-    // Iterate over each of the player names and despawn them.
-    query
-        .iter()
-        .for_each(|entity| commands.entity(entity).despawn())
 
 }
 

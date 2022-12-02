@@ -10,7 +10,7 @@ use bevy::{
     },
 };
 use crate::{
-    despawn_entity,
+    despawn_entity::DespawnEntity,
     game::GameAsset,
     listener::{
         possible_paths::{PossiblePaths, Paths},
@@ -107,8 +107,8 @@ fn dice_roll_btn_clicked(
                     .into_iter()
                     .for_each(|game_closure| game_closure(game.get_mut()));
                 paths.clear();
-                despawn_entity(&mut commands, &click_query);
-                despawn_entity(&mut commands, &paths_query);
+                commands.despawn_entity(&click_query);
+                commands.despawn_entity(&paths_query);
             },
             Interaction::Hovered => *color = UiColor::from(style::BTN_HOVERD_COLOR),
             Interaction::None    => *color = UiColor::from(style::BTN_BKGRND_COLOR),

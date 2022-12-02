@@ -4,7 +4,8 @@
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
 use crate::{
-    RESOLUTION, ZAxisLevel, TILESIZE, despawn_entity,
+    RESOLUTION, ZAxisLevel, TILESIZE,
+    despawn_entity::DespawnEntity,
     game::GameAsset,
 };
 use bevy::{
@@ -114,7 +115,7 @@ pub(crate) fn highlight_player_name(
 ) {
 
     // Clean up.
-    despawn_entity(commands, pname_query);
+    commands.despawn_entity(pname_query);
 
     // Getting the current highlighted color.
     let highlight_color = {
@@ -170,7 +171,7 @@ pub(crate) fn display_player_names(
     asset_server:   &Res<AssetServer>,
 ) {
     // Clean up.
-    despawn_entity(commands, query);
+    commands.despawn_entity(query);
 
     let font = asset_server.load("fonts/fira-sans.extrabold.ttf");
     player_names.boxes

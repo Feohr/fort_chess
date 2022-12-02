@@ -13,8 +13,9 @@ mod queen;
 //----------//
 
 use crate::{
-    ZAxisLevel, RESOLUTION, despawn_entity,
+    ZAxisLevel, RESOLUTION,
     listener::spawn_square_sprite,
+    despawn_entity::DespawnEntity,
 };
 use bevy::prelude::{Color, Commands, Component, Entity, Query, ResMut, Vec3, With};
 use fort_builders::{
@@ -100,7 +101,7 @@ pub(crate) fn draw_possible_piece_paths(
 ) {
 
     // Clean up.
-    despawn_entity(commands, paths_query);
+    commands.despawn_entity(paths_query);
 
     // Iterate over paths and draw a red tile where there is a piece else draw a yellow piece.
     for step in paths.get().iter() {

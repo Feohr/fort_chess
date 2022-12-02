@@ -3,7 +3,10 @@
 //! Handles the logic to highlight current player pieces onto the screen.
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
-use crate::{RESOLUTION, TILESIZE, ZAxisLevel, despawn_entity};
+use crate::{
+    RESOLUTION, TILESIZE, ZAxisLevel,
+    despawn_entity::DespawnEntity,
+};
 use bevy::prelude::{
     Entity, With, Commands, ResMut, Component, Query, SpriteBundle, Sprite, Vec3, Vec2, Transform,
     default, Color,
@@ -28,7 +31,7 @@ pub(crate) fn highlight_active_pieces(
 ) {
 
     // Clean up.
-    despawn_entity(commands, query);
+    commands.despawn_entity(query);
 
     // Draw.
     game
