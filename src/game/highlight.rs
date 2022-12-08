@@ -56,11 +56,8 @@ pub(crate) fn highlight_active_pieces(
                     },
                     transform: Transform {
                         translation: Vec3::new(
-                            //piece_pos_x.
                             piece.position.x as f32 * RESOLUTION,
-                            //piece_pos_y.
                             piece.position.y as f32 * RESOLUTION,
-                            // Z Level.
                             ZAxisLevel::Fifth.as_f32(),
                         ),
                         ..default()

@@ -69,7 +69,7 @@ pub enum Error {
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
 /// Takes a [`player::Player`] vector and checks for the number of winners.
-#[inline(always)]
+#[inline]
 fn results(mut winners: Vec<Player>) -> Result<Option<Player>, Error> {
     match winners.len() {
         0_usize => Ok(None), // Draw
@@ -81,8 +81,9 @@ fn results(mut winners: Vec<Player>) -> Result<Option<Player>, Error> {
 /// To check the winner of the game and close it.
 ///
 /// Result enum with the winner player. If the return value is `None` then the game is a draw.
-#[inline(always)]
+#[inline]
 pub fn exit(game: Game) -> Result<Option<Player>, Error> {
+
     let winners: Vec<Player> = game
         .players
         .into_iter()
@@ -90,6 +91,7 @@ pub fn exit(game: Game) -> Result<Option<Player>, Error> {
         .collect::<Vec<Player>>();
 
     results(winners)
+
 }
 
 /// To get a random value between 1 and 6.
@@ -97,7 +99,7 @@ pub fn exit(game: Game) -> Result<Option<Player>, Error> {
 /// Simulates a dice roll to get a value between 1 to 6. In exceptional cases you might be
 /// constantly getting 1 as return value. This will happen if the system date is set before
 /// 01/01/1970 (Unix Epoch). Please regain sanity and change it back to the current date.
-#[inline(always)]
+#[inline]
 pub fn dice_roll() -> usize {
     match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
         Ok(n)  => (n.as_secs() % 6_u64) as usize,
@@ -114,6 +116,7 @@ pub fn dice_roll() -> usize {
 /// Used to fix the zero axis 'issue' in the board.
 ///
 /// Works for `u8`, `usize`, `u16`, `u32`.
+#[inline]
 pub fn decrement_if_positive<T>(x: T) -> T
 where
     T:      std::cmp::PartialOrd<T>

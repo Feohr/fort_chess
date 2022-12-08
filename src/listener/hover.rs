@@ -23,19 +23,22 @@ pub(crate) struct Picker;
 
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
+/*████Picker Despawn████*/
+/*-----------------------------------------------------------------------------------------------*/
 /// Clear picker function to cleanup [`Picker`] entities.
 pub(crate) fn clear_picker(
     mut commands:   Commands,
     pickers:        Query<Entity, With<Picker>>,
 ) {
-
     // Iterate over all the entities that have the Picker component and despawn them.
     pickers
         .iter()
-        .for_each(|picker| commands.entity(picker).despawn())
-
+        .for_each(|picker| commands.entity(picker).despawn());
 }
+/*-----------------------------------------------------------------------------------------------*/
 
+/*████Hover Listener████*/
+/*-----------------------------------------------------------------------------------------------*/
 /// To check wether a given hovered position is inside player pieces.
 ///
 /// Return a bool value that is checked at each [`CursorMoved`] event. If the cursor position is
@@ -46,8 +49,9 @@ fn hovered_position_in_player_pieces(
     y:      f32,
     game:   &ResMut<GameAsset>,
 ) -> bool {
-    // Does a binary search to find the piece.
+
     game.get().current_player().piece_index_from_xy_f32(x, y).is_ok()
+
 }
 
 /// To display a light gray block over the piece where the mouse is hovering.
@@ -63,6 +67,7 @@ pub(crate) fn hover_listener(
     let (m_x, m_y) = (cursor.x, cursor.y);
     if  !position_in_board_bounds(m_x, m_y)
     ||  !hovered_position_in_player_pieces(m_x, m_y, &game)  { return }
+
     // Creating a hover tile.
     let hover = spawn_square_sprite(
         &mut commands,
@@ -73,7 +78,8 @@ pub(crate) fn hover_listener(
             ZAxisLevel::Sixth.as_f32(),
         ),
     );
-    // Spawn.
+
     commands.entity(hover).insert(Picker);
 
 }
+/*-----------------------------------------------------------------------------------------------*/

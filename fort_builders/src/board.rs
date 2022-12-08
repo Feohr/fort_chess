@@ -62,19 +62,19 @@ pub enum Quadrant {
 /*████Quadrant Outer Bounds████*/
 /*-----------------------------------------------------------------------------------------------*/
 /// Gets the outer bound of the board q1.
-#[inline(always)]
+#[inline]
 pub fn q1_outer_bound_pos() -> (i32, i32) {
     (X_MIN - 4_i32, 0_i32)
 }
 
 /// Gets the outer bound of the board q2.
-#[inline(always)]
+#[inline]
 pub fn q2_outer_bound_pos() -> (i32, i32) {
     (-1_i32, Y_MAX + 1_i32)
 }
 
 /// Gets the outer bound of the board q3.
-#[inline(always)]
+#[inline]
 pub fn q3_outer_bound_pos() -> (i32, i32) {
     (X_MAX + 1_i32, 0_i32)
 }
@@ -85,7 +85,7 @@ pub fn q3_outer_bound_pos() -> (i32, i32) {
 impl Quadrant {
 
     /// To get a [`Quadrant`] value from index of usize.
-    #[inline(always)]
+    #[inline]
     pub fn from_index(index: usize) -> Result<Self, Error> {
         match index {
             0_usize => Ok(Quadrant::Q1),
@@ -96,7 +96,7 @@ impl Quadrant {
     }
 
     /// To get a [`Quadrant`] value from x and y values of `f32` type.
-    #[inline(always)]
+    #[inline]
     pub fn from_xy(x: f32, y: f32) -> Result<Self, Error> {
         // Checking in each quadrant and returning the specific one.
         if position_in_q1_bounds(x, y) { return Ok(Quadrant::Q1) }
@@ -114,7 +114,7 @@ impl Quadrant {
 /// Returns the bool if the x and y values are inside [`Q1`] bounds.
 ///
 /// [`Q1`]: Quadrant::Q1
-#[inline(always)]
+#[inline]
 pub fn position_in_q1_bounds(x: f32, y: f32) -> bool {
         (x < XMAXF - (BOARD * 2_f32) && x >= XMINF)
     &&  (y <= (YMAXF - 1_f32) - EMPTY && y >= YMINF)
@@ -123,7 +123,7 @@ pub fn position_in_q1_bounds(x: f32, y: f32) -> bool {
 /// Returns the bool if the x and y values are inside [`Q2`] bounds.
 ///
 /// [`Q2`]: Quadrant::Q2
-#[inline(always)]
+#[inline]
 pub fn position_in_q2_bounds(x: f32, y: f32) -> bool {
         (x <= (XMAXF - 1_f32) - EMPTY && x >= XMAXF - (BOARD * 2_f32))
     &&  (y < YMAXF && y >= (YMINF + 4_f32))
@@ -132,7 +132,7 @@ pub fn position_in_q2_bounds(x: f32, y: f32) -> bool {
 /// Returns the bool if the x and y values are inside [`Q3`] bounds.
 ///
 /// [`Q3`]: Quadrant::Q3
-#[inline(always)]
+#[inline]
 pub fn position_in_q3_bounds(x: f32, y: f32) -> bool {
         (x >= XMAXF - EMPTY && x < XMAXF)
     &&  (y <= (YMAXF - 1_f32) - EMPTY && y >= YMINF)
@@ -144,7 +144,7 @@ pub fn position_in_q3_bounds(x: f32, y: f32) -> bool {
 /// [`Q1`]: Quadrant::Q1
 /// [`Q2`]: Quadrant::Q2
 /// [`Q3`]: Quadrant::Q3
-#[inline(always)]
+#[inline]
 pub fn position_in_board_bounds(x: f32, y: f32) -> bool {
         position_in_q1_bounds(x, y)
     ||  position_in_q2_bounds(x, y)
@@ -154,19 +154,19 @@ pub fn position_in_board_bounds(x: f32, y: f32) -> bool {
 /*████Cursor Position Logic████*/
 /*-----------------------------------------------------------------------------------------------*/
 /// To get the screen width as `f32`.
-#[inline(always)]
+#[inline]
 fn full_width() -> f32 {
     (LFT.abs() + RGT) as f32
 }
 
 /// To get the screen height as `f32`.
-#[inline(always)]
+#[inline]
 fn full_height() -> f32 {
     (BTM.abs() + TOP) as f32
 }
 
 /// To get the cursor position relative to the camera screen.
-#[inline(always)]
+#[inline]
 pub fn cursor_in_window(c_x: f32, c_y: f32, height: f32, width: f32) -> (f32, f32) {
     (
         (((c_x / width ) * full_width() ) + (LFT as f32)).round(),
@@ -177,12 +177,16 @@ pub fn cursor_in_window(c_x: f32, c_y: f32, height: f32, width: f32) -> (f32, f3
 
 /*████Position in Opposite Side Logic████*/
 /*-----------------------------------------------------------------------------------------------*/
+/// To check wether the defender piece is in the opposite side.
+#[inline]
 pub(crate) fn check_in_opposite_defender(x: i32, y: i32) -> bool {
         x <= X_MIN
     ||  x >= X_MAX - 1_i32
     ||  y >= Y_MAX - 1_i32
 }
 
+/// To check wether the non-defender piece is in the opposite side.
+#[inline]
 pub(crate) fn check_in_opposite_enemy(x: i32, y: i32) -> bool {
         (x >= -BREADTH - 1_i32 && x < BREADTH + 1_i32)
     &&   y.abs() <= BREADTH

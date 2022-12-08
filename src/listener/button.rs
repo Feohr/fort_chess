@@ -30,19 +30,41 @@ mod style {
 use bevy::{
     prelude::{
         Commands, AlignItems, Val, JustifyContent, default, ButtonBundle, Style, Size, TextStyle,
-        TextBundle, AssetServer, UiColor, Res, UiRect, Component, Plugin, App, AlignSelf,
-        NodeBundle,
+        TextBundle, UiColor, Res, UiRect, Component, Plugin, App, AlignSelf, NodeBundle,
+        AssetServer, Handle, Font, Image, Color, SystemSet,
     },
     hierarchy::{BuildChildren, ChildBuilder},
+};
+use crate::{
+    font::RegFontHandle,
+    state::FortChessState,
 };
 use skip_turn::SkipButtonPlugin;
 use dice_roll::DiceRollButtonPlugin;
 use fort_builders::game::{Game, GameAction};
 
 /// Closure to hold `skip turn` button closures to run.
-static SKIP_TURN_GAME_CLOSURES: [fn(&mut Game); 3_usize] = [
+const SKIP_TURN_GAME_CLOSURES: [fn(&mut Game); 3_usize] = [
     GameAction::next_player, Game::set_update_true, Game::set_picked_false,
 ];
+
+/// Object to create instances of button.
+pub(crate) struct BtnContainer {
+    /// Font type for the button.
+    font: Handle<Font>,
+    /// Font size for the button.
+    font_size: f32,
+    /// Image for the button.
+    image: Handle<Image>,
+    /// Size of the UI node.
+    size: Size<Val>,
+    /// Size of the button.
+    btn_size: Size<Val>,
+    /// Resting color of the button.
+    bg_color: Color,
+    /// Color of the text.
+    fg_text_color: Color,
+}
 
 /// Plugin that handles the buttons.
 pub(crate) struct FortButtonPlugin;
@@ -52,25 +74,49 @@ pub(crate) struct FortButtonPlugin;
 impl Plugin for FortButtonPlugin {
 
     fn build(&self, app: &mut App) {
-        app .add_plugin(SkipButtonPlugin        )
-            .add_plugin(DiceRollButtonPlugin    );
+        app
+            .add_system_set(
+                SystemSet::on_enter(FortChessState::StartScreen)
+                .with_system(init_btn_obj)
+            )
+            .add_plugin(SkipButtonPlugin    )
+            .add_plugin(DiceRollButtonPlugin);
     }
+
+}
+
+/// Creating button object and adding it to resources to be able to call later.
+fn init_btn_obj(
+    mut commands:   Commands,
+    font:           Res<RegFontHandle>,
+    asset_server:   Res<AssetServer>,
+) {
+
+    commands.insert_resource(BtnContainer{
+        font: font.0.clone(),
+        font_size: style::BTN_FONT_SIZE,
+        image: asset_server.load("spritesheet/button.png").into(),
+        size: Size::new(Val::Percent(14_f32), Val::Percent(14_f32)),
+        btn_size: Size::new(Val::Px(style::BTN_SIZE.0), Val::Px(style::BTN_SIZE.1)),
+        bg_color: style::BTN_BKGRND_COLOR,
+        fg_text_color: style::BTN_FGTEXT_COLOR,
+    });
 
 }
 
 /// To spawn a text component within the button.
 fn btn_text_spawn<'a>(
-    commands:       &mut ChildBuilder,
-    asset_server:   &Res<AssetServer>,
-    text:           &'a str,
+    commands:   &mut ChildBuilder,
+    button:     &Res<BtnContainer>,
+    text:       &'a str,
 ) {
 
     commands.spawn_bundle(TextBundle::from_section(
         text,
         TextStyle {
-            font: asset_server.load("fonts/fira-sans.regular.ttf"),
-            font_size: style::BTN_FONT_SIZE,
-            color: style::BTN_FGTEXT_COLOR,
+            font: button.font.clone(),
+            font_size: button.font_size,
+            color: button.fg_text_color,
         },
     ));
 
@@ -79,27 +125,24 @@ fn btn_text_spawn<'a>(
 /// To spawn the button component.
 fn btn_bg_spawn<'a>(
     commands:           &mut ChildBuilder,
-    asset_server:       &Res<AssetServer>,
+    button:             &Res<BtnContainer>,
     text:               &'a str,
     button_component:   impl Component,
 ) {
 
     commands.spawn_bundle(ButtonBundle {
         style: Style {
-            size: Size::new(
-                      Val::Px(style::BTN_SIZE.0),
-                      Val::Px(style::BTN_SIZE.1),
-            ),
+            size: button.btn_size,
             align_self: AlignSelf::FlexEnd,
             justify_content: JustifyContent::Center,
             align_items: AlignItems::Center,
             ..default()
         },
-        color: UiColor::from(style::BTN_BKGRND_COLOR),
-        image: asset_server.load("spritesheet/button.png").into(),
+        color: UiColor::from(button.bg_color),
+        image: button.image.clone().into(),
         ..default()
     })
-    .with_children(|parent| btn_text_spawn(parent, &asset_server, text))
+    .with_children(|parent| btn_text_spawn(parent, button, text))
     .insert(button_component);
 
 }
@@ -107,7 +150,7 @@ fn btn_bg_spawn<'a>(
 /// To spawn a button node.
 pub(crate) fn btn_spawn<'a>(
     commands:           &mut Commands,
-    asset_server:       &Res<AssetServer>,
+    button:             &Res<BtnContainer>,
     text:               &'a str,
     button_component:   impl Component,
 ) {
@@ -115,19 +158,15 @@ pub(crate) fn btn_spawn<'a>(
     // Spawning a UI Node.
     commands.spawn_bundle(NodeBundle {
         style: Style {
-            size: Size::new(
-                Val::Percent(14_f32),
-                Val::Percent(14_f32),
-            ),
+            size: button.size,
             align_self: AlignSelf::FlexEnd,
-            justify_content: JustifyContent::SpaceBetween,
-            align_items: AlignItems::FlexStart,
+            align_items: AlignItems::Stretch,
             padding: UiRect::all(Val::Percent(1_f32)),
             ..default()
         },
         color: UiColor::from(style::BTN_NODE_COLOR),
         ..default()
     })
-    .with_children(|parent| btn_bg_spawn(parent, asset_server, text, button_component));
+    .with_children(|parent| btn_bg_spawn(parent, button, text, button_component));
 
 }

@@ -11,11 +11,14 @@ mod hover;
 mod button;
 //------------------//
 
-use crate::{RESOLUTION, TILEDRAW};
+use crate::{
+    RESOLUTION, TILEDRAW,
+    state::FortChessState,
+};
 use bevy::{
     prelude::{
         default, Color, Commands, Component, CursorMoved, Entity, EventReader, Res, ResMut, Sprite,
-        SpriteBundle, Transform, Vec2, Vec3, Windows, Plugin, App,
+        SpriteBundle, Transform, Vec2, Vec3, Windows, Plugin, App, SystemSet,
     },
 };
 use fort_builders::board::cursor_in_window;
@@ -40,15 +43,21 @@ pub(crate) struct ListenerPlugin;
 /*-----------------------------------------------------------------------------------------------*/
 impl Plugin for ListenerPlugin {
 
-    /// [`Plugin`] implementation for [`ListenerPlugin`].
     fn build(&self, app: &mut App) {
-        app .add_startup_system(    initialize_listener_objects )
-                    .add_plugin(    FortButtonPlugin            )
-                    .add_system(    update_cursor_position      )
-                    .add_system(    clear_picker                )
-                    .add_system(    hover_listener              )
-                    .add_system(    click_listener              );
-    }
+        app
+            .add_system_set(
+                SystemSet::on_enter(FortChessState::BoardScreen)
+                .with_system(initialize_listener_objects)
+            )
+            .add_system_set(
+                SystemSet::on_update(FortChessState::BoardScreen)
+                .with_system(update_cursor_position )
+                .with_system(clear_picker           )
+                .with_system(hover_listener         )
+                .with_system(click_listener         )
+            )
+            .add_plugin(FortButtonPlugin);
+   }
 
 }
 /*-----------------------------------------------------------------------------------------------*/
@@ -87,8 +96,10 @@ pub(crate) fn update_cursor_position(
 
     // Does not read when the window is not active.
     let Some(window) = windows.get_primary()    else { return };
+
     // Updating cursor position at each frame.
     let Some(cursor) = events.iter().next()     else { return };
+
     // Updating the position struct.
     (position.x, position.y) = cursor_in_window(
         cursor.position.x,
@@ -103,12 +114,12 @@ pub(crate) fn update_cursor_position(
 /*████Spawn Sprites████*/
 /*-----------------------------------------------------------------------------------------------*/
 /// To spawn a square [`TILEDRAW`] size block.
-#[inline]
 fn spawn_square_sprite(
     commands:       &mut Commands,
     color:          Color,
     translation:    Vec3,
 ) -> Entity {
+
     commands
         .spawn()
         .insert_bundle(SpriteBundle {
@@ -129,5 +140,6 @@ fn spawn_square_sprite(
             ..default()
         })
         .id()
+
 }
 /*-----------------------------------------------------------------------------------------------*/

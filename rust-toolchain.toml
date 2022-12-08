@@ -1,3 +1,0 @@
-# To use nightly rust.
-[toolchain]
-channel = "nightly-2022-08-17"

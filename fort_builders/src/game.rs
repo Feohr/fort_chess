@@ -1,4 +1,4 @@
-//! # game module
+//! # game mdule
 //!
 //! Game module to initialize, stop and exit the game.
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
@@ -50,7 +50,7 @@ impl Game {
     ///
     /// In future, the function should handle two extra optional player argument.
     /// Omitted presently to avoid complexity.
-    #[inline(always)]
+    #[inline]
     pub fn init(players: Vec<Player>) -> Self {
         Game {
             players,
@@ -65,6 +65,7 @@ impl Game {
     /// Takes `self` reference and changes status to `true`.
     ///
     /// `Idempotent function`
+    #[inline]
     pub fn set_update_true(&mut self) { self.update = true }
 
     /// To change the game update state to `false`.
@@ -72,6 +73,7 @@ impl Game {
     /// Takes `self` reference and changes status to `false`.
     ///
     /// `Idempotent function`
+    #[inline]
     pub fn set_update_false(&mut self) { self.update = false }
 
     /// To change the game picked state to `true`.
@@ -79,6 +81,7 @@ impl Game {
     /// Takes `self` reference and changes picked to `true`.
     ///
     /// `Idempotent function`
+    #[inline]
     pub fn set_picked_true(&mut self) { self.picked = true }
 
     /// To change the game picked state to `false`.
@@ -86,6 +89,7 @@ impl Game {
     /// Takes `self` reference and changes picked to `false`.
     ///
     /// `Idempotent function`
+    #[inline]
     pub fn set_picked_false(&mut self) { self.picked = false }
 
     /// To return the current [`Player`] struct.
@@ -120,6 +124,7 @@ impl GameAction for Game {
     /// Changes the turn value to indiacate which player turn it is.
     ///
     /// Adds value to turn and changes to 0 if the value exceeds players vector len - 1.
+    #[inline]
     fn next_player(&mut self) {
         match self.turn < self.players.len() - 1_usize {
             true  => self.turn += 1_usize,
@@ -170,3 +175,16 @@ impl GameAction for Game {
 
 }
 /*-----------------------------------------------------------------------------------------------*/
+
+impl Default for Game {
+
+    fn default() -> Self {
+        Game {
+            players: Vec::new(),
+            turn: usize::default(),
+            update: bool::default(),
+            picked: bool::default(),
+        }
+    }
+
+}

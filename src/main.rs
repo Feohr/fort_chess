@@ -19,6 +19,8 @@ extern crate fort_builders;
 mod game;
 mod listener;
 mod tiles;
+mod font;
+mod state;
 mod despawn_entity;
 /*------------*/
 
@@ -26,7 +28,7 @@ use bevy::{
     input::{keyboard::KeyCode, Input},
     prelude::{
         default, App, Camera2dBundle, ClearColor, Color, Commands, DefaultPlugins, Res,
-        ResMut, WindowDescriptor, Windows,
+        ResMut, WindowDescriptor, Windows, State,
     },
     render::camera::{OrthographicProjection, ScalingMode, WindowOrigin},
     window::WindowMode,
@@ -38,6 +40,8 @@ use fort_builders::{
 use game::GamePlugin;
 use listener::ListenerPlugin;
 use tiles::TilePlugin;
+use font::FontHandlePlugin;
+use state::FortChessState;
 
 /// Size of a single sprite.
 pub(crate) const SPRITESIZE             : f32         = 32_f32;
@@ -102,6 +106,7 @@ impl ZAxisLevel {
 /*-----------------------------------------------------------------------------------------------*/
 
 /// Function to close the game window. Press `Ctrl + q` to quit.
+#[inline]
 fn close_window_listener(
     input:          Res<Input<KeyCode>>,
     mut windows:    ResMut<Windows>,
@@ -156,6 +161,26 @@ fn set_panic_hook_fmt() {
 
 }
 
+// Temporary function.
+fn tmp_state_change(
+    mut state:  ResMut<State<FortChessState>>,
+    keyboard:   Res<Input<KeyCode>>,
+) {
+
+    if keyboard.just_pressed(KeyCode::Return) {
+        // Idempotent function. Hence no need for handling err.
+        match state.current() {
+            FortChessState::StartScreen => {
+                let _throw = state.set(FortChessState::GameBuild);
+            },
+            _ => {
+                let _throw = state.set(FortChessState::BoardScreen);
+            },
+        }
+    }
+
+}
+
 /// Main entry function.
 fn main() {
 
@@ -185,12 +210,15 @@ fn main() {
             ..default()
         })
         .insert_resource(ClearColor(BKGRND_COLOR))
+        .add_state(FortChessState::new())
         .add_startup_system(setup)
         .add_plugins(DefaultPlugins)
         .add_plugin(TilePlugin)
         .add_plugin(ListenerPlugin)
         .add_plugin(GamePlugin)
+        .add_plugin(FontHandlePlugin)
         .add_system(close_window_listener)
+        .add_system(tmp_state_change)
         .run();
 
 }

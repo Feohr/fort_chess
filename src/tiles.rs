@@ -4,16 +4,26 @@
 //! game.
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
-use crate::{RESOLUTION, SPRITESIZE, TILESIZE, ZAxisLevel};
+//  Modules //
+/*----------*/
+mod block;
+/*----------*/
+
+use crate::{
+    RESOLUTION, SPRITESIZE, TILESIZE, ZAxisLevel,
+    state::FortChessState,
+};
 use bevy::prelude::{
     default, App, AssetServer, Assets, Commands, Entity, Handle, Name, Plugin, Res, ResMut,
     SpriteSheetBundle, StartupStage, TextureAtlas, TextureAtlasSprite, Transform, Vec2, Vec3,
+    SystemSet,
 };
 use fort_builders::{
     BREADTH,
     board::{X_MAX, X_MIN, Y_MAX, Y_MIN},
     decrement_if_positive,
 };
+use block::FortBlockPlugin;
 
 /// To hold the row size of the tile pieces.
 const TILE_TYPE_ROW : usize   = 5_usize;
@@ -49,10 +59,15 @@ impl Plugin for TilePlugin {
 
     /// [`Plugin`] implementation for [`TilePlugin`].
     fn build(&self, app: &mut App) {
-        app .add_startup_system_to_stage(StartupStage::PreStartup,  load_tile   )
-            .add_startup_system_to_stage(StartupStage::Startup,     draw_board  )
-            .add_startup_system_to_stage(StartupStage::Startup,     draw_border )
-            .add_startup_system_to_stage(StartupStage::Startup,     draw_fort   );
+        app
+            .add_startup_system_to_stage(StartupStage::PreStartup, load_tile)
+            .add_system_set(
+                SystemSet::on_enter(FortChessState::BoardScreen)
+                .with_system(draw_board )
+                .with_system(draw_border)
+                .with_system(draw_fort  )
+            )
+           .add_plugin(FortBlockPlugin);
     }
 
 }
@@ -63,7 +78,7 @@ impl Plugin for TilePlugin {
 impl TileSpriteSheetIndex {
 
     /// Returns the corresponding [`TileSpriteSheetIndex`] variant from usize.
-    #[inline(always)]
+    #[inline]
     fn from_usize(from: usize) -> Self {
         match from {
             0_usize => TileSpriteSheetIndex::Light,
@@ -76,6 +91,7 @@ impl TileSpriteSheetIndex {
     }
 
     /// Converts a given [`TileSpriteSheetIndex`] variant to corresponding usize value.
+    #[inline]
     fn as_usize(&self) -> usize {
         match self {
             TileSpriteSheetIndex::Light     => 0_usize,
@@ -95,7 +111,6 @@ impl TileSpriteSheetIndex {
 /// Returns [`TileSpriteSheetIndex::Dark`] or [`TileSpriteSheetIndex::Light`] tile depending on the
 /// tiles. Returns Dark for even tiles and Light for odd tiles until the x value is less than zero.
 /// After `x > 0`, the tiles are then switched with Light for even and Dark for odd tiles.
-#[inline(always)]
 fn dark_or_light_tile_index(x: i32, y: i32) -> TileSpriteSheetIndex {
    TileSpriteSheetIndex::from_usize({
         (
@@ -285,13 +300,13 @@ fn load_tile(
 /// 4.  Fort Interior.
 ///
 /// This is a helper function to spawn a tile from the given input.
-#[inline]
 fn spawn_tile(
     commands:       &mut Commands,
     tile:           &TileSheet,
     index:          TileSpriteSheetIndex,
     translation:    Vec3,
 ) -> Entity {
+
     commands
         .spawn_bundle(SpriteSheetBundle {
             sprite: TextureAtlasSprite {
@@ -313,5 +328,6 @@ fn spawn_tile(
             ..default()
         })
         .id()
+
 }
 /*-----------------------------------------------------------------------------------------------*/

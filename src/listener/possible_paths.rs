@@ -51,7 +51,6 @@ pub struct Paths;
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
 /// To detect possible paths of a piece.
-#[inline]
 pub(crate) fn possible_piece_paths(
     x:          f32,
     y:          f32,
@@ -77,15 +76,25 @@ pub(crate) fn possible_piece_paths(
 impl PossiblePaths {
 
     /// Calculates and updates the paths value to render.
-    fn update_paths(&mut self, _paths: PositionVectorf32) { self.paths = _paths }
+    #[inline]
+    fn update_paths(&mut self, paths: PositionVectorf32) {
+        self.paths = paths;
+    }
 
     /// Empties the paths vector.
-    pub(crate) fn clear(&mut self) { self.paths.clear() }
+    #[inline]
+    pub(crate) fn clear(&mut self) {
+        self.paths.clear();
+    }
 
     /// Returns a reference to the internal vector.
-    pub(crate) fn get(&self) -> &PositionVectorf32 { &self.paths }
+    #[inline]
+    pub(crate) fn get(&self) -> &PositionVectorf32 {
+        &self.paths
+    }
 
     /// searches the paths to see if the position exists.
+    #[inline]
     pub(crate) fn contains(&self, x: f32, y: f32) -> bool {
         self.get().contains(&(x, y))
     }
@@ -131,7 +140,6 @@ pub(crate) fn update_possible_piece_paths(
 
     // Exctracting piece position and type from game.
     let (piece_pos_x, piece_pos_y, piece_type) = {
-        // Fucking tired of these unwraps everywhere. Bevy needs proper Error handling.
         let piece = game.current_player().current_chosen_piece().unwrap();
         (
             piece.position.x as f32,
@@ -152,7 +160,7 @@ pub(crate) fn update_possible_piece_paths(
 
 /// To detect if a position has a piece and return the appropriate color. For position with pieces
 /// it returns Red else Yellow.
-#[inline(always)]
+#[inline]
 fn piece_in_step_detection(step: &(f32, f32), game: &Game) -> Color {
     match game.check_piece_in_pos(step.0, step.1) {
         true  => PPATHS_COLOR_PIECE,

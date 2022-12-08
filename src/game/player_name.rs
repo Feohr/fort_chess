@@ -7,12 +7,13 @@ use crate::{
     RESOLUTION, ZAxisLevel, TILESIZE,
     despawn_entity::DespawnEntity,
     game::GameAsset,
+    font::BoldFontHandle,
 };
 use bevy::{
     text::Text2dBounds,
     prelude::{
-        Entity, With, Commands, Res, ResMut, Component, Query, Vec2, Transform, default, 
-        AssetServer, Text2dBundle, TextStyle, Color, Text, TextAlignment, SpriteBundle, Vec3,
+        Entity, With, Commands, Res, ResMut, Component, Query, Vec2, Transform, default,
+        Text2dBundle, TextStyle, Color, Text, TextAlignment, SpriteBundle, Vec3,
         Sprite,
     }
 };
@@ -45,7 +46,7 @@ pub(crate) struct PlayerName;
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
 /// Function to convert [`Team`] to [`Color`].
-#[inline(always)]
+#[inline]
 fn color_from_team(team: Team) -> Color {
     match team {
         Team::Red       => Color::RED,
@@ -60,12 +61,12 @@ fn color_from_team(team: Team) -> Color {
 impl PlayerNameTextBox {
 
     /// To create a [`PlayerNameTextBox`].
-    #[inline(always)]
+    #[inline]
     pub(crate) fn create(name: String, team: Team, x: i32, y: i32) -> Self {
         PlayerNameTextBox {
             name,
             team,
-            position: Position { x, y },
+            position: Position {x, y},
         }
     }
 
@@ -77,7 +78,7 @@ impl PlayerNameTextBox {
 impl PlayerNameBoxVec {
 
     /// To initialize the [`PlayerNameBoxVec`] object.
-    #[inline(always)]
+    #[inline]
     pub(crate) fn new() -> Self {
         PlayerNameBoxVec {
             boxes: Vec::new(),
@@ -85,21 +86,27 @@ impl PlayerNameBoxVec {
     }
 
     /// To push a [`PlayerNameTextBox`] to the vec.
+    #[inline]
     pub(crate) fn push(&mut self, name: String, team: Team, x: i32, y: i32) {
-        self.boxes.push(PlayerNameTextBox::create(name, team, x, y))
+        self.boxes.push(
+            PlayerNameTextBox::create(name, team, x, y),
+        );
     }
 
     /// To find and pop the [`PlayerNameTextBox`] with the corresponding team.
+    #[inline]
     pub(crate) fn pop(&mut self, team: Team) {
+
         if let Ok(pos) = self.search(team) {
             self.boxes.remove(pos);
         }
+
     }
 
     /// To search the player with the given team using `binary search`.
+    #[inline]
     pub(crate) fn search(&self, team: Team) -> Result<usize, usize> {
-        self.boxes
-            .binary_search_by(|pname| pname.team.cmp(&team))
+        self.boxes.binary_search_by(|pname| pname.team.cmp(&team))
     }
 
 }
@@ -119,19 +126,20 @@ pub(crate) fn highlight_player_name(
 
     // Getting the current highlighted color.
     let highlight_color = {
+
         let player_team = game.get().current_player().team;
+
         match player_names.search(player_team) {
             Ok(_)   => *color_from_team(player_team).set_a(0.5_f32),
             Err(_)  => Color::NONE,
         }
+
     };
 
-    // To be written.
     player_names.boxes
         .iter()
         .for_each(|player| {
             if game.get().current_player().team != player.team { return }
-            // Spawn.
             commands
                 .spawn()
                 .insert_bundle(SpriteBundle {
@@ -147,11 +155,8 @@ pub(crate) fn highlight_player_name(
                     },
                     transform: Transform {
                         translation: Vec3::new(
-                            //player_pos_x.
                             (player.position.x as f32 + 0.5_f32) * RESOLUTION,
-                            //layer_pos_y.
                             player.position.y as f32 * RESOLUTION,
-                            // Z Level.
                             ZAxisLevel::Eleventh.as_f32(),
                         ),
                         ..default()
@@ -168,12 +173,11 @@ pub(crate) fn display_player_names(
     commands:       &mut Commands,
     player_names:   &ResMut<PlayerNameBoxVec>,
     query:          &Query<Entity, With<PlayerName>>,
-    asset_server:   &Res<AssetServer>,
+    font:           &Res<BoldFontHandle>,
 ) {
     // Clean up.
     commands.despawn_entity(query);
 
-    let font = asset_server.load("fonts/fira-sans.extrabold.ttf");
     player_names.boxes
         .iter()
         .for_each(|player| {
@@ -184,7 +188,7 @@ pub(crate) fn display_player_names(
                 text: Text::from_section(
                     player.name.as_str(),
                     TextStyle {
-                        font: font.clone(),
+                        font: font.0.clone(),
                         font_size: 0.5_f32 * RESOLUTION,
                         color: color_from_team(player.team),
                     },

@@ -52,13 +52,12 @@ pub(crate) fn click_listener(
     let (m_x, m_y) = (cursor.x, cursor.y);
     if !position_in_board_bounds(m_x, m_y)
     || !click.just_pressed(MouseButton::Left) { return }
-    // Storing a mutable reference to Game.
+
     let game = game.get_mut();
 
     // Clean up.
     commands.despawn_entity(&clicks);
 
-    // Matching to see if a piece is picked.
     match game.picked {
         // If a piece is already picked.
         true  => {
@@ -69,7 +68,6 @@ pub(crate) fn click_listener(
                 game.next_player();
             }
             game.set_picked_false();
-            // Clean up.
             commands.despawn_entity(&paths_query);
             paths.clear();
         },

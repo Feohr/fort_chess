@@ -23,6 +23,9 @@ const PIECES_SPRITESHEET_WIDTH: usize = 5_usize;
 pub(crate) struct Piece;
 
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
+
+/*████Draw Piece████*/
+/*-----------------------------------------------------------------------------------------------*/
 /// call to draw the player [`Piece`]s.
 ///
 /// Iterating over each player and drawing all the pieces once again. *row* and *col* correspond
@@ -39,12 +42,11 @@ pub(crate) fn draw_pieces(
 
     // Clean up.
     commands.despawn_entity(query);
-    // For each player.
+
     game
         .get().players
         .iter()
         .for_each(|player| {
-            // For each piece.
             player.pieces.iter().for_each(|piece| {
                 let sprite = spawn_piece(
                     commands,
@@ -55,20 +57,17 @@ pub(crate) fn draw_pieces(
                             // Column.
                     )   +   piece.piece_type.as_usize(),
                     Vec3::new(
-                        //piece_pos_x.
                         piece.position.x as f32     * RESOLUTION,
-                        //piece_pos_y.
                         piece.position.y as f32     * RESOLUTION,
-                        //Z level.
                         ZAxisLevel::Eight.as_f32(),
                     ),
                 );
-                // Spawn.
                 commands.entity(sprite).insert(Name::from("Piece")).insert(Piece);
             })
     });
 
 }
+/*-----------------------------------------------------------------------------------------------*/
 
 /// Simple helper function to spawn [`Piece`] sprites. Sprite size is [`TILESIZE`].
 fn spawn_piece(
@@ -77,6 +76,7 @@ fn spawn_piece(
     index:          usize,
     translation:    Vec3,
 ) -> Entity {
+
     commands
         .spawn_bundle(SpriteSheetBundle {
             sprite: TextureAtlasSprite {
@@ -97,5 +97,5 @@ fn spawn_piece(
             ..default()
         })
         .id()
+
 }
-/*-----------------------------------------------------------------------------------------------*/

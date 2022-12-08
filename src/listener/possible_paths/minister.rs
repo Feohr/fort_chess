@@ -22,8 +22,9 @@ use crate::listener::possible_paths::PositionVectorf32;
 /// There remaining positions are then filtered out based on the qudrant that the piece lies
 /// inside.
 pub(crate) fn analyse_minister_paths(x: f32, y: f32, game: &Game) -> PositionVectorf32 {
-    // Initializing possible paths vector.
+
     let mut _possiblepaths: PositionVectorf32 = Vec::new();
+
     // Along +ve X and +ve y diagonal.
     minister_step_analysis(
         x, y,   |x, y, breadth| {
@@ -56,6 +57,7 @@ pub(crate) fn analyse_minister_paths(x: f32, y: f32, game: &Game) -> PositionVec
                 },
         game, &mut _possiblepaths,
     );
+
     // Return.
     _possiblepaths  .into_iter()
                     .filter(|(_x, _y)| (
@@ -69,6 +71,7 @@ pub(crate) fn analyse_minister_paths(x: f32, y: f32, game: &Game) -> PositionVec
                         ),
                     })(*_x, *_y))
                     .collect::<PositionVectorf32>()
+
 }
 
 fn minister_step_analysis<F>(

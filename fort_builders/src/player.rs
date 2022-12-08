@@ -115,7 +115,7 @@ impl Team {
     /// To get a team corresponding to the index value.
     ///
     /// Takes a usize and returns a [`Team`] struct.
-    #[inline(always)]
+    #[inline]
     pub fn from_index(index: usize) -> Result<Self, Error> {
         match index {
             0 => Ok(Team::Red),
@@ -129,7 +129,7 @@ impl Team {
     /// To turn a team enum value to a String value.
     ///
     /// Takes [`Team`] enum value and converts is to [`String`] value.
-    #[inline(always)]
+    #[inline]
     pub fn teamstr_from_team<'a>(team: Team) -> &'a str {
         match team {
             Team::Red    => "Red",
@@ -140,6 +140,7 @@ impl Team {
     }
 
     /// Takes the [`Team`] value and returns the respective index.
+    #[inline]
     pub fn as_usize(&self) -> usize {
         match self {
             Team::Red    => 0_usize,
@@ -159,7 +160,6 @@ impl Player {
     /// Used to initialize a new player based on the inputs.
     ///
     /// Takes the name, team and is_defender boolean value to create a [`Player`] struct.
-    #[inline(always)]
     pub fn from(
         name:               String,
         team:               Team,
@@ -185,18 +185,23 @@ impl Player {
     /// Changes the `is_winner` value to `true`.
     ///
     /// `Idempotent function`
-    pub fn set_winner(&mut self) { self.is_winner = true }
+    #[inline]
+    pub fn set_winner(&mut self) {
+        self.is_winner = true;
+    }
 
     /// For sorting the pieces.
     ///
     /// TimeSorts the pieces based on their position value.
+    #[inline]
     fn sort_pieces(&mut self) {
-        self.pieces.sort_by(|a, b| a.position.cmp(&b.position))
+        self.pieces.sort_by(|a, b| a.position.cmp(&b.position));
     }
 
     /// To sort and return the object.
     ///
     /// Used when intializing the player struct.
+    #[inline]
     fn to_sorted(mut self) -> Self {
         self.sort_pieces();
         self
@@ -204,22 +209,29 @@ impl Player {
 
     /// To get the piece reference in the current player.
     #[inline]
-    pub fn pieces(&self) -> &Vec<Piece> { &self.pieces }
+    pub fn pieces(&self) -> &Vec<Piece> {
+        &self.pieces
+    }
 
     /// To get the pieces mutable reference in the current player.
     #[inline]
-    pub fn pieces_mut(&mut self) -> &mut Vec<Piece> { &mut self.pieces }
+    pub fn pieces_mut(&mut self) -> &mut Vec<Piece> {
+        &mut self.pieces
+    }
 
     /// A simple function to check if the name length is too big or too small.
     ///
     /// returns false if the name length is invalid. The constraints are 2 < name_length < 15.
-    #[inline(always)]
+    #[inline]
     fn validate_name(name: String) -> Result<String, Error> {
+        // The length of the name.
         let len = name.len();
+
         match len >= 3_usize && len < 15_usize {
             true  => Ok(name),
             false => Err(Error::InvalidNameLength(name.clone(), name.len())),
         }
+
     }
 
     /// To set the chosen piece position in the vec.
@@ -286,14 +298,18 @@ impl PlayerAction for Player {
     ///
     /// Takes the position of the piece, finds it inside the vector and deletes that piece.
     fn kill_piece(&mut self, pos: usize) -> Result<Piece, Error> {
+
         // Checks.
         Piece::is_valid_index(pos, self.is_defender)?;
         Piece::is_in_bounds(pos, self.pieces.len())?;
+
         // Removing the piece.
         let piece = self.pieces.remove(pos);
+
         // Sort pieces after mutation.
         self.sort_pieces();
         Ok(piece)
+
     }
 
     /// To update position of the piece inside the [`Player`] struct vector.
@@ -301,9 +317,12 @@ impl PlayerAction for Player {
     /// Takes x and y coordinates to update the piece at the position that is provided.
     /// returns a result type in case of errors.
     fn update_piece(&mut self, x: i32, y: i32) -> Result<bool, Error> {
+
         let pos = self.chosen_piece_index;
+
         // Is the index a valid index?
         Piece::is_valid_index(pos, self.is_defender)?;
+
         match self.pieces[pos].position.x == x && self.pieces[pos].position.y == y {
             true => Ok(false),
             false => {
@@ -314,6 +333,7 @@ impl PlayerAction for Player {
                 Ok(true)
             },
         }
+
     }
 
     /// To check if the current chosen piece is on the opposite side.
@@ -321,6 +341,7 @@ impl PlayerAction for Player {
     /// Takes a self reference and checks for the position depending on if you're a defender piece
     /// or an enemy piece.
     fn in_opposite_side(&self) -> bool {
+
         if let Ok(current_piece) = self.current_chosen_piece() {
             let (x, y) = (current_piece.position.x, current_piece.position.y);
             match self.is_defender {
@@ -328,7 +349,9 @@ impl PlayerAction for Player {
                 false => return check_in_opposite_enemy(x, y),
             }
         };
+
         false
+
     }
 
 }

@@ -5,8 +5,8 @@
 
 use bevy::{
     prelude::{
-        Commands, Query, ResMut, With, Plugin, App, AssetServer, UiColor, Res, Button, Interaction,
-        Changed, Component, Entity,
+        Commands, Query, ResMut, With, Plugin, App, UiColor, Res, Button, Interaction, Changed,
+        Component, Entity, SystemSet,
     },
 };
 use crate::{
@@ -14,11 +14,11 @@ use crate::{
     game::GameAsset,
     listener::{
         possible_paths::{PossiblePaths, Paths},
-        button::{style, btn_spawn, SKIP_TURN_GAME_CLOSURES},
+        button::{style, btn_spawn, SKIP_TURN_GAME_CLOSURES, BtnContainer},
         click::Click,
     },
+    state::FortChessState,
 };
-// use fort_builders::game::{GameAction, Game};
 
 /// To hold the button text.
 const SKIP_TURN_BTN_TEXT: &str = "Skip Turn";
@@ -35,8 +35,15 @@ pub struct SkipTurnButton;
 impl Plugin for SkipButtonPlugin {
 
     fn build(&self, app: &mut App) {
-        app .add_startup_system(skip_turn_btn_spawn     )
-            .add_system(        skip_turn_btn_clicked   );
+        app
+            .add_system_set(
+                SystemSet::on_enter(FortChessState::GameBuild)
+                .with_system(skip_turn_btn_spawn)
+            )
+            .add_system_set(
+                SystemSet::on_update(FortChessState::BoardScreen)
+                .with_system(skip_turn_btn_clicked)
+            );
     }
 
 }
@@ -82,12 +89,13 @@ fn skip_turn_btn_clicked(
 /*████Skip Turn Button Setup████*/
 /*-----------------------------------------------------------------------------------------------*/
 /// To setup the `skip turn` button.
+#[inline]
 fn skip_turn_btn_spawn(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
+    mut commands:   Commands,
+    button:         Res<BtnContainer>,
 ) {
 
-    btn_spawn(&mut commands, &asset_server, SKIP_TURN_BTN_TEXT, SkipTurnButton);
+    btn_spawn(&mut commands, &button, SKIP_TURN_BTN_TEXT, SkipTurnButton);
 
 }
 /*-----------------------------------------------------------------------------------------------*/

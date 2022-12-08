@@ -10,33 +10,35 @@
 mod draw_piece;
 mod highlight;
 mod player_name;
+mod game_end;
 //-----------//
 
-use crate::SPRITESIZE;
+use crate::{
+    SPRITESIZE,
+    font::BoldFontHandle,
+    state::FortChessState,
+};
 use bevy::{
     prelude::{
         Entity, With, Commands, Res, ResMut, Component, Vec2, Handle, TextureAtlas, StartupStage,
-        App, Assets, AssetServer, Plugin, Query,
+        App, Assets, AssetServer, Plugin, Query, SystemSet,
     }
 };
 use fort_builders::{
-    board::{Quadrant, q1_outer_bound_pos, q2_outer_bound_pos, q3_outer_bound_pos},
     dice_roll,
+    board::{Quadrant, q1_outer_bound_pos, q2_outer_bound_pos, q3_outer_bound_pos},
     game::{Game, GameAction},
     player::{Player, Team},
 };
-use draw_piece::draw_pieces;
-use draw_piece::Piece;
-use highlight::highlight_active_pieces;
-use highlight::Highlight;
-use player_name::display_player_names;
-use player_name::highlight_player_name;
-use player_name::PlayerName;
-use player_name::PlayerNameBoxVec;
-use player_name::PlayerNameOutline;
+use draw_piece::{draw_pieces, Piece};
+use highlight::{highlight_active_pieces, Highlight};
+use player_name::{
+    display_player_names, highlight_player_name, PlayerName, PlayerNameBoxVec, PlayerNameOutline,
+};
+use game_end::GameEndPlugin;
 
 // Temporary holder for number of players.
-pub(crate) const PLAYER_COUNT       : usize = 3_usize;
+pub(crate) const PLAYER_COUNT       : usize = 2_usize;
 /// To hold the number of types of pieces.
 const PIECE_TYPE_COUNT              : usize = 5_usize;
 
@@ -59,10 +61,21 @@ impl Plugin for GamePlugin {
 
     /// [`Plugin`] implementation for [`GamePlugin`].
     fn build(&self, app: &mut App) {
-        app .add_startup_system_to_stage(StartupStage::PreStartup, init_game                )
-            .add_startup_system_to_stage(StartupStage::PreStartup, load_sprite              )
-            .add_startup_system_to_stage(StartupStage::Startup,    init_player_name_box_vec )
-            .add_system(                                           game_update_tick         );
+        app
+            .add_startup_system_to_stage(StartupStage::PreStartup, load_sprite)
+            .add_system_set(
+                SystemSet::on_enter(FortChessState::GameBuild)
+                .with_system(init_game)
+            )
+            .add_system_set(
+                SystemSet::on_enter(FortChessState::BoardScreen)
+                .with_system(init_player_name_box_vec)
+            )
+            .add_system_set(
+                SystemSet::on_update(FortChessState::BoardScreen)
+                .with_system(game_update_tick)
+            )
+            .add_plugin(GameEndPlugin);
     }
 
 }
@@ -106,10 +119,16 @@ fn init_player_name_box_vec(
 impl GameAsset {
 
     /// To get a reference to the inner game tuple element,
-    pub(crate) fn get(&self) -> &Game { &self.0 }
+    #[inline]
+    pub(crate) fn get(&self) -> &Game {
+        &self.0
+    }
 
     /// To get a mutable reference to the inner game tuple element,
-    pub(crate) fn get_mut(&mut self) -> &mut Game { &mut self.0 }
+    #[inline]
+    pub(crate) fn get_mut(&mut self) -> &mut Game {
+        &mut self.0
+    }
 
 }
 /*-----------------------------------------------------------------------------------------------*/
@@ -148,7 +167,7 @@ fn init_game(mut commands: Commands) {
 fn game_update_tick(
     mut commands:   Commands,
     mut game:       ResMut<GameAsset>,
-    asset:          Res<AssetServer>,
+    font:           Res<BoldFontHandle>,
     sprite:         Res<PlayerSheet>,
     mut pname:      ResMut<PlayerNameBoxVec>,
     dquery:         Query<Entity, With<Piece>>,
@@ -159,13 +178,16 @@ fn game_update_tick(
 
     // If no need for update, return.
     if !game.get().update { return }
+
     // Deleting lost players.
     clean_up_lost_players(game.get_mut(), &mut pname);
+
     // Update draw functions.
     draw_pieces(            &mut commands, &sprite, &game, &dquery);
     highlight_active_pieces(&mut commands, &game,          &hquery);
-    display_player_names(   &mut commands, &pname,         &pnquery, &asset);
+    display_player_names(   &mut commands, &pname,         &pnquery, &font);
     highlight_player_name(  &mut commands, &pname,  &game, &pnhquery);
+
     // Setting the update as false to put latch back.
     game.get_mut().set_update_false();
 
@@ -179,8 +201,9 @@ fn clean_up_lost_players(
 
     // Getting the lost players,
     let _dead = game.hunt();
-    // For debugging.
+
     if !_dead.is_empty() { dbg!(&_dead); }
+
     // Iterating through and poping the corresponding player_name text box.
     _dead
         .into_iter()

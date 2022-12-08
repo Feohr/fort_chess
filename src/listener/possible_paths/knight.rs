@@ -46,8 +46,9 @@ mod circle {
 ///
 /// Any positions with the pieces of the same team are also skipped.
 pub(crate) fn analyse_knight_paths(x: f32, y: f32, game: &Game) -> PositionVectorf32 {
-    // Paths vector initialize.
+
     let mut _possiblepaths: PositionVectorf32 = Vec::new();
+
     // Looping from 0 to 360 with 30 as the step.
     for theta in (circle::ANGLE_START..circle::ANGLE_END).step_by(circle::ANGLE_STEP) {
         // Getting the circumeference x and y values.
@@ -61,6 +62,7 @@ pub(crate) fn analyse_knight_paths(x: f32, y: f32, game: &Game) -> PositionVecto
         // Pushing to the _possiblepaths vec.
         _possiblepaths.push((path_x, path_y));
     }
+
     // Return.
     _possiblepaths  .into_iter()
                     .filter(|(_x, _y)| (
@@ -74,4 +76,5 @@ pub(crate) fn analyse_knight_paths(x: f32, y: f32, game: &Game) -> PositionVecto
                         ),
                     })(*_x, *_y))
                     .collect::<PositionVectorf32>()
+
 }

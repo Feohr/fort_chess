@@ -26,12 +26,8 @@ impl<T> DespawnEntity<T> for Commands<'_,'_>
         &mut self,
         query:      &Query<Entity, With<T>>,
     ) {
-
         // Iterate over each of the player names and despawn them.
-        query
-            .iter()
-            .for_each(|entity| self.entity(entity).despawn())
-
+        query.iter().for_each(|entity| self.entity(entity).despawn());
     }
 
 }
