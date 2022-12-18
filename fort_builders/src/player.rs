@@ -356,3 +356,21 @@ impl PlayerAction for Player {
 
 }
 /*-----------------------------------------------------------------------------------------------*/
+
+/*████Impl Default for Player████*/
+/*-----------------------------------------------------------------------------------------------*/
+impl Default for Player {
+
+    fn default() -> Self {
+        Player {
+            name: String::default(),
+            pieces: Vec::default(),
+            team: Team::Red,
+            is_defender: bool::default(),
+            is_winner: bool::default(),
+            chosen_piece_index: usize::default(),
+        }
+    }
+
+}
+/*-----------------------------------------------------------------------------------------------*/

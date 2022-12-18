@@ -7,7 +7,7 @@ use bevy::{
     prelude::{
         Commands, Component, Query, ResMut, With, Plugin, App, UiColor, Res, Button, Interaction,
         Changed, Visibility, Entity, Text2dBundle, default, Transform, Vec2, Text, TextStyle,
-        TextAlignment, Color, Timer, Time, SystemSet, State,
+        TextAlignment, Color, Timer, Time, SystemSet,
     },
     text::Text2dBounds,
 };
@@ -269,7 +269,6 @@ fn dice_roll_btn_clicked(
     mut dice_roll_val:      ResMut<DiceRollValue>,
     paths_query:            Query<Entity, With<Paths>>,
     click_query:            Query<Entity, With<Click>>,
-    mut game_state:         ResMut<State<FortChessState>>,
 ) {
 
     // Matching with the interaction to display the respective animations.
@@ -282,7 +281,7 @@ fn dice_roll_btn_clicked(
                 dice_roll_val.set(roll);
                 if roll == 5_usize {
                     game.get_mut().current_player_mut().set_winner();
-                    game_state.set(FortChessState::ResultScreen).unwrap();
+                    game.get_mut().set_play_false();
                 }
                 // To change the display and move the player along.
                 SKIP_TURN_GAME_CLOSURES
@@ -308,8 +307,6 @@ fn dice_roll_btn_spawn(
     mut commands:   Commands,
     button:         Res<BtnContainer>,
 ) {
-
     btn_spawn( &mut commands, &button, DICE_ROLL_BTN_TEXT, DiceRollButton);
-
 }
 /*-----------------------------------------------------------------------------------------------*/

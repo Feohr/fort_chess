@@ -21,7 +21,7 @@ use crate::{
 use bevy::{
     prelude::{
         Entity, With, Commands, Res, ResMut, Component, Vec2, Handle, TextureAtlas, StartupStage,
-        App, Assets, AssetServer, Plugin, Query, SystemSet,
+        App, Assets, AssetServer, Plugin, Query, SystemSet, State,
     }
 };
 use fort_builders::{
@@ -38,7 +38,7 @@ use player_name::{
 use game_end::GameEndPlugin;
 
 // Temporary holder for number of players.
-pub(crate) const PLAYER_COUNT       : usize = 2_usize;
+pub(crate) const PLAYER_COUNT       : usize = 4_usize;
 /// To hold the number of types of pieces.
 const PIECE_TYPE_COUNT              : usize = 5_usize;
 
@@ -75,13 +75,17 @@ impl Plugin for GamePlugin {
                 SystemSet::on_update(FortChessState::BoardScreen)
                 .with_system(game_update_tick)
             )
+           .add_system_set(
+               SystemSet::on_exit(FortChessState::BoardScreen)
+               .with_system(dealloc_player_name_box_vec)
+           )
             .add_plugin(GameEndPlugin);
     }
 
 }
 /*-----------------------------------------------------------------------------------------------*/
 
-/*████Init Player Name Box████*/
+/*████Player Name Box████*/
 /*-----------------------------------------------------------------------------------------------*/
 /// Simple function to initialize player name struct vec.
 fn init_player_name_box_vec(
@@ -111,6 +115,11 @@ fn init_player_name_box_vec(
     // Inserting the resource.
     commands.insert_resource(player_name);
 
+}
+
+/// To dealloc [`PlayerNameBoxVec`] when leaving board screen.
+fn dealloc_player_name_box_vec(mut commands: Commands) {
+    commands.remove_resource::<PlayerNameBoxVec>();
 }
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -170,6 +179,7 @@ fn game_update_tick(
     font:           Res<BoldFontHandle>,
     sprite:         Res<PlayerSheet>,
     mut pname:      ResMut<PlayerNameBoxVec>,
+    mut state:      ResMut<State<FortChessState>>,
     dquery:         Query<Entity, With<Piece>>,
     hquery:         Query<Entity, With<Highlight>>,
     pnquery:        Query<Entity, With<PlayerName>>,
@@ -181,6 +191,9 @@ fn game_update_tick(
 
     // Deleting lost players.
     clean_up_lost_players(game.get_mut(), &mut pname);
+    if game.get().players.is_empty() {
+        game.get_mut().set_play_false();
+    }
 
     // Update draw functions.
     draw_pieces(            &mut commands, &sprite, &game, &dquery);
@@ -190,6 +203,11 @@ fn game_update_tick(
 
     // Setting the update as false to put latch back.
     game.get_mut().set_update_false();
+
+    if !game.get().play {
+        // Idempotent in nature hence we throw the result.
+        let _throw = state.set(FortChessState::ResultScreen);
+    }
 
 }
 

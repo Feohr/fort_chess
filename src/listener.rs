@@ -8,7 +8,7 @@
 mod possible_paths;
 mod click;
 mod hover;
-mod button;
+pub(crate) mod button;
 //------------------//
 
 use crate::{

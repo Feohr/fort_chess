@@ -33,7 +33,6 @@ pub struct SkipTurnButton;
 /*████Plugin for SkipButtonPlugin████*/
 /*-----------------------------------------------------------------------------------------------*/
 impl Plugin for SkipButtonPlugin {
-
     fn build(&self, app: &mut App) {
         app
             .add_system_set(
@@ -45,7 +44,6 @@ impl Plugin for SkipButtonPlugin {
                 .with_system(skip_turn_btn_clicked)
             );
     }
-
 }
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -94,8 +92,6 @@ fn skip_turn_btn_spawn(
     mut commands:   Commands,
     button:         Res<BtnContainer>,
 ) {
-
     btn_spawn(&mut commands, &button, SKIP_TURN_BTN_TEXT, SkipTurnButton);
-
 }
 /*-----------------------------------------------------------------------------------------------*/

@@ -21,6 +21,9 @@ pub struct Game {
 
     /// To track if there is a piece picked.
     pub picked: bool,
+
+    /// To notify if the game is still being played.
+    pub play: bool,
 }
 
 /// To handle operations over the Game.
@@ -57,6 +60,7 @@ impl Game {
             turn: 0_usize,
             update: true,
             picked: false,
+            play: true,
         }
     }
 
@@ -66,7 +70,9 @@ impl Game {
     ///
     /// `Idempotent function`
     #[inline]
-    pub fn set_update_true(&mut self) { self.update = true }
+    pub fn set_update_true(&mut self) {
+        self.update = true;
+    }
 
     /// To change the game update state to `false`.
     ///
@@ -74,7 +80,9 @@ impl Game {
     ///
     /// `Idempotent function`
     #[inline]
-    pub fn set_update_false(&mut self) { self.update = false }
+    pub fn set_update_false(&mut self) {
+        self.update = false;
+    }
 
     /// To change the game picked state to `true`.
     ///
@@ -82,7 +90,18 @@ impl Game {
     ///
     /// `Idempotent function`
     #[inline]
-    pub fn set_picked_true(&mut self) { self.picked = true }
+    pub fn set_picked_true(&mut self) {
+        self.picked = true;
+    }
+
+    /// To change the game play to `true`.
+    ///
+    /// Takes a mutable self reference and changes play to `true`.
+    ///
+    /// `Idempotent function`
+    pub fn set_play_false(&mut self) {
+        self.play = false;
+    }
 
     /// To change the game picked state to `false`.
     ///
@@ -90,15 +109,21 @@ impl Game {
     ///
     /// `Idempotent function`
     #[inline]
-    pub fn set_picked_false(&mut self) { self.picked = false }
+    pub fn set_picked_false(&mut self) {
+        self.picked = false;
+    }
 
     /// To return the current [`Player`] struct.
     #[inline]
-    pub fn current_player(&self) -> &Player { &self.players[self.turn] }
+    pub fn current_player(&self) -> &Player {
+        &self.players[self.turn]
+    }
 
     /// Mutable reference to the player.
     #[inline]
-    pub fn current_player_mut(&mut self) -> &mut Player { &mut self.players[self.turn] }
+    pub fn current_player_mut(&mut self) -> &mut Player {
+        &mut self.players[self.turn]
+    }
 
 }
 /*-----------------------------------------------------------------------------------------------*/
@@ -184,6 +209,7 @@ impl Default for Game {
             turn: usize::default(),
             update: bool::default(),
             picked: bool::default(),
+            play: bool::default(),
         }
     }
 

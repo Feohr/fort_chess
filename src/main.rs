@@ -22,6 +22,7 @@ mod tiles;
 mod font;
 mod state;
 mod despawn_entity;
+mod startscreen;
 /*------------*/
 
 use bevy::{
@@ -42,6 +43,7 @@ use listener::ListenerPlugin;
 use tiles::TilePlugin;
 use font::FontHandlePlugin;
 use state::FortChessState;
+use startscreen::MainScreenPlugin;
 
 /// Size of a single sprite.
 pub(crate) const SPRITESIZE             : f32         = 32_f32;
@@ -133,6 +135,7 @@ fn setup(mut commands: Commands) {
                 top:    TOP as f32 * RESOLUTION,
                 right:  RGT as f32 * RESOLUTION,
                 bottom: BTM as f32 * RESOLUTION,
+                far:    10000_f32,
                 scaling_mode: ScalingMode::None,
                 window_origin: WindowOrigin::Center,
                 ..default()
@@ -153,9 +156,9 @@ fn set_panic_hook_fmt() {
 
     std::panic::set_hook(Box::new(|info| {
         println!(
-            "{RED}ERROR:{RST} [{}] {}",
-            info.location().expect("No error location found."),
-            info.message().expect("No error message found."),
+            "{RED}ERROR:{RST} [{}] {:?}",
+            info.location().expect("Fatal error, cannot find the panic location."),
+            info.message().expect("No error message produced."),
         );
     }));
 
@@ -173,9 +176,11 @@ fn tmp_state_change(
             FortChessState::StartScreen => {
                 let _throw = state.set(FortChessState::GameBuild);
             },
-            _ => {
+            FortChessState::GameBuild => {
                 let _throw = state.set(FortChessState::BoardScreen);
             },
+            // Do nothing.
+            _ => {},
         }
     }
 
@@ -195,7 +200,7 @@ fn main() {
     // -    Mode:       fullscreen.
     //
     // __ClearColor__ is used to fill the background color,
-    // -    Valie:      BKGRND_COLOR.
+    // -    Value:      BKGRND_COLOR.
     //
     //  Plugins:
     //  -   Default:    for default bevy functionalities.
@@ -213,6 +218,7 @@ fn main() {
         .add_state(FortChessState::new())
         .add_startup_system(setup)
         .add_plugins(DefaultPlugins)
+        .add_plugin(MainScreenPlugin)
         .add_plugin(TilePlugin)
         .add_plugin(ListenerPlugin)
         .add_plugin(GamePlugin)

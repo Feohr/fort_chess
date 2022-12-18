@@ -62,7 +62,7 @@ pub enum Error {
 
 
     /// When more than one winner exists.
-    #[error("{} There seens to be more than one winner. {}", RED, RST)]
+    #[error("{} There seems to be more than one winner. {}", RED, RST)]
     MoreThanOneWinner(usize),
 }
 

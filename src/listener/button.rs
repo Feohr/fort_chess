@@ -5,6 +5,7 @@
 
 pub(crate) mod skip_turn;
 pub(crate) mod dice_roll;
+pub(crate) mod return_main;
 
 mod style {
 
@@ -30,17 +31,19 @@ mod style {
 use bevy::{
     prelude::{
         Commands, AlignItems, Val, JustifyContent, default, ButtonBundle, Style, Size, TextStyle,
-        TextBundle, UiColor, Res, UiRect, Component, Plugin, App, AlignSelf, NodeBundle,
-        AssetServer, Handle, Font, Image, Color, SystemSet,
+        TextBundle, UiColor, Res, UiRect, Component, Plugin, App, AlignSelf, NodeBundle, With,
+        AssetServer, Handle, Font, Image, Color, SystemSet, Query, Entity,
     },
     hierarchy::{BuildChildren, ChildBuilder},
 };
 use crate::{
     font::RegFontHandle,
     state::FortChessState,
+    despawn_entity::DespawnEntity,
 };
 use skip_turn::SkipButtonPlugin;
 use dice_roll::DiceRollButtonPlugin;
+use return_main::ReturnButtonPlugin;
 use fort_builders::game::{Game, GameAction};
 
 /// Closure to hold `skip turn` button closures to run.
@@ -69,6 +72,9 @@ pub(crate) struct BtnContainer {
 /// Plugin that handles the buttons.
 pub(crate) struct FortButtonPlugin;
 
+#[derive(Component)]
+struct BoardButton;
+
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
 impl Plugin for FortButtonPlugin {
@@ -79,10 +85,23 @@ impl Plugin for FortButtonPlugin {
                 SystemSet::on_enter(FortChessState::StartScreen)
                 .with_system(init_btn_obj)
             )
+            .add_system_set(
+                SystemSet::on_exit(FortChessState::BoardScreen)
+                .with_system(despawn_buttons)
+            )
             .add_plugin(SkipButtonPlugin    )
-            .add_plugin(DiceRollButtonPlugin);
+            .add_plugin(DiceRollButtonPlugin)
+            .add_plugin(ReturnButtonPlugin);
     }
 
+}
+
+/// Despawns button when leaving the board screen.
+fn despawn_buttons(
+    mut commands:   Commands,
+    buttons:        Query<Entity, With<BoardButton>>,
+) {
+    commands.despawn_entity(&buttons);
 }
 
 /// Creating button object and adding it to resources to be able to call later.
@@ -167,6 +186,7 @@ pub(crate) fn btn_spawn<'a>(
         color: UiColor::from(style::BTN_NODE_COLOR),
         ..default()
     })
-    .with_children(|parent| btn_bg_spawn(parent, button, text, button_component));
+    .with_children(|parent| btn_bg_spawn(parent, button, text, button_component))
+    .insert(BoardButton);
 
 }
