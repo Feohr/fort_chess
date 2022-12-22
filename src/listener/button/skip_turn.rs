@@ -62,24 +62,26 @@ fn skip_turn_btn_clicked(
     click_query:    Query<Entity, With<Click>>,
 ) {
 
-    for (&interaction, mut color) in &mut interaction_query {
-        match interaction {
-            Interaction::Clicked => {
-                // Updating color,
-                *color = UiColor::from(style::BTN_CLICKD_COLOR);
-                // Iterating over a bunch of closures to process.
-                SKIP_TURN_GAME_CLOSURES
-                    .into_iter()
-                    .for_each(|game_closure| game_closure(game.get_mut()));
-                // To clear off the paths and clear the screen for next player.
-                paths.clear();
-                commands.despawn_entity(&click_query);
-                commands.despawn_entity(&paths_query);
-            },
-            Interaction::Hovered => *color = UiColor::from(style::BTN_HOVERD_COLOR),
-            Interaction::None    => *color = UiColor::from(style::BTN_BKGRND_COLOR),
-        }
-    }
+    interaction_query
+        .iter_mut()
+        .for_each(|(&interaction, mut color)| {
+            match interaction {
+                Interaction::Clicked => {
+                    // Updating color,
+                    *color = UiColor::from(style::BTN_CLICKD_COLOR);
+                    // Iterating over a bunch of closures to process.
+                    SKIP_TURN_GAME_CLOSURES
+                        .into_iter()
+                        .for_each(|game_closure| game_closure(game.get_mut()));
+                    // To clear off the paths and clear the screen for next player.
+                    paths.clear();
+                    commands.despawn_entity(&click_query);
+                    commands.despawn_entity(&paths_query);
+                },
+                Interaction::Hovered => *color = UiColor::from(style::BTN_HOVERD_COLOR),
+                Interaction::None    => *color = UiColor::from(style::BTN_BKGRND_COLOR),
+            }
+        });
 
 }
 /*-----------------------------------------------------------------------------------------------*/

@@ -270,32 +270,32 @@ fn dice_roll_btn_clicked(
     paths_query:            Query<Entity, With<Paths>>,
     click_query:            Query<Entity, With<Click>>,
 ) {
-
     // Matching with the interaction to display the respective animations.
-    for (&interaction, mut color) in &mut dice_roll_query.iter_mut() {
-        match interaction {
-            Interaction::Clicked => {
-                *color = UiColor::from(style::BTN_CLICKD_COLOR);
-                let roll = dice_roll();
-                // Set dice roll value.
-                dice_roll_val.set(roll);
-                if roll == 5_usize {
-                    game.get_mut().current_player_mut().set_winner();
-                    game.get_mut().set_play_false();
-                }
-                // To change the display and move the player along.
-                SKIP_TURN_GAME_CLOSURES
-                    .into_iter()
-                    .for_each(|game_closure| game_closure(game.get_mut()));
-                paths.clear();
-                commands.despawn_entity(&click_query);
-                commands.despawn_entity(&paths_query);
-            },
-            Interaction::Hovered => *color = UiColor::from(style::BTN_HOVERD_COLOR),
-            Interaction::None    => *color = UiColor::from(style::BTN_BKGRND_COLOR),
-        }
-    }
-
+    dice_roll_query
+        .iter_mut()
+        .for_each(|(&interaction, mut color)| {
+            match interaction {
+                Interaction::Clicked => {
+                    *color = UiColor::from(style::BTN_CLICKD_COLOR);
+                    let roll = dice_roll();
+                    // Set dice roll value.
+                    dice_roll_val.set(roll);
+                    if roll == 5_usize {
+                        game.get_mut().current_player_mut().set_winner();
+                        game.get_mut().set_play_false();
+                    }
+                    // To change the display and move the player along.
+                    SKIP_TURN_GAME_CLOSURES
+                        .into_iter()
+                        .for_each(|game_closure| game_closure(game.get_mut()));
+                    paths.clear();
+                    commands.despawn_entity(&click_query);
+                    commands.despawn_entity(&paths_query);
+                },
+                Interaction::Hovered => *color = UiColor::from(style::BTN_HOVERD_COLOR),
+                Interaction::None    => *color = UiColor::from(style::BTN_BKGRND_COLOR),
+            }
+        });
 }
 /*-----------------------------------------------------------------------------------------------*/
 

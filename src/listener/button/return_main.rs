@@ -45,16 +45,17 @@ fn return_btn_clicked(
         (Changed<Interaction>, With<Button>, With<ReturnButtonComponent>),
     >,
 ) {
-
-    for (&interaction, mut color) in &mut interaction_query {
-        match interaction {
-            Interaction::Clicked => *color = UiColor::from(style::BTN_CLICKD_COLOR),
-            Interaction::Hovered => *color = UiColor::from(style::BTN_HOVERD_COLOR),
-            Interaction::None    => *color = UiColor::from(style::BTN_BKGRND_COLOR),
-        }
-    }
-
+    interaction_query
+        .iter_mut()
+        .for_each(|(&interaction, mut color)| {
+            match interaction {
+                Interaction::Clicked => *color = UiColor::from(style::BTN_CLICKD_COLOR),
+                Interaction::Hovered => *color = UiColor::from(style::BTN_HOVERD_COLOR),
+                Interaction::None    => *color = UiColor::from(style::BTN_BKGRND_COLOR),
+            }
+        });
 }
+
 fn return_button_spawn(
     mut commands:   Commands,
     button:         Res<BtnContainer>,
