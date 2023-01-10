@@ -7,6 +7,7 @@ use crate::{
     RESOLUTION, ZAxisLevel,
     listener::{CursorPosition,spawn_square_sprite},
     game::GameAsset,
+    despawn_entity::DespawnEntity,
 };
 use bevy::prelude::{Color, Commands, Component, Entity, Query, Res, ResMut, Vec3, With};
 use fort_builders::{
@@ -31,9 +32,7 @@ pub(crate) fn clear_picker(
     pickers:        Query<Entity, With<Picker>>,
 ) {
     // Iterate over all the entities that have the Picker component and despawn them.
-    pickers
-        .iter()
-        .for_each(|picker| commands.entity(picker).despawn());
+    commands.despawn_entity(&pickers);
 }
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -49,9 +48,7 @@ fn hovered_position_in_player_pieces(
     y:      f32,
     game:   &ResMut<GameAsset>,
 ) -> bool {
-
     game.get().current_player().piece_index_from_xy_f32(x, y).is_ok()
-
 }
 
 /// To display a light gray block over the piece where the mouse is hovering.
@@ -62,12 +59,10 @@ pub(crate) fn hover_listener(
     game:           ResMut<GameAsset>,
     cursor:         Res<CursorPosition>,
 ) {
-
     // Checking for early return.
     let (m_x, m_y) = (cursor.x, cursor.y);
     if  !position_in_board_bounds(m_x, m_y)
     ||  !hovered_position_in_player_pieces(m_x, m_y, &game)  { return }
-
     // Creating a hover tile.
     let hover = spawn_square_sprite(
         &mut commands,
@@ -78,8 +73,6 @@ pub(crate) fn hover_listener(
             ZAxisLevel::Sixth.as_f32(),
         ),
     );
-
     commands.entity(hover).insert(Picker);
-
 }
 /*-----------------------------------------------------------------------------------------------*/

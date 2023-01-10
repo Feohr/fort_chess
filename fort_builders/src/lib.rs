@@ -32,17 +32,14 @@ pub enum Error {
     /// To handle runtime IO errors.
     #[error("{} Ran into runtime error: {0} {}", RED, RST)]
     RunTimeError(#[from] std::io::Error),
-
     // Piece.
     /// Piece module errors,
     #[error("{} Error in the piece module: {0} {}", RED, RST)]
     PieceModuleError(#[from] pieces::Error),
-
     // Player.
     /// Player modile error.
     #[error("{} Error in the player module: {0} {}", RED, RST)]
     PlayerModuleError(#[from] player::Error),
-
     // Misc.
     /// If invalid Quadrant index was provided.
     #[error(
@@ -51,7 +48,6 @@ pub enum Error {
         RST,
     )]
     InvalidQuadrantIndex(usize),
-
     /// If position does not exist inside a quadrant.
     #[error(
         "{} The provided position ({0}, {1}) does not exist inside a quadrant. {}",
@@ -59,8 +55,6 @@ pub enum Error {
         RST,
     )]
     PositionNotInQuadrant(i32, i32),
-
-
     /// When more than one winner exists.
     #[error("{} There seems to be more than one winner. {}", RED, RST)]
     MoreThanOneWinner(usize),
@@ -83,15 +77,12 @@ fn results(mut winners: Vec<Player>) -> Result<Option<Player>, Error> {
 /// Result enum with the winner player. If the return value is `None` then the game is a draw.
 #[inline]
 pub fn exit(game: Game) -> Result<Option<Player>, Error> {
-
     let winners: Vec<Player> = game
         .players
         .into_iter()
         .filter(|player| player.is_winner)
         .collect::<Vec<Player>>();
-
     results(winners)
-
 }
 
 /// To get a random value between 1 and 6.

@@ -16,9 +16,7 @@ pub(crate) enum FortChessState {
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
 impl FortChessState {
-
     pub(crate) fn new() -> Self {
         FortChessState::StartScreen
     }
-
 }

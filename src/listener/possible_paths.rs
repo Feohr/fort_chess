@@ -43,7 +43,6 @@ type PositionVectorf32 = Vec<(f32, f32)>;
 pub struct PossiblePaths {
     pub(crate) paths: PositionVectorf32,
 }
-
 /// A component to denote enitity with Path.
 #[derive(Component)]
 pub struct Paths;
@@ -67,38 +66,33 @@ pub(crate) fn possible_piece_paths(
             PieceType::Minister => analyse_minister_paths,
             PieceType::Queen    => analyse_queen_paths,
         }
-    // executing the function.
-    )(x, y, game)
+        // executing the function.
+    )   (x, y, game)
 }
 
 /*████PossiblePaths████*/
 /*-----------------------------------------------------------------------------------------------*/
 impl PossiblePaths {
-
     /// Calculates and updates the paths value to render.
     #[inline]
     fn update_paths(&mut self, paths: PositionVectorf32) {
         self.paths = paths;
     }
-
     /// Empties the paths vector.
     #[inline]
     pub(crate) fn clear(&mut self) {
         self.paths.clear();
     }
-
     /// Returns a reference to the internal vector.
     #[inline]
     pub(crate) fn get(&self) -> &PositionVectorf32 {
         &self.paths
     }
-
     /// searches the paths to see if the position exists.
     #[inline]
     pub(crate) fn contains(&self, x: f32, y: f32) -> bool {
         self.get().contains(&(x, y))
     }
-
 }
 
 /// To draw the paths whenever a piece is chosen.
@@ -108,27 +102,27 @@ pub(crate) fn draw_possible_piece_paths(
     paths_query:    &Query<Entity, With<Paths>>,
     game:           &Game,
 ) {
-
     // Clean up.
     commands.despawn_entity(paths_query);
-
     // Iterate over paths and draw a red tile where there is a piece else draw a yellow piece.
-    for step in paths.get().iter() {
-        let step_block = spawn_square_sprite(
-            commands,
-            piece_in_step_detection(step, game),
-            Vec3::new(
-                // step_x.
-                step.0 * RESOLUTION,
-                // step_y.
-                step.1 * RESOLUTION,
-                // Z leve.
-                ZAxisLevel::Seventh.as_f32(),
-            ),
-        );
-        commands.entity(step_block).insert(Paths);
-    }
-
+    paths
+        .get()
+        .iter()
+        .for_each(|step| {
+            let step_block = spawn_square_sprite(
+                commands,
+                piece_in_step_detection(step, game),
+                Vec3::new(
+                    // step_x.
+                    step.0 * RESOLUTION,
+                    // step_y.
+                    step.1 * RESOLUTION,
+                    // Z leve.
+                    ZAxisLevel::Seventh.as_f32(),
+                ),
+            );
+            commands.entity(step_block).insert(Paths);
+        });
 }
 
 /// To update the possible paths whenever a piece is chosen. The paths are derived from
@@ -137,7 +131,6 @@ pub(crate) fn update_possible_piece_paths(
     game: &Game,
     paths: &mut ResMut<PossiblePaths>,
 ) {
-
     // Exctracting piece position and type from game.
     let (piece_pos_x, piece_pos_y, piece_type) = {
         let piece = game.current_player().current_chosen_piece().unwrap();
@@ -147,7 +140,6 @@ pub(crate) fn update_possible_piece_paths(
             piece.piece_type,
         )
     };
-
     // Updating the paths.
     paths.update_paths(possible_piece_paths(
         piece_pos_x,
@@ -155,7 +147,6 @@ pub(crate) fn update_possible_piece_paths(
         piece_type,
         game,
     ));
-
 }
 
 /// To detect if a position has a piece and return the appropriate color. For position with pieces

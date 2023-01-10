@@ -8,24 +8,19 @@ pub(crate) mod dice_roll;
 pub(crate) mod return_main;
 
 mod style {
-
     use bevy::prelude::Color;
-
     /// Color of the button background.
     pub(crate) static BTN_BKGRND_COLOR: Color = Color::rgba(0.85_f32, 0.85_f32, 0.85_f32, 0.8_f32);
     /// Color of button hovered.
     pub(crate) static BTN_HOVERD_COLOR: Color = Color::rgba(0.75_f32, 0.75_f32, 0.75_f32, 0.8_f32);
     /// Color of button clicked.
     pub(crate) static BTN_CLICKD_COLOR: Color = Color::rgba(0.15_f32, 0.15_f32, 0.15_f32, 0.8_f32);
-    /// Color of the button text.
-    pub(crate) static BTN_FGTEXT_COLOR: Color = Color::WHITE;
     /// Color of the background node.
     pub(crate) static BTN_NODE_COLOR:   Color = Color::NONE;
     /// Button size.
     pub(crate) static BTN_SIZE      : (f32, f32) =   (153_f32, 51_f32);
     /// Button font size.
     pub(crate) static BTN_FONT_SIZE : f32        =   28_f32;
-
 }
 
 use bevy::{
@@ -37,7 +32,7 @@ use bevy::{
     hierarchy::{BuildChildren, ChildBuilder},
 };
 use crate::{
-    font::RegFontHandle,
+    font::{RegFontHandle, DEFAULT_FONT_CLR},
     state::FortChessState,
     despawn_entity::DespawnEntity,
 };
@@ -68,17 +63,14 @@ pub(crate) struct BtnContainer {
     /// Color of the text.
     fg_text_color: Color,
 }
-
 /// Plugin that handles the buttons.
 pub(crate) struct FortButtonPlugin;
-
 #[derive(Component)]
 struct BoardButton;
 
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
 impl Plugin for FortButtonPlugin {
-
     fn build(&self, app: &mut App) {
         app
             .add_system_set(
@@ -93,7 +85,6 @@ impl Plugin for FortButtonPlugin {
             .add_plugin(DiceRollButtonPlugin)
             .add_plugin(ReturnButtonPlugin);
     }
-
 }
 
 /// Despawns button when leaving the board screen.
@@ -110,17 +101,15 @@ fn init_btn_obj(
     font:           Res<RegFontHandle>,
     asset_server:   Res<AssetServer>,
 ) {
-
     commands.insert_resource(BtnContainer{
-        font: font.0.clone(),
+        font: font.get().clone(),
         font_size: style::BTN_FONT_SIZE,
         image: asset_server.load("spritesheet/button.png").into(),
         size: Size::new(Val::Percent(14_f32), Val::Percent(14_f32)),
         btn_size: Size::new(Val::Px(style::BTN_SIZE.0), Val::Px(style::BTN_SIZE.1)),
         bg_color: style::BTN_BKGRND_COLOR,
-        fg_text_color: style::BTN_FGTEXT_COLOR,
+        fg_text_color: DEFAULT_FONT_CLR,
     });
-
 }
 
 /// To spawn a text component within the button.
@@ -129,7 +118,6 @@ fn btn_text_spawn<'a>(
     button:     &Res<BtnContainer>,
     text:       &'a str,
 ) {
-
     commands.spawn_bundle(TextBundle::from_section(
         text,
         TextStyle {
@@ -138,7 +126,6 @@ fn btn_text_spawn<'a>(
             color: button.fg_text_color,
         },
     ));
-
 }
 
 /// To spawn the button component.
@@ -148,7 +135,6 @@ fn btn_bg_spawn<'a>(
     text:               &'a str,
     button_component:   impl Component,
 ) {
-
     commands.spawn_bundle(ButtonBundle {
         style: Style {
             size: button.btn_size,
@@ -163,7 +149,6 @@ fn btn_bg_spawn<'a>(
     })
     .with_children(|parent| btn_text_spawn(parent, button, text))
     .insert(button_component);
-
 }
 
 /// To spawn a button node.
@@ -173,7 +158,6 @@ pub(crate) fn btn_spawn<'a>(
     text:               &'a str,
     button_component:   impl Component,
 ) {
-
     // Spawning a UI Node.
     commands.spawn_bundle(NodeBundle {
         style: Style {
@@ -188,5 +172,4 @@ pub(crate) fn btn_spawn<'a>(
     })
     .with_children(|parent| btn_bg_spawn(parent, button, text, button_component))
     .insert(BoardButton);
-
 }

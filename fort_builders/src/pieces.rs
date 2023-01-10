@@ -24,7 +24,6 @@ pub enum Error {
     /// Invalid position.
     #[error("{} The position ({0}, {1}) is invalid {}", RED, RST)]
     IllegalPosition(i32, i32),
-
     /// If the position referenced is not present in the pieces vector.
     #[error(
         "{} The given index of the piece {0} does not exist in a vec of length {1}. {}",
@@ -32,7 +31,6 @@ pub enum Error {
         RST
     )]
     PieceVectorIndexOutOfBounds(usize, usize),
-
     /// When an illegal position is referenced.
     #[error(
         "{} The given index {0} cannot exist as the index for a piece vector should be \
@@ -41,7 +39,6 @@ pub enum Error {
         RST
     )]
     IllegalPieceVectorIndex(usize),
-
     /// If Invalid Piece type index was provided.
     #[error(
         "{} The provided index {0} does not have a piece type corresponding to it. {}",
@@ -49,7 +46,6 @@ pub enum Error {
         RST
     )]
     InvalidPieceTypeIndex(u8),
-
     /// If Invalid Piece type index was provided.
     #[error("{} The vector id non-singular with length {0}. {}", RED, RST)]
     VectorNonSingular(usize),
@@ -76,7 +72,6 @@ pub enum PieceType {
 pub struct Position {
     /// The x-axis value.
     pub x: i32,
-
     /// The y-axis value.
     pub y: i32,
 }
@@ -86,7 +81,6 @@ pub struct Position {
 pub struct Piece {
     /// To hold the type information for the piece.
     pub piece_type: PieceType,
-
     /// To hold the position information.
     pub position: Position,
 }
@@ -97,16 +91,13 @@ pub struct Piece {
 /*-----------------------------------------------------------------------------------------------*/
 #[doc(hidden)]
 impl fmt::Debug for PieceType {
-
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:<8}", self.as_str())
     }
-
 }
 
 impl<'a> PieceType {
-
     /// Takes self reference and returns the corresponding [`PieceType`] value as a `&str`.
     #[inline]
     fn as_str(&self) -> &'a str {
@@ -118,11 +109,9 @@ impl<'a> PieceType {
             PieceType::Knight   => "Knight",
         }
     }
-
 }
 
 impl PieceType {
-
     /// Returns a [`Result`] type with [`PieceType`] by taking in a `u8` value to correspond with
     /// it.
     ///
@@ -138,7 +127,6 @@ impl PieceType {
             _ => Err(Error::InvalidPieceTypeIndex(index)),
         }
     }
-
     /// Takes a self reference and returns a `usize` value that corresponds to the type.
     #[inline]
     pub fn as_usize(&self) -> usize {
@@ -150,7 +138,6 @@ impl PieceType {
             PieceType::Knight   => 4_usize,
         }
     }
-
 }
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -158,29 +145,22 @@ impl PieceType {
 /*-----------------------------------------------------------------------------------------------*/
 #[doc(hidden)]
 impl fmt::Debug for Position {
-
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "({:2}, {:2})", self.x, self.y)
     }
-
 }
 
 impl Position {
-
     /// To create a [`Position`] struct.
     ///
     /// Takes the x and y value, checks if it is inside the board and creates the struct.
     #[inline]
     pub(crate) fn from(x: i32, y: i32) -> Result<Self, Error> {
-
         // Checking if the poisition is in the board range.
         Piece::in_board_range(x, y)?;
-
         Ok(Position { x, y })
-
     }
-
 }
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -188,15 +168,12 @@ impl Position {
 /*-----------------------------------------------------------------------------------------------*/
 #[doc(hidden)]
 impl fmt::Debug for Piece {
-
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "[{:?} {:?}]", self.piece_type, self.position)
     }
-
 }
 
 impl Piece {
-
     /// To create a new [`Piece`] type.
     ///
     /// Takes the positional arguments along with type argument to return a new piece type.
@@ -208,16 +185,13 @@ impl Piece {
             position: Position::from(x, y)?,
         })
     }
-
     /// Function used to initialize the [`Piece`] vector.
     pub(crate) fn init_pieces(
         is_defender:        bool,
         quadrant:           Quadrant,
         quadrant_active:    usize,
     ) -> Result<Vec<Piece>, Error> {
-
         let mut pieces: Vec<Piece> = Vec::new();
-
         // Zipping through the hard-coded positions and creating pieces.
         for ((pos1, pos2), piece_type) in   position_from_quadrant(
                                                 &quadrant,
@@ -233,12 +207,9 @@ impl Piece {
                 )?
             ); 
         }
-
         // Return.
         Ok(pieces)
-
     }
-
     /// To update the [`Position`] of the [`Piece`].
     ///
     /// Takes x and y value and changes the position to the given value.
@@ -247,14 +218,11 @@ impl Piece {
     pub(crate) fn update_pos(&mut self, x: i32, y: i32) -> Result<(), Error> {
         // Checking if the position is in the board range.
         Self::in_board_range(x, y)?;
-
         Ok({
             self.position.x = x;
             self.position.y = y;
         })
-
     }
-
     /// To check wether a vector index is valid.
     ///
     /// There can be a maximum of 24 [`Piece`] inside a player pieces vec. Anything more than that
@@ -269,7 +237,6 @@ impl Piece {
             false => Err(Error::IllegalPieceVectorIndex(pos)),
         }
     }
-
     /// To check if the [`Position`] is inside the [`Piece`] vector bounds.
     ///
     /// takes a `usize` value and checks the vector size with the length of the pieces `vec`.
@@ -280,7 +247,6 @@ impl Piece {
             false => Err(Error::PieceVectorIndexOutOfBounds(pos, len)),
         }
     }
-
     /// To check if a [`Position`] value is inside the board.
     ///
     /// This function is used to check if a particular [`Position`] is inside the board.
@@ -291,6 +257,5 @@ impl Piece {
             false => return Err(Error::IllegalPosition(x, y)),
         }
     }
-
 }
 /*-----------------------------------------------------------------------------------------------*/

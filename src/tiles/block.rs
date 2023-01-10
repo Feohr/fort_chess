@@ -17,9 +17,9 @@ use fort_builders::{
 /// To hold the quadrant block color,
 const BLOCK_COLOR: Color = Color::rgba(0.1_f32, 0.1_f32, 0.1_f32, 0.95_f32);
 
+/// To identify block [`Component`].
 #[derive(Component)]
 struct Blocker;
-
 /// To hold the quadrant block plugin.
 pub(crate) struct FortBlockPlugin;
 
@@ -28,7 +28,6 @@ pub(crate) struct FortBlockPlugin;
 /*████Plugin for FortBlockPlugin████*/
 /*-----------------------------------------------------------------------------------------------*/
 impl Plugin for FortBlockPlugin {
-
     fn build(&self, app: &mut App) {
         app
             .add_system_set(
@@ -37,7 +36,6 @@ impl Plugin for FortBlockPlugin {
                 .with_system(muteblockq3)
             );
    }
-
 }
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -47,10 +45,8 @@ impl Plugin for FortBlockPlugin {
 ///
 /// [`Q2`]: [`fort_builder::board::Quadrant::Q2`]
 fn muteblockq2(mut commands: Commands) {
-
     // If player count is greater than or equal to `3`.
     if PLAYER_COUNT >= 3_usize { return }
-
     (-BREADTH..BREADTH)
         .into_iter()
         .for_each(|x| {
@@ -69,17 +65,14 @@ fn muteblockq2(mut commands: Commands) {
                     commands.entity(tile).insert(Blocker);
                 })
         })
-
 }
 
 /// To block the [`Q3`] if the `PLAYER_COUNT` is less than `4`.
 ///
 /// [`Q3`]: [`fort_builder::board::Quadrant::Q3`]
 fn muteblockq3(mut commands: Commands) {
-
     // If player count is greater than or equal to `4` then.
     if PLAYER_COUNT >= 4_usize { return }
-
     (BREADTH..X_MAX)
         .into_iter()
         .for_each(|x| {
@@ -98,7 +91,6 @@ fn muteblockq3(mut commands: Commands) {
                     commands.entity(tile).insert(Blocker);
                 })
         })
-
 }
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -108,7 +100,6 @@ fn spawn_block_sprite(
     color:          Color,
     translation:    Vec3,
 ) -> Entity {
-
     commands
         .spawn()
         .insert_bundle(SpriteBundle {
@@ -129,5 +120,4 @@ fn spawn_block_sprite(
             ..default()
         })
         .id()
-
 }

@@ -50,5 +50,4 @@ Some ideas to re-impliment this code into your own project:
 
     -  Make this game cross-platform and port it to Android/IOS.
 
-` -- Mohammed Rehaan`
-
+    -- Mohammed Rehaan`

@@ -9,6 +9,7 @@
 
 #![feature(let_else)]
 #![feature(panic_info_message)]
+#![feature(generic_arg_infer)]
 
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
@@ -82,7 +83,6 @@ pub(crate) enum ZAxisLevel {
 /*████ZAxisLevel████*/
 /*-----------------------------------------------------------------------------------------------*/
 impl ZAxisLevel {
-
     /// Each level corresponds to its value in `f32`. There are a total of _ levels.
     fn as_f32(&self) -> f32 {
         match self {
@@ -103,22 +103,23 @@ impl ZAxisLevel {
             ZAxisLevel::Fifteenth   => 15_f32,
         }
     }
-
 }
 /*-----------------------------------------------------------------------------------------------*/
 
 /// Function to close the game window. Press `Ctrl + q` to quit.
 #[inline]
 fn close_window_listener(
-    input:          Res<Input<KeyCode>>,
+    input:      Res<Input<KeyCode>>,
     mut windows:    ResMut<Windows>,
 ) {
-
     // If the Control and q key is pressed, find the primary window and close it instantly.
     if  input.pressed(KeyCode::LControl)
-    &&  input.pressed(KeyCode::Q)
-    &&  let Some(window) = windows.get_primary_mut() { window.close() }
+    &&  input.pressed(KeyCode::Q) { close_window(&mut windows) }
+}
 
+#[inline]
+pub(crate) fn close_window(window: &mut ResMut<Windows>) {
+    if let Some(window) = window.get_primary_mut() { window.close() }
 }
 
 /// Initial setup.
@@ -126,7 +127,6 @@ fn close_window_listener(
 /// Fetches the bounds constraints from the [`fort_builders`] library and sets up the camera
 /// according to the [`RESOLUTION`]. The scaling mode is set to `None`.
 fn setup(mut commands: Commands) {
-
     commands
         .spawn()
         .insert_bundle(Camera2dBundle {
@@ -142,7 +142,6 @@ fn setup(mut commands: Commands) {
             },
         ..default()
     });
-
 }
 
 /// To set a custom panic statement format.
@@ -153,7 +152,6 @@ fn setup(mut commands: Commands) {
 ///  value: 'error_value'
 /// ```
 fn set_panic_hook_fmt() {
-
     std::panic::set_hook(Box::new(|info| {
         println!(
             "{RED}ERROR:{RST} [{}] {:?}",
@@ -161,7 +159,6 @@ fn set_panic_hook_fmt() {
             info.message().expect("No error message produced."),
         );
     }));
-
 }
 
 // Temporary function.
@@ -169,29 +166,25 @@ fn tmp_state_change(
     mut state:  ResMut<State<FortChessState>>,
     keyboard:   Res<Input<KeyCode>>,
 ) {
-
     if keyboard.just_pressed(KeyCode::Return) {
         // Idempotent function. Hence no need for handling err.
         match state.current() {
             FortChessState::StartScreen => {
-                let _throw = state.set(FortChessState::GameBuild);
+                state.set(FortChessState::GameBuild).unwrap_or_default();
             },
             FortChessState::GameBuild => {
-                let _throw = state.set(FortChessState::BoardScreen);
+                state.set(FortChessState::BoardScreen).unwrap_or_default();
             },
             // Do nothing.
             _ => {},
         }
     }
-
 }
 
 /// Main entry function.
 fn main() {
-
     // Setting up the panic hook before the program begins.
     set_panic_hook_fmt();
-
     // Main loop of the game.
     //
     // __WindowDescriptor__ for setting up the window.
@@ -226,5 +219,4 @@ fn main() {
         .add_system(close_window_listener)
         .add_system(tmp_state_change)
         .run();
-
 }

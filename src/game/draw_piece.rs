@@ -7,7 +7,6 @@ use crate::{
     RESOLUTION, TILESIZE, ZAxisLevel,
     despawn_entity::DespawnEntity,
 };
-
 use bevy::prelude::{
     Entity, With, Commands, Res, ResMut, TextureAtlasSprite, SpriteSheetBundle, Component, Query,
     Vec3, Vec2, Transform, Name, default,
@@ -39,10 +38,8 @@ pub(crate) fn draw_pieces(
     game:       &ResMut<GameAsset>,
     query:      &Query<Entity, With<Piece>>,
 ) {
-
     // Clean up.
     commands.despawn_entity(query);
-
     game
         .get().players
         .iter()
@@ -65,7 +62,6 @@ pub(crate) fn draw_pieces(
                 commands.entity(sprite).insert(Name::from("Piece")).insert(Piece);
             })
     });
-
 }
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -76,7 +72,6 @@ fn spawn_piece(
     index:          usize,
     translation:    Vec3,
 ) -> Entity {
-
     commands
         .spawn_bundle(SpriteSheetBundle {
             sprite: TextureAtlasSprite {
@@ -97,5 +92,4 @@ fn spawn_piece(
             ..default()
         })
         .id()
-
 }

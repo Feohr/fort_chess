@@ -3,14 +3,14 @@
 use crate::{
     RESOLUTION,
     game::GameAsset,
-    font::BoldFontHandle,
+    font::{BoldFontHandle, DEFAULT_FONT_CLR},
     state::FortChessState,
 };
 use bevy::{
     prelude::{
         Commands, Res, ResMut, Vec2, App, Plugin, SystemSet, SpriteBundle, Transform, Color,
         TextAlignment, Text2dBundle, Text, TextStyle, Sprite, default, BuildChildren, Component,
-        Time, Timer, Query, With, Children, KeyCode, State, Input,
+        Time, Timer, Query, With, Children, KeyCode, State, Input, TextSection,
     },
     text::Text2dBounds,
 };
@@ -27,10 +27,8 @@ const FADEOUT_SPEED: f32 = 2_f32;
 const RES_BKGRND_COLOR: Color = Color::CYAN;
 
 pub(crate) struct GameEndPlugin;
-
 #[derive(Component)]
 struct GameResultComponent;
-
 #[derive(Component)]
 struct GameResult {
     result: String,
@@ -43,7 +41,6 @@ struct GameResult {
 /*████Plugin for GameEndPlugin████*/
 /*-----------------------------------------------------------------------------------------------*/
 impl Plugin for GameEndPlugin {
-
     fn build(&self, app: &mut App) {
         app
             .add_system_set(
@@ -64,14 +61,12 @@ impl Plugin for GameEndPlugin {
                 .with_system(jump_to_end_screen)
             );
     }
-
 }
 /*-----------------------------------------------------------------------------------------------*/
 
 /*████GameResult████*/
 /*-----------------------------------------------------------------------------------------------*/
 impl GameResult {
-
     /// To get game result from player values.
     fn from(value: Result<Option<Player>, Error>) -> Self {
         match value {
@@ -90,12 +85,10 @@ impl GameResult {
             Err(err)  => panic!("{error:?}: {error}", error = err),
         }
     }
-
     /// To check if the game result has been drawn already.
     fn set_draw_false(&mut self) {
         self.draw = false;
     }
-
 }
 
 /// To create [`GameResult`] from [`GameAsset`].
@@ -103,29 +96,23 @@ fn game_result(
     mut commands:   Commands,
     mut game:       ResMut<GameAsset>,
 ) {
-
     let exit_game = exit(
         std::mem::replace(game.get_mut(), Game::default())
     );
-
     // Dealloc.
     commands.remove_resource::<GameAsset>();
     commands.insert_resource(GameResult::from(exit_game));
-
 }
 /*-----------------------------------------------------------------------------------------------*/
 
 fn fade_in_result(
-    mut result_obj:     ResMut<GameResult>,
     time:               Res<Time>,
+    mut result_obj:     ResMut<GameResult>,
     mut query:          Query<(&mut Sprite, &mut Children), With<GameResultComponent>>,
     mut query_child:    Query<&mut Text>,
 ) {
-
     result_obj.fade.tick(time.delta());
-
     if result_obj.fade.finished() { return }
-
     query
         .iter_mut()
         .for_each(|(mut sprite, child)| {
@@ -137,12 +124,11 @@ fn fade_in_result(
                     let mut text_var = query_child.get_mut(*text).unwrap();
                     text_var.sections
                         .first_mut()
-                        .unwrap()
+                        .unwrap_or(&mut TextSection::default())
                         .style.color
                         .set_a(alpha);
                 });
         });
-
 }
 
 // Tmp test function to get the result screen.
@@ -150,11 +136,9 @@ fn jump_to_end_screen(
     mut state:      ResMut<State<FortChessState>>,
     key:            Res<Input<KeyCode>>,
 ) {
-
     if key.just_pressed(KeyCode::R) {
         let _throw = state.set(FortChessState::ResultScreen);
     }
-
 }
 
 fn display_winner(
@@ -162,9 +146,7 @@ fn display_winner(
     font:               Res<BoldFontHandle>,
     mut game_result:    ResMut<GameResult>,
 ) {
-
     if !game_result.draw { return }
-
     commands.spawn_bundle(SpriteBundle {
         sprite: Sprite {
             color: RES_BKGRND_COLOR,
@@ -186,9 +168,9 @@ fn display_winner(
             text: Text::from_section(
                 game_result.result.clone(),
                 TextStyle {
-                    font: font.0.clone(),
+                    font: font.get().clone(),
                     font_size: 2_f32 * RESOLUTION,
-                    color: Color::BLACK,
+                    color: DEFAULT_FONT_CLR,
                 },
             )
             .with_alignment(TextAlignment::CENTER_LEFT),
@@ -201,7 +183,5 @@ fn display_winner(
         });
     })
     .insert(GameResultComponent);
-
     game_result.set_draw_false();
-
 }

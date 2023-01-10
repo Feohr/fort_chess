@@ -1,5 +1,4 @@
 //! click module.
-//!
 //! To handle player clicking functionality.
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
@@ -47,25 +46,20 @@ pub(crate) fn click_listener(
     cursor:         Res<CursorPosition>,
     paths_query:    Query<Entity, With<Paths>>,
 ) {
-
     // Checking for early return.
     let (m_x, m_y) = (cursor.x, cursor.y);
     if !position_in_board_bounds(m_x, m_y)
     || !click.just_pressed(MouseButton::Left) { return }
-
     let game = game.get_mut();
-
     // Clean up.
     commands.despawn_entity(&clicks);
-
     match game.picked {
         // If a piece is already picked.
         true  => {
             if paths.contains(m_x, m_y) {
                 // Killing the piece if present.
                 let _killed_piece = game.remove_piece_in_pos(m_x, m_y).unwrap();
-                game.update_position(m_x as i32, m_y as i32).unwrap();
-                game.next_player();
+                game.update_position(m_x as i32, m_y as i32).unwrap().next_player();
             }
             game.set_picked_false();
             commands.despawn_entity(&paths_query);
@@ -74,8 +68,9 @@ pub(crate) fn click_listener(
         // If piece not picked.
         false => {
             // if a piece is inside the player pieces then process else do nothing 
-            let Ok(index) = game.current_player().piece_index_from_xy_f32(m_x, m_y)
-                            else { return };
+            let Ok(index) = game.current_player().piece_index_from_xy_f32(m_x, m_y) else {
+                return
+            };
             let click = spawn_square_sprite(
                 &mut commands,
                 CLICKS_COLOR,
@@ -101,5 +96,4 @@ pub(crate) fn click_listener(
             );
         },
     }
-
 }

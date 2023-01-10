@@ -56,7 +56,6 @@ enum TileSpriteSheetIndex {
 /*████Plugin for TilePlugin████*/
 /*-----------------------------------------------------------------------------------------------*/
 impl Plugin for TilePlugin {
-
     /// [`Plugin`] implementation for [`TilePlugin`].
     fn build(&self, app: &mut App) {
         app
@@ -69,14 +68,12 @@ impl Plugin for TilePlugin {
             )
            .add_plugin(FortBlockPlugin);
     }
-
 }
 /*-----------------------------------------------------------------------------------------------*/
 
 /*████TileSpriteSheetIndex████*/
 /*-----------------------------------------------------------------------------------------------*/
 impl TileSpriteSheetIndex {
-
     /// Returns the corresponding [`TileSpriteSheetIndex`] variant from usize.
     #[inline]
     fn from_usize(from: usize) -> Self {
@@ -89,7 +86,6 @@ impl TileSpriteSheetIndex {
             _       => panic!("TileSpriteSheetIndex cannot have index greater than 4."),
         }
     }
-
     /// Converts a given [`TileSpriteSheetIndex`] variant to corresponding usize value.
     #[inline]
     fn as_usize(&self) -> usize {
@@ -101,7 +97,6 @@ impl TileSpriteSheetIndex {
             TileSpriteSheetIndex::FortInner => 4_usize,
         }
     }
-
 }
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -112,7 +107,7 @@ impl TileSpriteSheetIndex {
 /// tiles. Returns Dark for even tiles and Light for odd tiles until the x value is less than zero.
 /// After `x > 0`, the tiles are then switched with Light for even and Dark for odd tiles.
 fn dark_or_light_tile_index(x: i32, y: i32) -> TileSpriteSheetIndex {
-   TileSpriteSheetIndex::from_usize({
+    TileSpriteSheetIndex::from_usize({
         (
             match x > 0_i32 {
                 true  => TileSpriteSheetIndex::Light,
@@ -144,7 +139,6 @@ fn draw_board(
     mut commands:   Commands,
     tile:           Res<TileSheet>,
 ) {
-
     (X_MIN..=X_MAX).for_each(|x| {
         (Y_MIN..=Y_MAX).for_each(|mut y| {
             // If x value as well as y value are less than BREADTH value then it won't be drawn
@@ -177,7 +171,6 @@ fn draw_board(
             }
         })
     });
-
 }
 
 /// To Draw the border of the board.
@@ -187,7 +180,6 @@ fn draw_border(
     mut commands:   Commands,
     tile:           Res<TileSheet>,
 ) {
-
     ((X_MIN - 1)..=(X_MAX + 1)).for_each(|x| {
         ((Y_MIN - 1)..=(Y_MAX + 1)).for_each(|mut y| {
             // Exactly the same as draw_board fucntion but with one column and row extra padding
@@ -217,7 +209,6 @@ fn draw_border(
             }
         })
     });
-
 }
 
 /// To draw the fort.
@@ -227,7 +218,6 @@ fn draw_fort(
     mut commands:   Commands,
     tile_sheet:     Res<TileSheet>,
 ) {
-
     // Draws the fort in the BREADTH side square.
     (-BREADTH..=BREADTH).for_each(|x| {
         (-BREADTH..BREADTH).for_each(|y| {
@@ -244,7 +234,6 @@ fn draw_fort(
             commands.entity(tile).insert(Name::new("Fort Exterior"));
         })
     });
-
     // Draws the middle most part which is BREADTH - 1 size square.
     ((-BREADTH + 1_i32)..=(BREADTH - 1_i32)).for_each(|x| {
         ((-BREADTH + 1_i32)..(BREADTH - 1_i32)).for_each(|y| {
@@ -261,7 +250,6 @@ fn draw_fort(
             commands.entity(tile).insert(Name::new("Fort Interior"));
         })
     });
-
 }
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -276,7 +264,6 @@ fn load_tile(
     asset:                  Res<AssetServer>,
     mut texture_atlases:    ResMut<Assets<TextureAtlas>>,
 ) {
-
    commands.insert_resource(TileSheet(texture_atlases.add(
         TextureAtlas::from_grid_with_padding(
             asset.load("spritesheet/tile_sheet.png"),
@@ -287,7 +274,6 @@ fn load_tile(
             Vec2::splat(0_f32),
         ),
     )));
-
 }
 
 /// To spawn a tile.
@@ -306,7 +292,6 @@ fn spawn_tile(
     index:          TileSpriteSheetIndex,
     translation:    Vec3,
 ) -> Entity {
-
     commands
         .spawn_bundle(SpriteSheetBundle {
             sprite: TextureAtlasSprite {
@@ -328,6 +313,5 @@ fn spawn_tile(
             ..default()
         })
         .id()
-
 }
 /*-----------------------------------------------------------------------------------------------*/

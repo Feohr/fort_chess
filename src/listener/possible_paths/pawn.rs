@@ -38,13 +38,10 @@ use crate::listener::possible_paths::{STEP, PositionVectorf32};
 /// if inside [`Quadrant::Q3`]: Then we decrement steps in `x-axis` as it moves towards
 /// the defender along the `positive x-axis`.
 pub(crate) fn analyse_pawn_paths(x: f32, y: f32, game: &Game) -> PositionVectorf32 {
-
     let mut _possiblepaths: PositionVectorf32 = Vec::new();
-
     // Initializing variables.
     let quadrant    = Quadrant::from_xy(x, y).unwrap();
     let is_defender = game.current_player().is_defender;
-
     // Getting the quadrant information and mapping the appropriate closure to calculate.
     let pawn_closure = match is_defender {
         true  =>    match quadrant {
@@ -60,7 +57,6 @@ pub(crate) fn analyse_pawn_paths(x: f32, y: f32, game: &Game) -> PositionVectorf
                         _            => panic!("Position of the piece must have a qudrant."),
                     },
     };
-
     // To calculate the steps after getting the appropriate steps.
     iter_pawn_path_step_analysis(
         x,
@@ -71,10 +67,8 @@ pub(crate) fn analyse_pawn_paths(x: f32, y: f32, game: &Game) -> PositionVectorf
         game,
         &mut _possiblepaths,
     );
-
     // Return.
     _possiblepaths
-
 }
 
 /// To handle the pawn step analysis and find the killable pieces.
@@ -90,12 +84,10 @@ fn iter_pawn_path_step_analysis<F>(
     game:           &Game,
     _possiblepaths: &mut PositionVectorf32,
 ) where
-    F: Fn(&mut f32, &mut f32),
+        F: Fn(&mut f32, &mut f32),
 {
-
     // Execute the closure to take a step.
     step(&mut _x, &mut _y);
-
     // Matching with the quadrant to process the respective calculation.
     match qudrant {
        Quadrant::Q1 | Quadrant::Q3 => {
@@ -114,15 +106,12 @@ fn iter_pawn_path_step_analysis<F>(
             panic!("Cannot analyse steps for \'Noquad\' quadrant pieces.")
         },
     }
-
     // Check if there is a piece in the current position and return of true.
     // This is the straight path part of the pawn.
     // Also checks if the position is out of board bounds.
     if game.check_piece_in_pos(_x, _y) || !position_in_board_bounds(_x, _y) { return }
-
     // Pushing to the vec.
     _possiblepaths.push((_x, _y));
-
 }
 
 /// Used to detect pawn's killable pieces.
@@ -138,12 +127,9 @@ fn pawn_possible_path_if_piece_at_pos(
     game:           &Game,
     _possiblepaths: &mut PositionVectorf32,
 ) {
-
     // Checking for early return.
     if !game.check_piece_in_pos(x, y)
     ||  game.current_player().piece_index_from_xy_f32(x, y).is_ok() { return }
-
     // Finally push the resultant position to PossiblePaths.
     _possiblepaths.push((x, y));
-
 }

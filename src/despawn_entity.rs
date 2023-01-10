@@ -6,7 +6,7 @@
 use bevy::prelude::{Entity, Commands, Query, With, Component, DespawnRecursiveExt};
 
 /// To despawn entities with a a specific component.
-pub(crate) trait DespawnEntity<T> 
+pub(crate) trait DespawnEntity<T>
     where
         T: Component,
 {
@@ -19,7 +19,6 @@ impl<T> DespawnEntity<T> for Commands<'_,'_>
     where
         T: Component,
 {
-
     /// To despawn entities recursively whenever called.
     #[inline]
     fn despawn_entity(
@@ -29,5 +28,4 @@ impl<T> DespawnEntity<T> for Commands<'_,'_>
         // Iterate over each of the player names and despawn them.
         query.iter().for_each(|entity| self.entity(entity).despawn_recursive());
     }
-
 }

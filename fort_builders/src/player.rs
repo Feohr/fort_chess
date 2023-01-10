@@ -12,6 +12,11 @@ use crate::pieces::{Piece, Position};
 use crate::{RED, RST};
 use thiserror::Error;
 
+/// Maximum name length.
+pub const NAME_MAX_LEN: usize = 15_usize;
+/// Minimum name length.
+pub const NAME_MIN_LEN: usize = 3_usize;
+
 /// Player Error enum.
 #[derive(Error, Debug)]
 pub enum Error {
@@ -23,7 +28,6 @@ pub enum Error {
         RST
     )]
     InvalidNameLength(String, usize),
-
     /// If the position referenced is not present in the pieces vector.
     #[error(
         "{} The given index of the piece {0} does not exist in a vec of length {1}. {}",
@@ -31,7 +35,6 @@ pub enum Error {
         RST
     )]
     PlayerVectorIndexOutOfBounds(usize, usize),
-
     /// When an illegal position is referenced.
     #[error(
         "{} The given index {0} cannot exist as the index for a player vector should be \
@@ -40,7 +43,6 @@ pub enum Error {
         RST
     )]
     IllegalPlayerVectorIndex(usize),
-
     /// If Invalid Team index was provided.
     #[error(
         "{} The provided index {0} does not have a team corresponding to it. {}",
@@ -48,7 +50,6 @@ pub enum Error {
         RST
     )]
     InvalidTeamIndex(usize),
-
     /// Error from pieces module.
     #[error("{} Error in piece module originated from player module. {}", RED, RST)]
     PlayerPieceModuleError(#[from] pieces::Error),
@@ -74,36 +75,25 @@ pub enum Team {
 pub struct Player {
     /// The name of the player.
     pub name: String,
-
     /// The pieces held by the player.
     pub pieces: Vec<Piece>,
-
     /// The team player belongs to.
     pub team: Team,
-
     /// Indicates if the player is a defender.
     pub is_defender: bool,
-
     /// Indicates if the player is a winner.
     pub is_winner: bool,
-
     /// Current position of the player piece in the vec.
     pub chosen_piece_index: usize,
 }
 
 /// A public trait to handle [`Player`] actions.
 pub trait PlayerAction {
-
     fn piece_index_from_xy_i32(&self, x: i32, y: i32) -> Result<usize, usize>;
-
     fn piece_index_from_xy_f32(&self, x: f32, y: f32) -> Result<usize, usize>;
-
     fn kill_piece(&mut self, pos: usize) -> Result<Piece, Error>;
-
     fn update_piece(&mut self, x: i32, y: i32) -> Result<bool, Error>;
-
     fn in_opposite_side(&self) -> bool;
-
 }
 
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
@@ -111,7 +101,6 @@ pub trait PlayerAction {
 /*████Team████*/
 /*-----------------------------------------------------------------------------------------------*/
 impl Team {
-
     /// To get a team corresponding to the index value.
     ///
     /// Takes a usize and returns a [`Team`] struct.
@@ -125,7 +114,6 @@ impl Team {
             _ => Err(Error::InvalidTeamIndex(index)),
         }
     }
-
     /// To turn a team enum value to a String value.
     ///
     /// Takes [`Team`] enum value and converts is to [`String`] value.
@@ -138,7 +126,6 @@ impl Team {
             Team::Yellow => "Yellow",
         }
     }
-
     /// Takes the [`Team`] value and returns the respective index.
     #[inline]
     pub fn as_usize(&self) -> usize {
@@ -149,14 +136,12 @@ impl Team {
             Team::Yellow => 3_usize,
         }
     }
-
 }
 /*-----------------------------------------------------------------------------------------------*/
 
 /*████Player████*/
 /*-----------------------------------------------------------------------------------------------*/
 impl Player {
-
     /// Used to initialize a new player based on the inputs.
     ///
     /// Takes the name, team and is_defender boolean value to create a [`Player`] struct.
@@ -167,7 +152,6 @@ impl Player {
         quadrant_active:    usize,
         quadrant:           Quadrant,
     ) -> Result<Self, Error> {
-
         Ok(Player {
             name:   Player::validate_name(name)?,
             pieces: Piece::init_pieces(is_defender, quadrant, quadrant_active)?,
@@ -177,9 +161,7 @@ impl Player {
             chosen_piece_index: 0_usize,
         }
         .to_sorted())
-
     }
-
     /// To set the player as a winner.
     ///
     /// Changes the `is_winner` value to `true`.
@@ -189,7 +171,6 @@ impl Player {
     pub fn set_winner(&mut self) {
         self.is_winner = true;
     }
-
     /// For sorting the pieces.
     ///
     /// TimeSorts the pieces based on their position value.
@@ -197,7 +178,6 @@ impl Player {
     fn sort_pieces(&mut self) {
         self.pieces.sort_by(|a, b| a.position.cmp(&b.position));
     }
-
     /// To sort and return the object.
     ///
     /// Used when intializing the player struct.
@@ -206,19 +186,16 @@ impl Player {
         self.sort_pieces();
         self
     }
-
     /// To get the piece reference in the current player.
     #[inline]
     pub fn pieces(&self) -> &Vec<Piece> {
         &self.pieces
     }
-
     /// To get the pieces mutable reference in the current player.
     #[inline]
     pub fn pieces_mut(&mut self) -> &mut Vec<Piece> {
         &mut self.pieces
     }
-
     /// A simple function to check if the name length is too big or too small.
     ///
     /// returns false if the name length is invalid. The constraints are 2 < name_length < 15.
@@ -226,20 +203,16 @@ impl Player {
     fn validate_name(name: String) -> Result<String, Error> {
         // The length of the name.
         let len = name.len();
-
-        match len >= 3_usize && len < 15_usize {
+        match len >= NAME_MIN_LEN && len < NAME_MAX_LEN {
             true  => Ok(name),
             false => Err(Error::InvalidNameLength(name.clone(), name.len())),
         }
-
     }
-
     /// To set the chosen piece position in the vec.
     #[inline]
     pub fn set_chosen_piece_index(&mut self, chosen_piece_index: usize) {
         self.chosen_piece_index = chosen_piece_index
     }
-
     /// To get the chosen piece reference.
     #[inline]
     pub fn current_chosen_piece(&self) -> Result<&Piece, Error> {
@@ -247,7 +220,6 @@ impl Player {
         Piece::is_in_bounds(self.chosen_piece_index, self.pieces.len())?;
         Ok(&self.pieces[self.chosen_piece_index])
     }
-
     /// To get the chosen piece mutable reference.
     #[inline]
     pub fn current_chosen_piece_mut(&mut self) -> Result<&mut Piece, Error> {
@@ -255,14 +227,12 @@ impl Player {
         Piece::is_in_bounds(self.chosen_piece_index, self.pieces.len())?;
         Ok(&mut self.pieces[self.chosen_piece_index])
     }
-
 }
 /*-----------------------------------------------------------------------------------------------*/
 
 /*████PlayerAction for Player████*/
 /*-----------------------------------------------------------------------------------------------*/
 impl PlayerAction for Player {
-
     /// To get position of the piece that is clicked in relevance to the vec.
     ///
     /// Takes x and y coordinate position, as `f32`, of the clicked piece. Then checks the piece
@@ -275,7 +245,6 @@ impl PlayerAction for Player {
     fn piece_index_from_xy_f32(&self, x: f32, y: f32) -> Result<usize, usize> {
         self.piece_index_from_xy_i32(x as i32, y as i32)
     }
-
     /// To get position of the piece that is clicked in relevance to the vec.
     ///
     /// Takes x and y coordinate position, as `i32`, of the clicked piece. Then checks the piece
@@ -293,36 +262,27 @@ impl PlayerAction for Player {
             })
         })
     }
-
     /// To kill a piece inside the [`Player`] struct.
     ///
     /// Takes the position of the piece, finds it inside the vector and deletes that piece.
     fn kill_piece(&mut self, pos: usize) -> Result<Piece, Error> {
-
         // Checks.
         Piece::is_valid_index(pos, self.is_defender)?;
         Piece::is_in_bounds(pos, self.pieces.len())?;
-
         // Removing the piece.
         let piece = self.pieces.remove(pos);
-
         // Sort pieces after mutation.
         self.sort_pieces();
         Ok(piece)
-
     }
-
     /// To update position of the piece inside the [`Player`] struct vector.
     ///
     /// Takes x and y coordinates to update the piece at the position that is provided.
     /// returns a result type in case of errors.
     fn update_piece(&mut self, x: i32, y: i32) -> Result<bool, Error> {
-
         let pos = self.chosen_piece_index;
-
         // Is the index a valid index?
         Piece::is_valid_index(pos, self.is_defender)?;
-
         match self.pieces[pos].position.x == x && self.pieces[pos].position.y == y {
             true => Ok(false),
             false => {
@@ -333,15 +293,12 @@ impl PlayerAction for Player {
                 Ok(true)
             },
         }
-
     }
-
     /// To check if the current chosen piece is on the opposite side.
     ///
     /// Takes a self reference and checks for the position depending on if you're a defender piece
     /// or an enemy piece.
     fn in_opposite_side(&self) -> bool {
-
         if let Ok(current_piece) = self.current_chosen_piece() {
             let (x, y) = (current_piece.position.x, current_piece.position.y);
             match self.is_defender {
@@ -349,18 +306,14 @@ impl PlayerAction for Player {
                 false => return check_in_opposite_enemy(x, y),
             }
         };
-
         false
-
     }
-
 }
 /*-----------------------------------------------------------------------------------------------*/
 
 /*████Impl Default for Player████*/
 /*-----------------------------------------------------------------------------------------------*/
 impl Default for Player {
-
     fn default() -> Self {
         Player {
             name: String::default(),
@@ -371,6 +324,5 @@ impl Default for Player {
             chosen_piece_index: usize::default(),
         }
     }
-
 }
 /*-----------------------------------------------------------------------------------------------*/

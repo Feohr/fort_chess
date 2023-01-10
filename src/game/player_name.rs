@@ -24,7 +24,6 @@ use fort_builders::{
 
 #[derive(Component)]
 pub(crate) struct PlayerNameOutline;
-
 /// To hold the data of each player box.
 #[derive(Debug, PartialOrd, Ord, Eq, PartialEq)]
 pub(crate) struct PlayerNameTextBox {
@@ -32,13 +31,11 @@ pub(crate) struct PlayerNameTextBox {
     team:       Team,
     position:   Position,
 }
-
 /// Parent object to hold the [`PlayerNameTextBox`] vec.
 #[derive(Debug)]
 pub(crate) struct PlayerNameBoxVec {
     boxes: Vec<PlayerNameTextBox>,
 }
-
 /// To denote a player name box entity.
 #[derive(Component)]
 pub(crate) struct PlayerName;
@@ -59,7 +56,6 @@ fn color_from_team(team: Team) -> Color {
 /*████PlayerNameTextBox████*/
 /*-----------------------------------------------------------------------------------------------*/
 impl PlayerNameTextBox {
-
     /// To create a [`PlayerNameTextBox`].
     #[inline]
     pub(crate) fn create(name: String, team: Team, x: i32, y: i32) -> Self {
@@ -69,14 +65,12 @@ impl PlayerNameTextBox {
             position: Position {x, y},
         }
     }
-
 }
 /*-----------------------------------------------------------------------------------------------*/
 
 /*████PlayerNameBoxVec████*/
 /*-----------------------------------------------------------------------------------------------*/
 impl PlayerNameBoxVec {
-
     /// To initialize the [`PlayerNameBoxVec`] object.
     #[inline]
     pub(crate) fn new() -> Self {
@@ -84,7 +78,6 @@ impl PlayerNameBoxVec {
             boxes: Vec::new(),
         }
     }
-
     /// To push a [`PlayerNameTextBox`] to the vec.
     #[inline]
     pub(crate) fn push(&mut self, name: String, team: Team, x: i32, y: i32) {
@@ -92,23 +85,18 @@ impl PlayerNameBoxVec {
             PlayerNameTextBox::create(name, team, x, y),
         );
     }
-
     /// To find and pop the [`PlayerNameTextBox`] with the corresponding team.
     #[inline]
     pub(crate) fn pop(&mut self, team: Team) {
-
         if let Ok(pos) = self.search(team) {
             self.boxes.remove(pos);
         }
-
     }
-
     /// To search the player with the given team using `binary search`.
     #[inline]
     pub(crate) fn search(&self, team: Team) -> Result<usize, usize> {
         self.boxes.binary_search_by(|pname| pname.team.cmp(&team))
     }
-
 }
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -120,22 +108,15 @@ pub(crate) fn highlight_player_name(
     game:           &ResMut<GameAsset>,
     pname_query:    &Query<Entity, With<PlayerNameOutline>>,
 ) {
-
     // Clean up.
-    commands.despawn_entity(pname_query);
-
-    // Getting the current highlighted color.
+    commands.despawn_entity(pname_query); // Getting the current highlighted color.
     let highlight_color = {
-
         let player_team = game.get().current_player().team;
-
         match player_names.search(player_team) {
             Ok(_)   => *color_from_team(player_team).set_a(0.5_f32),
             Err(_)  => Color::NONE,
         }
-
     };
-
     player_names.boxes
         .iter()
         .for_each(|player| {
@@ -165,7 +146,6 @@ pub(crate) fn highlight_player_name(
                 })
                 .insert(PlayerNameOutline);
         })
-
 }
 
 /// To display the player names onto the screen with the appropriate team color.
@@ -177,7 +157,6 @@ pub(crate) fn display_player_names(
 ) {
     // Clean up.
     commands.despawn_entity(query);
-
     player_names.boxes
         .iter()
         .for_each(|player| {
@@ -188,7 +167,7 @@ pub(crate) fn display_player_names(
                 text: Text::from_section(
                     player.name.as_str(),
                     TextStyle {
-                        font: font.0.clone(),
+                        font: font.get().clone(),
                         font_size: 0.5_f32 * RESOLUTION,
                         color: color_from_team(player.team),
                     },
@@ -203,6 +182,5 @@ pub(crate) fn display_player_names(
             })
             .insert(PlayerName);
         })
-
 }
 /*-----------------------------------------------------------------------------------------------*/

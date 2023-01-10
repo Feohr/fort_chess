@@ -46,13 +46,10 @@ pub const YMAXF : f32 = Y_MAX as f32;
 pub enum Quadrant {
     /// Block 1.
     Q1,
-
     /// Block 2.
     Q2,
-
     /// Block 3.
     Q3,
-
     /// Defender Quadrant.
     NoQuad,
 }
@@ -83,7 +80,6 @@ pub fn q3_outer_bound_pos() -> (i32, i32) {
 /*████Quadrant████*/
 /*-----------------------------------------------------------------------------------------------*/
 impl Quadrant {
-
     /// To get a [`Quadrant`] value from index of usize.
     #[inline]
     pub fn from_index(index: usize) -> Result<Self, Error> {
@@ -94,7 +90,6 @@ impl Quadrant {
             _ => Err(Error::InvalidQuadrantIndex(index)),
         }
     }
-
     /// To get a [`Quadrant`] value from x and y values of `f32` type.
     #[inline]
     pub fn from_xy(x: f32, y: f32) -> Result<Self, Error> {
@@ -105,7 +100,6 @@ impl Quadrant {
         // If the position is out of bounds.
         Err(Error::PositionNotInQuadrant(x as i32, y as i32))
     }
-
 }
 /*-----------------------------------------------------------------------------------------------*/
 

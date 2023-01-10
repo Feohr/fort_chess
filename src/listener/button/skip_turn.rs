@@ -3,11 +3,9 @@
 //! To handle the `skip_turn` button plugin.
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
-use bevy::{
-    prelude::{
-        Commands, Query, ResMut, With, Plugin, App, UiColor, Res, Button, Interaction, Changed,
-        Component, Entity, SystemSet,
-    },
+use bevy::prelude::{
+    Commands, Query, ResMut, With, Plugin, App, UiColor, Res, Button, Interaction, Changed,
+    Component, Entity, SystemSet,
 };
 use crate::{
     despawn_entity::DespawnEntity,
@@ -22,9 +20,9 @@ use crate::{
 
 /// To hold the button text.
 const SKIP_TURN_BTN_TEXT: &str = "Skip Turn";
+
 /// Plugin to handle `skip_turn` button.
 pub(crate) struct SkipButtonPlugin;
-
 #[derive(Component)]
 pub struct SkipTurnButton;
 
@@ -61,7 +59,6 @@ fn skip_turn_btn_clicked(
     paths_query:    Query<Entity, With<Paths>>,
     click_query:    Query<Entity, With<Click>>,
 ) {
-
     interaction_query
         .iter_mut()
         .for_each(|(&interaction, mut color)| {
@@ -82,7 +79,6 @@ fn skip_turn_btn_clicked(
                 Interaction::None    => *color = UiColor::from(style::BTN_BKGRND_COLOR),
             }
         });
-
 }
 /*-----------------------------------------------------------------------------------------------*/
 

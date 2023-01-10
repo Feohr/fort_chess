@@ -15,7 +15,6 @@ type PieceTypeVectoru8 = Vec<u8>;
 
 /// To return the defender position inside a board based on the number of players.
 fn defender_position(quadrant_active: usize) -> PositionVectori32 {
-
     (1..quadrant_active)
         .into_iter()
         .flat_map(|index| match index {
@@ -34,7 +33,6 @@ fn defender_position(quadrant_active: usize) -> PositionVectori32 {
             _ => panic!("There can't be more than 4 players. index: {}.", index),
         })
         .collect::<PositionVectori32>()
-
 }
 
 // The enemies.
@@ -78,17 +76,14 @@ fn enemy_type() -> PieceTypeVectoru8 {
 ///
 /// [`PieceType`]: crate::pieces::PieceType
 fn defender_type(quadrant_active: usize) -> PieceTypeVectoru8 {
-
     if quadrant_active > 4_usize {
         panic!("There can't be more than 4 players. index: {quadrant_active}.")
     }
-
     vec![4_u8, 1_u8, 2_u8, 0_u8, 3_u8, 3_u8, 3_u8, 3_u8]
         .into_iter()
         .cycle()
         .take(ENEMY_COUNT * quadrant_active)
         .collect::<PieceTypeVectoru8>()
-
 }
 
 /*-----------------------------------------------------------------------------------------------*/

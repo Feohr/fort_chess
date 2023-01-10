@@ -17,13 +17,11 @@ const RET_BTN_TEXT: &str = "Return";
 
 #[derive(Component)]
 struct ReturnButtonComponent;
-
 pub(crate) struct ReturnButtonPlugin;
 
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
 impl Plugin for ReturnButtonPlugin {
-
     fn build(&self, app: &mut App) {
         app
             .add_system_set(
@@ -35,7 +33,6 @@ impl Plugin for ReturnButtonPlugin {
                 .with_system(return_btn_clicked)
             );
     }
-
 }
 
 /// To animate the button clicked animations.

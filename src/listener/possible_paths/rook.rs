@@ -17,9 +17,7 @@ use crate::listener::possible_paths::{STEP, PositionVectorf32};
 ///
 /// Checks for steps along `+ve X-axis`, `-ve X-axis`, `+ve Y-axis` and `-ve Y-axis`.
 pub(crate) fn analyse_rook_paths(x: f32, y: f32, game: &Game) -> PositionVectorf32 {
-
     let mut _possiblepaths: PositionVectorf32 = Vec::new();
-
     // Along positive x-axis.
     iter_rook_path_step_analysis(x, y, |_x, _y| *_x += STEP, game, &mut _possiblepaths);
     // Along negative x-axis.
@@ -28,10 +26,8 @@ pub(crate) fn analyse_rook_paths(x: f32, y: f32, game: &Game) -> PositionVectorf
     iter_rook_path_step_analysis(x, y, |_x, _y| *_y += STEP, game, &mut _possiblepaths);
     // Along negative y-axis.
     iter_rook_path_step_analysis(x, y, |_x, _y| *_y -= STEP, game, &mut _possiblepaths);
-
     // Return.
     _possiblepaths
-
 }
 
 /// To analyse the rook path in a given direction using the step function.
@@ -47,7 +43,6 @@ fn iter_rook_path_step_analysis<F>(
 ) where
         F: Fn(&mut f32, &mut f32),
 {
-
     // Loop over a direction until we hit the same team player, enemy player and add that to path
     // or go out of bounds.
     loop {
@@ -61,5 +56,4 @@ fn iter_rook_path_step_analysis<F>(
         // Checking if the next piece needs to be calculated.
         if game.check_piece_in_pos(_x, _y) { break }
     }
-
 }

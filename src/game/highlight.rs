@@ -29,10 +29,8 @@ pub(crate) fn highlight_active_pieces(
     game:       &ResMut<GameAsset>,
     query:      &Query<Entity, With<Highlight>>,
 ) {
-
     // Clean up.
     commands.despawn_entity(query);
-
     // Draw.
     game
         .get()
@@ -66,5 +64,4 @@ pub(crate) fn highlight_active_pieces(
                 })
                 .insert(Highlight);
         })
-
 }

@@ -7,7 +7,7 @@ use bevy::{
     prelude::{
         Commands, Component, Query, ResMut, With, Plugin, App, UiColor, Res, Button, Interaction,
         Changed, Visibility, Entity, Text2dBundle, default, Transform, Vec2, Text, TextStyle,
-        TextAlignment, Color, Timer, Time, SystemSet,
+        TextAlignment, Timer, Time, SystemSet,
     },
     text::Text2dBounds,
 };
@@ -20,7 +20,7 @@ use crate::{
         click::Click,
         button::{btn_spawn, style, SKIP_TURN_GAME_CLOSURES, BtnContainer},
     },
-    font::RegFontHandle,
+    font::{RegFontHandle, DEFAULT_FONT_CLR},
     state::FortChessState,
 };
 use fort_builders::{
@@ -42,17 +42,13 @@ struct DiceRollValue{
     value: usize,
     display: bool,
 }
-
 /// To hold the dice roll timer.
 struct DiceRollTimer(Timer);
-
 /// Plugin to handle `skip_turn` button.
 pub(crate) struct DiceRollButtonPlugin;
-
 /// To signify dice roll value counter.
 #[derive(Component)]
 struct DiceRollValueText;
-
 /// To signify a DiceRoll Button.
 #[derive(Component)]
 pub(crate) struct DiceRollButton;
@@ -62,7 +58,6 @@ pub(crate) struct DiceRollButton;
 /*████Plugin for DiceRollButtonPlugin████*/
 /*-----------------------------------------------------------------------------------------------*/
 impl Plugin for DiceRollButtonPlugin {
-
     // The `dice roll` button was spawning before the `skip turn` button unpredictably. Hence,
     // the button spawning is pushed to on resume `BoardScreen`. Not the most elegant solution.
     fn build(&self, app: &mut App) {
@@ -80,7 +75,6 @@ impl Plugin for DiceRollButtonPlugin {
                 .with_system(dice_roll_btn_visibility)
             );
    }
-
 }
 /*-----------------------------------------------------------------------------------------------*/
 /*████Dice Roll Button Visibility████*/
@@ -91,7 +85,6 @@ fn dice_roll_btn_visibility(
     mut dice_roll_query:    Query<&mut Visibility, With<DiceRollButton>>,
     game:                   Res<GameAsset>,
 ) {
-
     // Matching to see if the current player piece is in opposite side.
     dice_roll_query
         .iter_mut()
@@ -101,7 +94,6 @@ fn dice_roll_btn_visibility(
                                                             .in_opposite_side()
                                                         && game.get().picked
         );
- 
 }
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -109,45 +101,37 @@ fn dice_roll_btn_visibility(
 /*-----------------------------------------------------------------------------------------------*/
 /// Initializing dice roll object values.
 fn init_dice_roll_objects(mut commands: Commands) {
-
     // Inserting the DiceRollValue object.
     commands.insert_resource(DiceRollValue::new());
-
     // Initializing the DiceRollTimer.
     commands.insert_resource(DiceRollTimer::init());
-
 }
 /*-----------------------------------------------------------------------------------------------*/
 
 /*████Dice Roll Timer████*/
 /*-----------------------------------------------------------------------------------------------*/
 impl DiceRollTimer {
-
     /// To create a timer.
     #[inline]
     fn init() -> Self {
         DiceRollTimer(Timer::from_seconds(TIMER_LEN, TIMER_REPEAT))
     }
-
     /// To get a mutable reference to [`DiceRollTimer`] timer.
     #[inline]
     fn get_mut(&mut self) -> &mut Timer {
         &mut self.0
     }
-
     /// To get an immutable reference to [`DiceRollTimer`] timer.
     #[inline]
     fn get(&self) -> &Timer {
         &self.0
     }
-
 }
 /*-----------------------------------------------------------------------------------------------*/
 
 /*████Dice Roll Value████*/
 /*-----------------------------------------------------------------------------------------------*/
 impl DiceRollValue {
-
     /// Creates a new dice roll value.
     #[inline]
     fn new() -> Self {
@@ -156,26 +140,22 @@ impl DiceRollValue {
             display: false,
         }
     }
-
     /// To set the value of dice roll.
     #[inline]
     fn set(&mut self, value: usize) {
         self.value = value;
         self.display = true;
     }
-
     /// To set the dice roll value display as false.
     #[inline]
     fn undisplay(&mut self) {
         self.display = false;
     }
-
     /// To get the dice roll value.
     #[inline]
     fn get(&self) -> usize {
         self.value
     }
-
 }
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -188,23 +168,20 @@ fn clear_dice_roll_ui_text(
     mut dice_time:  ResMut<DiceRollTimer>,
     time:           Res<Time>,
 ) {
-
     // Ticking.
     dice_time.get_mut().tick(time.delta());
-
     dice_query
         .iter_mut()
         .for_each(|(entity, mut text)| {
             text.sections
                     .first_mut()
-                    .unwrap().style.color
+                    .expect("There are no text sections for dice roll value prompt").style.color
                     .set_a(dice_time.get().percent_left() * FADEOUT_SPEED);
             // Clear text when the timer is done.
             if dice_time.get().just_finished() {
                 commands.entity(entity).despawn();
             }
         })
-
 }
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -218,40 +195,34 @@ fn dice_roll_ui_text(
     dice_query:             Query<Entity, With<DiceRollValueText>>,
     font:                   Res<RegFontHandle>,
 ) {
-
     if !dice_roll_value.display { return }
-
     // Cleaning up text so that new text can be displayed.
     commands.despawn_entity(&dice_query);
-
     // Dice roll timer reset.
     dice_time.get_mut().reset();
-
     commands.spawn_bundle(Text2dBundle {
-       text_2d_bounds: Text2dBounds {
+        text_2d_bounds: Text2dBounds {
            size: Vec2::splat(3_f32 * RESOLUTION),
-       },
-       text: Text::from_section(
-           format!("Dice Roll: {:>1?}", dice_roll_value.get()),
-           TextStyle {
-               font: font.0.clone(),
-               font_size: 0.5_f32 * RESOLUTION,
-               color: Color::BLACK,
-           },
-       )
-       .with_alignment(TextAlignment::CENTER_LEFT),
-       transform: Transform::from_xyz(
-               8_f32 * RESOLUTION,
-               8_f32 * RESOLUTION,
-               ZAxisLevel::Twelfth.as_f32(),
-       ),
-       ..default()
+        },
+        text: Text::from_section(
+            format!("Dice Roll: {:>1?}", dice_roll_value.get()),
+            TextStyle {
+                font: font.get().clone(),
+                font_size: 0.5_f32 * RESOLUTION,
+                color: DEFAULT_FONT_CLR,
+            },
+        )
+        .with_alignment(TextAlignment::CENTER_LEFT),
+        transform: Transform::from_xyz(
+                8_f32 * RESOLUTION,
+                8_f32 * RESOLUTION,
+                ZAxisLevel::Twelfth.as_f32(),
+        ),
+        ..default()
     })
     .insert(DiceRollValueText);
-
     // To stop from spawning more than one at a time.
     dice_roll_value.undisplay();
-
 }
 /*-----------------------------------------------------------------------------------------------*/
 

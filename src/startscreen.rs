@@ -1,15 +1,33 @@
+//! start screen module.
+//!
+//! Module to handle the starting screen of the game.
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
+//  Module   //
+//-----------//
 mod expand;
+mod name_input;
+mod startbtn;
+//-----------//
 
-use bevy::prelude::*;
+use bevy::prelude::{
+    Color, Commands, Res, JustifyContent, AlignItems, AlignSelf, NodeBundle, FlexDirection, Style,
+    Size, Val, UiRect, UiImage, UiColor, default, ChildBuilder, Visibility, Component, Plugin,
+    SystemSet, App, Query, Entity, With, Text, TextStyle, Transform, Text2dBundle, ButtonBundle,
+    BuildChildren,
+};
 use crate::{
     RESOLUTION, ZAxisLevel,
     state::FortChessState,
     despawn_entity::DespawnEntity,
-    font::BoldFontHandle,
+    font::{BoldFontHandle, RegFontHandle},
 };
-use expand::{ExpandTextInputButton, EXPAND_NORML, expand_btn_click};
+use expand::{
+   ExpandBtnImage, ExpandTextInputButtonPlugin, ExpandTextInputButton, TextInputId, InputBoxNode,
+   style,
+};
+use startbtn::{spawn_start_btn, StartBtnPlugin};
+use name_input::{NameInput, NameInputPlugin};
 
 /// Player name UI color.
 const PLNAME_UI_COLOR:  Color = Color::rgba(0.2_f32, 0.3_f32, 0.1_f32, 0.25_f32);
@@ -22,6 +40,9 @@ const MAIN_TITLE_SIZE: f32 = 96_f32;
 /// Length of the main text input node.
 const TEXT_INPUT_NODE: (f32, f32) = (700_f32, 300_f32);
 
+pub(crate) trait FromBool {
+    fn from_bool(value: bool) -> Self;
+}
 /// Main screen plugin.
 pub(crate) struct MainScreenPlugin;
 /// To signify player name input component.
@@ -32,61 +53,78 @@ struct PlayerNameInput;
 struct MainTitle;
 /// Name entry value object.
 #[derive(Debug)]
-struct NameEntryValue {
-    player1: String,
-    player2: String,
-    player3: Option<String>,
-    player4: Option<String>,
+pub(crate) struct NameEntryValue {
+    players: [String; 4_usize],
 }
 
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
+/*████Plugin for MainScreenPlugin████*/
+/*-----------------------------------------------------------------------------------------------*/
 impl Plugin for MainScreenPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_system_set(
                 SystemSet::on_enter(FortChessState::StartScreen)
-                .with_system(name_entry_value_res)
-                .with_system(title_text)
-                .with_system(name_entry_text_box_ui)
-            )
-            .add_system_set(
-                SystemSet::on_update(FortChessState::StartScreen)
-                .with_system(expand_btn_click)
+                .with_system(name_entry_value_res   )
+                .with_system(title_text             )
+                .with_system(name_entry_text_box_ui )
             )
             .add_system_set(
                 SystemSet::on_exit(FortChessState::StartScreen)
-                .with_system(despawn_player_name_text_input_box)
-            );
+                .with_system(despawn_pname_text_input_box)
+            )
+            .add_plugin(ExpandTextInputButtonPlugin)
+            .add_plugin(StartBtnPlugin)
+            .add_plugin(NameInputPlugin);
+    }
+}
+/*-----------------------------------------------------------------------------------------------*/
+
+/*████NameEntryValue████*/
+/*-----------------------------------------------------------------------------------------------*/
+impl Default for NameEntryValue {
+    /// Default implementation to create a [`NameEntryValue`].
+    fn default() -> Self {
+        NameEntryValue {
+            players: [
+                String::default(),
+                String::default(),
+                String::default(),
+                String::default(),
+            ]
+        }
     }
 }
 
 impl NameEntryValue {
-
-    fn new() -> Self {
-        NameEntryValue {
-            player1: String::new(),
-            player2: String::new(),
-            player3: None,
-            player4: None,
-        }
+    /// Count of player names entered.
+    fn _count(&self) -> usize {
+        self.players
+            .iter()
+            .filter(|name| !name.is_empty())
+            .count()
     }
-
 }
 
-fn despawn_player_name_text_input_box(
+fn name_entry_value_res(mut commands: Commands) {
+    commands.insert_resource(NameEntryValue::default());
+}
+/*-----------------------------------------------------------------------------------------------*/
+
+/*████Main Screen UI████*/
+/*-----------------------------------------------------------------------------------------------*/
+/// To despawn text when the player leaves the screen.
+fn despawn_pname_text_input_box(
     mut commands:   Commands,
     input_box:      Query<Entity, With<PlayerNameInput>>,
     text:           Query<Entity, With<MainTitle>>
 ) {
-     commands.despawn_entity(&input_box);
-     commands.despawn_entity(&text);
+    commands.despawn_entity(&input_box);
+    commands.despawn_entity(&text);
 }
 
-fn name_entry_value_res(mut commands: Commands) {
-    commands.insert_resource(NameEntryValue::new());
-}
-
+/// Main title text.
 fn title_text(
     mut commands:   Commands,
     font:           Res<BoldFontHandle>,
@@ -95,7 +133,7 @@ fn title_text(
         text: Text::from_section(
             "Fort Chess",
             TextStyle {
-                font: font.0.clone(),
+                font: font.get().clone(),
                 font_size: MAIN_TITLE_SIZE,
                 color: MAIN_TITLE_COLOR,
             },
@@ -110,9 +148,14 @@ fn title_text(
     .insert(MainTitle);
 }
 
+// Main UI Node:
+// ------------- //
+
+/// To insert the expand button to open and close the name input three and four.
 fn expand_btn(
     commands:       &mut ChildBuilder,
-    asset_server:   &Res<AssetServer>,
+    asset_server:   &Res<ExpandBtnImage>,
+    textinputid:    TextInputId,
 ) {
     commands.spawn_bundle(ButtonBundle {
         style: Style {
@@ -122,23 +165,26 @@ fn expand_btn(
             flex_direction: FlexDirection::Row,
             ..default()
         },
-        color: UiColor::from(EXPAND_NORML),
-        image: UiImage(asset_server.load("spritesheet/expand.png")),
+        color: UiColor::from(style::EXPAND_NORML),
+        image: UiImage(asset_server.open.clone()),
         ..default()
     })
-    .insert(ExpandTextInputButton);
+    .insert(ExpandTextInputButton {
+        id: textinputid,
+        expanded: false, // default value
+    });
 }
 
+/// To insert the text box UI node.
 fn text_box_sprite(
     commands:       &mut ChildBuilder,
     expandable:     bool,
-    asset_server:   &Res<AssetServer>,
+    asset_server:   &Res<ExpandBtnImage>,
+    textinputid:    TextInputId,
 ) {
-
     if expandable {
-        expand_btn(commands, asset_server);
+        expand_btn(commands, asset_server, textinputid);
     }
-
     commands.spawn_bundle(NodeBundle {
         style: Style {
             size: Size::new(Val::Percent(40_f32), Val::Percent(66_f32)),
@@ -146,16 +192,32 @@ fn text_box_sprite(
             ..default()
         },
         visibility: Visibility { is_visible: !expandable },
-        color: UiColor::from(TEXT_INPUT_COLOR),
+        color: UiColor::from(Color::NONE),
         ..default()
+    })
+    .insert(InputBoxNode {
+        expandable,
+        id: textinputid,
+    })
+    .with_children(|commands| {
+        commands.spawn_bundle(ButtonBundle {
+            style: Style {
+                size: Size::new(Val::Percent(100_f32), Val::Percent(100_f32)),
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            color: UiColor::from(TEXT_INPUT_COLOR),
+            ..default()
+        })
+        .insert(NameInput);
     });
-
 }
 
+/// To insert a row of text boxes.
 fn text_box_sprite_node(
     commands:       &mut ChildBuilder,
     expandable:     bool,
-    asset_server:   &Res<AssetServer>,
+    asset_server:   &Res<ExpandBtnImage>,
 ) {
     commands.spawn_bundle(NodeBundle {
         style: Style {
@@ -170,15 +232,19 @@ fn text_box_sprite_node(
     })
     .with_children(|commands| {
         // Left text box.
-        text_box_sprite(commands, expandable, asset_server);
+        text_box_sprite(commands, expandable, asset_server, TextInputId::One);
         // Right text box.
-        text_box_sprite(commands, expandable, asset_server);
+        text_box_sprite(commands, expandable, asset_server, TextInputId::Two);
     });
 }
 
+/// To add the main entry box node.
+///
+/// Contains the insert boxes and buttons to start game.
 fn name_entry_text_box_ui(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
+    mut commands:   Commands,
+    asset_server:   Res<ExpandBtnImage>,
+    start_btn_font: Res<RegFontHandle>,
 ) {
     // Input box.
     commands.spawn_bundle(NodeBundle {
@@ -211,10 +277,13 @@ fn name_entry_text_box_ui(
             ..default()
         })
         .with_children(|commands| {
-            // Top 2 names.
-            text_box_sprite_node(commands, true,    &asset_server);
+            // Start Button.
+            spawn_start_btn(        commands, &start_btn_font       );
             // Bottom 2 names.
-            text_box_sprite_node(commands, false,   &asset_server);
-        });
-   });
+            text_box_sprite_node(   commands, true,    &asset_server);
+            // Top 2 names.
+            text_box_sprite_node(   commands, false,   &asset_server);
+       });
+    });
 }
+/*-----------------------------------------------------------------------------------------------*/
