@@ -14,7 +14,7 @@ use bevy::prelude::{
     Color, Commands, Res, JustifyContent, AlignItems, AlignSelf, NodeBundle, FlexDirection, Style,
     Size, Val, UiRect, UiImage, UiColor, default, ChildBuilder, Visibility, Component, Plugin,
     SystemSet, App, Query, Entity, With, Text, TextStyle, Transform, Text2dBundle, ButtonBundle,
-    BuildChildren,
+    BuildChildren, TextBundle,
 };
 use crate::{
     RESOLUTION, ZAxisLevel,
@@ -27,7 +27,7 @@ use expand::{
    style,
 };
 use startbtn::{spawn_start_btn, StartBtnPlugin};
-use name_input::{NameInput, NameInputPlugin};
+use name_input::{NameInput, NameInputText, NameInputPlugin};
 
 /// Player name UI color.
 const PLNAME_UI_COLOR:  Color = Color::rgba(0.2_f32, 0.3_f32, 0.1_f32, 0.25_f32);
@@ -105,6 +105,9 @@ impl NameEntryValue {
             .filter(|name| !name.is_empty())
             .count()
     }
+    // fn get_mut(&mut self, index: usize) -> Option<&mut String> {
+    //     self.players.get_mut(index)
+    // }
 }
 
 fn name_entry_value_res(mut commands: Commands) {
@@ -179,6 +182,7 @@ fn expand_btn(
 fn text_box_sprite(
     commands:       &mut ChildBuilder,
     expandable:     bool,
+    font:           &Res<RegFontHandle>,
     asset_server:   &Res<ExpandBtnImage>,
     textinputid:    TextInputId,
 ) {
@@ -209,7 +213,20 @@ fn text_box_sprite(
             color: UiColor::from(TEXT_INPUT_COLOR),
             ..default()
         })
-        .insert(NameInput);
+        .insert(NameInput)
+        .with_children(|commands| {
+            commands.spawn_bundle(TextBundle::from_section(
+                "Enter your name",
+                TextStyle {
+                    font: font.get().clone(),
+                    color: MAIN_TITLE_COLOR,
+                    ..default()
+                },
+            ))
+            .insert(NameInputText {
+                id: textinputid,
+            });
+        });
     });
 }
 
@@ -218,6 +235,7 @@ fn text_box_sprite_node(
     commands:       &mut ChildBuilder,
     expandable:     bool,
     asset_server:   &Res<ExpandBtnImage>,
+    font:           &Res<RegFontHandle>,
 ) {
     commands.spawn_bundle(NodeBundle {
         style: Style {
@@ -232,9 +250,9 @@ fn text_box_sprite_node(
     })
     .with_children(|commands| {
         // Left text box.
-        text_box_sprite(commands, expandable, asset_server, TextInputId::One);
+        text_box_sprite(commands, expandable, font, asset_server, TextInputId::One);
         // Right text box.
-        text_box_sprite(commands, expandable, asset_server, TextInputId::Two);
+        text_box_sprite(commands, expandable, font, asset_server, TextInputId::Two);
     });
 }
 
@@ -278,11 +296,11 @@ fn name_entry_text_box_ui(
         })
         .with_children(|commands| {
             // Start Button.
-            spawn_start_btn(        commands, &start_btn_font       );
+            spawn_start_btn(        commands, &start_btn_font               );
             // Bottom 2 names.
-            text_box_sprite_node(   commands, true,    &asset_server);
+            text_box_sprite_node(   commands, true,    &asset_server, &start_btn_font );
             // Top 2 names.
-            text_box_sprite_node(   commands, false,   &asset_server);
+            text_box_sprite_node(   commands, false,   &asset_server, &start_btn_font );
        });
     });
 }
