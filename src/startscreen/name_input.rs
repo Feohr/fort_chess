@@ -3,20 +3,22 @@
 //! Module to handle name input.
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
-use bevy::{
-    prelude::*,
-//    input::keyboard::KeyboardInput,
-};
+use bevy::prelude::*;
 use crate::{
     FortChessState,
     startscreen::{
-//        NameEntryValue,
-        TextInputId,
+        NameEntryValue, TEXT_INPUT_DEF_VAL,
         FromBool, TEXT_INPUT_COLOR,
         expand::InputBoxNode,
     },
+    font::DEFAULT_FONT_CLR,
 };
 use std::fmt::Debug;
+
+/// Color of the input selection.
+const INPUT_SELECT_CLR: Color = Color::rgb(0.76_f32, 0.76_f32, 0.76_f32);
+/// Color of the default filler text holder.
+const TEXT_HOLDER_CLR:  Color = Color::GRAY;
 
 /// Plugin to handle input of the name input.
 pub(crate) struct NameInputPlugin;
@@ -25,9 +27,7 @@ pub(crate) struct NameInputPlugin;
 pub(crate) struct NameInput;
 /// To get the text of the input bar.
 #[derive(Component)]
-pub(crate) struct NameInputText {
-    pub(crate) id: TextInputId,
-}
+pub(crate) struct NameInputText;
 /// To check if the name input is selected.
 #[derive(Debug)]
 pub(crate) struct NameInputSelected {
@@ -48,28 +48,35 @@ impl Plugin for NameInputPlugin {
                 SystemSet::on_update(FortChessState::StartScreen)
                 .with_system(name_input_click)
                 .with_system(name_input_color)
+                .with_system(text_typing)
+                .with_system(display_text_to_input)
             );
     }
 }
 
 impl NameInputSelected {
+    #[inline]
     fn new() -> Self {
         NameInputSelected {
             selected: [false; _],
             render: false,
         }
     }
+    #[inline]
     fn get_mut(&mut self, index: usize) -> Option<&mut bool> {
         self.selected.get_mut(index)
     }
+    #[inline]
     fn render(&mut self) -> &mut Self {
         self.render = true;
         self
     }
+    #[inline]
     fn unrender(&mut self) -> &mut Self {
         self.render = false;
         self
     }
+    #[inline]
     fn mutex(&mut self, index: usize) -> &mut Self {
         self.selected
             .iter_mut()
@@ -80,6 +87,7 @@ impl NameInputSelected {
     }
 }
 
+#[inline]
 fn name_input_selected_res(mut commands: Commands) {
     commands.insert_resource(NameInputSelected::new());
 }
@@ -112,7 +120,7 @@ fn name_input_click(
 impl FromBool for Color {
     fn from_bool(value: bool) -> Self {
         match value {
-            true    => Color::GRAY,
+            true    => INPUT_SELECT_CLR,
             false   => TEXT_INPUT_COLOR,
         }
     }
@@ -144,4 +152,58 @@ fn select_name_input_parent(
         *bool_val = !(*bool_val);
     } else { return }
     name_input_selected.mutex(parent.as_usize()).render();
+}
+
+fn text_typing(
+    mut input:                  EventReader<ReceivedCharacter>,
+    mut name_entry_value_res:   ResMut<NameEntryValue>,
+    name_input_selected:        Res<NameInputSelected>,
+    key_press:                  Res<Input<KeyCode>>,
+) {
+    let Some(&(index, _)) = name_input_selected.selected
+        .iter()
+        .enumerate()
+        .filter(|(_, name)| **name)
+        .collect::<Vec<(usize, &bool)>>()
+        .get(0_usize) else { return };
+    let Some(name) = name_entry_value_res.players.get_mut(index) else { return };
+    // To backspace if pressed.
+    if key_press.just_pressed(KeyCode::Back) { name.pop(); }
+    input
+        .iter()
+        .for_each(|ch| {
+            if ch.char.ne(&'\u{08}') {
+                name.push(ch.char);
+            }
+        });
+}
+
+fn display_text_to_input(
+    name_entry_value:   Res<NameEntryValue>,
+    mut text_boxes:     Query<(&mut Text, &Parent), With<NameInputText>>,
+    name_input:         Query<&Parent, With<NameInput>>,
+    parent_text:        Query<&InputBoxNode>,
+) {
+    text_boxes
+        .iter_mut()
+        .for_each(|(mut text_box, parent)| {
+            if let Some(text_node) = get_text_node_parent(parent, &name_input, &parent_text) {
+                if let Some(text) = text_box.sections.first_mut() {
+                    let name = name_entry_value.as_string(text_node.as_usize()).unwrap();
+                    (text.value, text.style.color) = if name.is_empty() {
+                        (String::from(TEXT_INPUT_DEF_VAL), TEXT_HOLDER_CLR)
+                    } else { (name, DEFAULT_FONT_CLR) };
+               }
+           }
+      });
+}
+
+fn get_text_node_parent<'a>(
+    parent:         &Parent,
+    name_input:     &Query<&Parent, With<NameInput>>,
+    parent_text:    &'a Query<&InputBoxNode>,
+) -> Option<&'a InputBoxNode> {
+    let Ok(name_input)  = name_input.get(parent.get())      else { return None };
+    let Ok(text_node)   = parent_text.get(name_input.get()) else { return None };
+    Some(text_node)
 }

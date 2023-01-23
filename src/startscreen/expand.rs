@@ -73,6 +73,7 @@ impl Plugin for ExpandTextInputButtonPlugin {
 /*-----------------------------------------------------------------------------------------------*/
 
 impl TextInputId {
+    #[inline]
     pub(crate) fn as_usize(&self) -> usize {
         match self {
             TextInputId::One => 0_usize,
@@ -82,6 +83,7 @@ impl TextInputId {
 }
 
 impl InputBoxNode {
+    #[inline]
     pub(crate) fn as_usize(&self) -> usize {
             self.id.as_usize()
         +   (if self.expandable {
@@ -94,6 +96,7 @@ impl InputBoxNode {
 
 /*████ExpandBtnImage████*/
 /*-----------------------------------------------------------------------------------------------*/
+#[inline]
 fn insert_expand_input_btn_res(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -104,6 +107,7 @@ fn insert_expand_input_btn_res(
     });
 }
 
+#[inline]
 fn deallocate_expand_input_btn_res(mut commands: Commands) {
     commands.remove_resource::<ExpandBtnImage>();
 }
@@ -143,6 +147,7 @@ pub(crate) fn expand_btn_click(
 /// To reset the input string value.
 ///
 /// Takes [`TextInputId`] value and maps to the respective string buffer which is to be cleared.
+#[inline]
 fn reset_input_str(
     id:     &TextInputId,
     names:  &mut ResMut<NameEntryValue>,
@@ -161,6 +166,7 @@ fn reset_input_str(
 ///
 /// Takes a boolean value and returns the appropriate [`UiImage`] to show if the button is expanded
 /// or not.
+#[inline]
 fn expand_btn_icon_select(
     expanded:   bool,
     icon:       &Res<ExpandBtnImage>,

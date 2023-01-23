@@ -251,6 +251,11 @@ fn validate_and_start_game(
                 return
             }
         }
+        // Checking if name has space.
+        if name.contains(" ") {
+            err_msg(commands, font, "Name cannot have whitespace");
+            return
+        }
         // Checking the first character of the names.
         if let Some(ch) = name.chars().nth(0_usize) {
             if !ch.is_alphabetic() {
@@ -259,10 +264,6 @@ fn validate_and_start_game(
             }
             if !ch.is_ascii() {
                 err_msg(commands, font, "Name can only contain ascii values");
-                return
-            }
-            if ch.is_whitespace() {
-                err_msg(commands, font, "Name cannot have first letter as whitespace");
                 return
             }
             if ch.is_ascii_punctuation() {

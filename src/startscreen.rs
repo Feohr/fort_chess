@@ -39,6 +39,8 @@ const MAIN_TITLE_COLOR: Color = Color::BLACK;
 const MAIN_TITLE_SIZE: f32 = 96_f32;
 /// Length of the main text input node.
 const TEXT_INPUT_NODE: (f32, f32) = (700_f32, 300_f32);
+/// Placeholder for name.
+pub(crate) const TEXT_INPUT_DEF_VAL: &str = "Enter your name";
 
 pub(crate) trait FromBool {
     fn from_bool(value: bool) -> Self;
@@ -85,6 +87,7 @@ impl Plugin for MainScreenPlugin {
 /*-----------------------------------------------------------------------------------------------*/
 impl Default for NameEntryValue {
     /// Default implementation to create a [`NameEntryValue`].
+    #[inline]
     fn default() -> Self {
         NameEntryValue {
             players: [
@@ -99,17 +102,22 @@ impl Default for NameEntryValue {
 
 impl NameEntryValue {
     /// Count of player names entered.
+    #[inline]
     fn _count(&self) -> usize {
         self.players
             .iter()
             .filter(|name| !name.is_empty())
             .count()
     }
-    // fn get_mut(&mut self, index: usize) -> Option<&mut String> {
-    //     self.players.get_mut(index)
-    // }
+    /// To get the string in the given position.
+    #[inline]
+    fn as_string(&self, index: usize) -> Result<String, usize> {
+        if index >= self.players.len() { return Err(index) }
+        Ok(self.players[index].clone())
+    }
 }
 
+#[inline]
 fn name_entry_value_res(mut commands: Commands) {
     commands.insert_resource(NameEntryValue::default());
 }
@@ -118,6 +126,7 @@ fn name_entry_value_res(mut commands: Commands) {
 /*████Main Screen UI████*/
 /*-----------------------------------------------------------------------------------------------*/
 /// To despawn text when the player leaves the screen.
+#[inline]
 fn despawn_pname_text_input_box(
     mut commands:   Commands,
     input_box:      Query<Entity, With<PlayerNameInput>>,
@@ -216,16 +225,14 @@ fn text_box_sprite(
         .insert(NameInput)
         .with_children(|commands| {
             commands.spawn_bundle(TextBundle::from_section(
-                "Enter your name",
+                TEXT_INPUT_DEF_VAL,
                 TextStyle {
                     font: font.get().clone(),
                     color: MAIN_TITLE_COLOR,
                     ..default()
                 },
             ))
-            .insert(NameInputText {
-                id: textinputid,
-            });
+            .insert(NameInputText);
         });
     });
 }
