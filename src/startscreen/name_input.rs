@@ -55,6 +55,7 @@ impl Plugin for NameInputPlugin {
 }
 
 impl NameInputSelected {
+    /// To create a new [`NameInputSelected`] object.
     #[inline]
     fn new() -> Self {
         NameInputSelected {
@@ -62,20 +63,22 @@ impl NameInputSelected {
             render: false,
         }
     }
+    /// to get the `selected` vector value at the given index.
     #[inline]
     fn get_mut(&mut self, index: usize) -> Option<&mut bool> {
         self.selected.get_mut(index)
     }
+    /// To set the `render` field as true.
     #[inline]
-    fn render(&mut self) -> &mut Self {
+    fn render(&mut self) {
         self.render = true;
-        self
     }
+    /// To set the `render` field as false.
     #[inline]
-    fn unrender(&mut self) -> &mut Self {
+    fn unrender(&mut self) {
         self.render = false;
-        self
     }
+    /// To maintain only one `selected` vector value as `true`.
     #[inline]
     fn mutex(&mut self, index: usize) -> &mut Self {
         self.selected
@@ -87,11 +90,13 @@ impl NameInputSelected {
     }
 }
 
+/// To insert the [`NameInputSelected`] resource.
 #[inline]
 fn name_input_selected_res(mut commands: Commands) {
     commands.insert_resource(NameInputSelected::new());
 }
 
+/// To make input clickable.
 fn name_input_click(
     mut name_input_query:       Query<
         (&Interaction, &Parent),
@@ -117,6 +122,7 @@ fn name_input_click(
         });
 }
 
+/// To get color from `bool`.
 impl FromBool for Color {
     fn from_bool(value: bool) -> Self {
         match value {
@@ -126,6 +132,7 @@ impl FromBool for Color {
     }
 }
 
+/// To choose the color of the input box node.
 fn name_input_color(
     input_node_query:           Query<&InputBoxNode>,
     mut text_input_query:       Query<(&mut UiColor, &Parent), (With<Button>, With<NameInput>)>,
@@ -144,6 +151,7 @@ fn name_input_color(
     name_input_selected.unrender();
 }
 
+/// For selecting the input box node.
 fn select_name_input_parent(
     parent:                 &InputBoxNode,
     name_input_selected:    &mut ResMut<NameInputSelected>,
@@ -154,12 +162,14 @@ fn select_name_input_parent(
     name_input_selected.mutex(parent.as_usize()).render();
 }
 
+/// For typing text to the input.
 fn text_typing(
     mut input:                  EventReader<ReceivedCharacter>,
     mut name_entry_value_res:   ResMut<NameEntryValue>,
     name_input_selected:        Res<NameInputSelected>,
     key_press:                  Res<Input<KeyCode>>,
 ) {
+    // Fetching the index of the text to get NameEntryValue string.
     let Some(&(index, _)) = name_input_selected.selected
         .iter()
         .enumerate()
@@ -169,6 +179,7 @@ fn text_typing(
     let Some(name) = name_entry_value_res.players.get_mut(index) else { return };
     // To backspace if pressed.
     if key_press.just_pressed(KeyCode::Back) { name.pop(); }
+    // Iter over inputting character and push to NameEntryValue.
     input
         .iter()
         .for_each(|ch| {
@@ -178,6 +189,7 @@ fn text_typing(
         });
 }
 
+/// To handle the display of the input text.
 fn display_text_to_input(
     name_entry_value:   Res<NameEntryValue>,
     mut text_boxes:     Query<(&mut Text, &Parent), With<NameInputText>>,
@@ -187,17 +199,21 @@ fn display_text_to_input(
     text_boxes
         .iter_mut()
         .for_each(|(mut text_box, parent)| {
+            // Get InputBoxNode.
             if let Some(text_node) = get_text_node_parent(parent, &name_input, &parent_text) {
+                // Get text value from the text section.
                 if let Some(text) = text_box.sections.first_mut() {
+                    // Setting the text value and the bg color.
                     let name = name_entry_value.as_string(text_node.as_usize()).unwrap();
                     (text.value, text.style.color) = if name.is_empty() {
                         (String::from(TEXT_INPUT_DEF_VAL), TEXT_HOLDER_CLR)
                     } else { (name, DEFAULT_FONT_CLR) };
-               }
+                }
            }
       });
 }
 
+///To get the parent of the text node.
 fn get_text_node_parent<'a>(
     parent:         &Parent,
     name_input:     &Query<&Parent, With<NameInput>>,
@@ -205,5 +221,6 @@ fn get_text_node_parent<'a>(
 ) -> Option<&'a InputBoxNode> {
     let Ok(name_input)  = name_input.get(parent.get())      else { return None };
     let Ok(text_node)   = parent_text.get(name_input.get()) else { return None };
+    // Return InputBoxNode.
     Some(text_node)
 }
