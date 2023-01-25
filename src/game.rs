@@ -17,6 +17,7 @@ use crate::{
     SPRITESIZE,
     font::BoldFontHandle,
     state::FortChessState,
+    startscreen::NameEntryValue,
 };
 use bevy::prelude::{
     Entity, With, Commands, Res, ResMut, Component, Vec2, Handle, TextureAtlas, StartupStage, App,
@@ -35,10 +36,10 @@ use player_name::{
 };
 use game_end::GameEndPlugin;
 
-// Temporary holder for number of players.
-pub(crate) const PLAYER_COUNT       : usize = 4_usize;
 /// To hold the number of types of pieces.
-const PIECE_TYPE_COUNT              : usize = 5_usize;
+const PIECE_TYPE_COUNT: usize = 5_usize;
+/// To hold the number of types of teams.
+const TEAM_TYPE_COUNT: usize = 3_usize;
 
 /// The game Plugin that holds piece drawing information.
 pub(crate) struct GamePlugin;
@@ -61,6 +62,10 @@ impl Plugin for GamePlugin {
             .add_system_set(
                 SystemSet::on_enter(FortChessState::GameBuild)
                 .with_system(init_game)
+            )
+            .add_system_set(
+                SystemSet::on_update(FortChessState::GameBuild)
+                .with_system(set_state_boardscreen)
             )
             .add_system_set(
                 SystemSet::on_enter(FortChessState::BoardScreen)
@@ -138,21 +143,26 @@ impl GameAsset {
 /*-----------------------------------------------------------------------------------------------*/
 /// Initial game creation. In future, this will be handled a bit differently to facilitate variable
 /// game players.
-fn init_game(mut commands: Commands) {
+fn init_game(
+    mut commands:           Commands,
+    name_entry_value_res:   Res<NameEntryValue>,
+) {
+    let count = name_entry_value_res.count();
+    if count < 2_usize { panic!("Less than two players") }
     // Initialization.
-    let dice_roll = (dice_roll() % 3_usize) % PLAYER_COUNT;
+    let dice_roll = (dice_roll() % TEAM_TYPE_COUNT) % count;
     let mut quadrant = [Quadrant::Q1, Quadrant::Q2, Quadrant::Q3].into_iter();
     // Inserting the game resource.
     commands.insert_resource(GameAsset(Game::init(
-        (usize::MIN..PLAYER_COUNT)
+        (usize::MIN..count)
             .into_iter()
             .map(|index| {
                 let is_defender = dice_roll == index;
                 Player::from(
-                    format!("Player {}", index + 1_usize),
+                    name_entry_value_res.as_string(index).unwrap(),
                     Team::from_index(index).unwrap(),
                     is_defender,
-                    PLAYER_COUNT,
+                    count,
                     if is_defender {
                         Quadrant::NoQuad
                     } else {
@@ -163,6 +173,13 @@ fn init_game(mut commands: Commands) {
             })
             .collect::<Vec<Player>>()
     )));
+}
+
+/// To set the state to [`BoardScreen`].
+///
+/// [`BoardScreen`]: FortChessState::BoardScreen
+fn set_state_boardscreen(mut state: ResMut<State<FortChessState>>) {
+    state.set(FortChessState::BoardScreen).unwrap();
 }
 
 /// Runs every frame of the game to check if the board needs to update graphics. Draws pieces as

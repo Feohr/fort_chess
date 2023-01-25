@@ -246,13 +246,13 @@ fn validate_and_start_game(
         // Checking for the name length.
         {
             let len = name.len();
-            if len <= NAME_MIN_LEN && len > NAME_MAX_LEN {
+            if (len <= NAME_MIN_LEN || len >= NAME_MAX_LEN) && len != 0_usize {
                 err_msg(commands, font, "Name length should be greater than 3 and less than 15");
                 return
             }
         }
         // Checking if name has space.
-        if name.contains(" ") {
+        if name.contains('\u{0020}') || name.contains('\u{00a0}') {
             err_msg(commands, font, "Name cannot have whitespace");
             return
         }

@@ -103,7 +103,7 @@ impl Default for NameEntryValue {
 impl NameEntryValue {
     /// Count of player names entered.
     #[inline]
-    fn _count(&self) -> usize {
+    pub(crate) fn count(&self) -> usize {
         self.players
             .iter()
             .filter(|name| !name.is_empty())
@@ -111,7 +111,7 @@ impl NameEntryValue {
     }
     /// To get the string in the given position.
     #[inline]
-    fn as_string(&self, index: usize) -> Result<String, usize> {
+    pub(crate) fn as_string(&self, index: usize) -> Result<String, usize> {
         if index >= self.players.len() { return Err(index) }
         Ok(self.players[index].clone())
     }

@@ -2,12 +2,12 @@
 
 use crate::{
     RESOLUTION, TILESIZE, ZAxisLevel,
-    game::PLAYER_COUNT,
     state::FortChessState,
+    startscreen::NameEntryValue,
 };
 use bevy::prelude::{
-    default, App, Commands, Entity, Plugin, Transform, Vec2, Vec3, Color, Component,
-    Sprite, SpriteBundle, SystemSet,
+    default, App, Commands, Entity, Plugin, Transform, Vec2, Vec3, Color, Component, Res, Sprite,
+    SpriteBundle, SystemSet,
 };
 use fort_builders::{
     BREADTH,
@@ -44,9 +44,12 @@ impl Plugin for FortBlockPlugin {
 /// To block the [`Q2`] if the `PLAYER_COUNT` is less than `3`.
 ///
 /// [`Q2`]: [`fort_builder::board::Quadrant::Q2`]
-fn muteblockq2(mut commands: Commands) {
+fn muteblockq2(
+    mut commands:           Commands,
+    name_entry_value_res:   Res<NameEntryValue>,
+) {
     // If player count is greater than or equal to `3`.
-    if PLAYER_COUNT >= 3_usize { return }
+    if name_entry_value_res.count() >= 3_usize { return }
     (-BREADTH..BREADTH)
         .into_iter()
         .for_each(|x| {
@@ -70,9 +73,12 @@ fn muteblockq2(mut commands: Commands) {
 /// To block the [`Q3`] if the `PLAYER_COUNT` is less than `4`.
 ///
 /// [`Q3`]: [`fort_builder::board::Quadrant::Q3`]
-fn muteblockq3(mut commands: Commands) {
+fn muteblockq3(
+    mut commands:           Commands,
+    name_entry_value_res:   Res<NameEntryValue>,
+) {
     // If player count is greater than or equal to `4` then.
-    if PLAYER_COUNT >= 4_usize { return }
+    if name_entry_value_res.count() >= 4_usize { return }
     (BREADTH..X_MAX)
         .into_iter()
         .for_each(|x| {
