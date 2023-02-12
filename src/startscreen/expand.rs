@@ -27,7 +27,9 @@ use crate::{
 
 /// Resource to access the expand button image.
 pub(crate) struct ExpandBtnImage {
+    /// Stores the opened button image.
     pub(crate) open: Handle<Image>,
+    /// Stores the closed button image.
     pub(crate) close: Handle<Image>,
 }
 /// To recognise the respective text input.
@@ -73,6 +75,7 @@ impl Plugin for ExpandTextInputButtonPlugin {
 /*-----------------------------------------------------------------------------------------------*/
 
 impl TextInputId {
+    /// To get [`TextInputId`] as `usize` value.
     #[inline]
     pub(crate) fn as_usize(&self) -> usize {
         match self {
@@ -83,19 +86,21 @@ impl TextInputId {
 }
 
 impl InputBoxNode {
+    /// To get the [`InputBoxNode`] value as `usize` value in order to identify the text box.
     #[inline]
     pub(crate) fn as_usize(&self) -> usize {
-            self.id.as_usize()
+        self.id.as_usize()
         +   (if self.expandable {
-                2_usize
-            } else {
-                0_usize
-            })
+            2_usize
+        } else {
+            0_usize
+        })
     }
 }
 
 /*████ExpandBtnImage████*/
 /*-----------------------------------------------------------------------------------------------*/
+/// To store the button image resources when we enter the screen.
 #[inline]
 fn insert_expand_input_btn_res(
     mut commands: Commands,
@@ -107,6 +112,7 @@ fn insert_expand_input_btn_res(
     });
 }
 
+/// To deallocate button image resource when we leave the screen.
 #[inline]
 fn deallocate_expand_input_btn_res(mut commands: Commands) {
     commands.remove_resource::<ExpandBtnImage>();
@@ -133,6 +139,7 @@ pub(crate) fn expand_btn_click(
         .for_each(|(&interaction, mut color, mut image, mut expand)| {
             match interaction {
                 Interaction::Clicked    => {
+                    // Expand and unexpand button switch.
                     expand.expanded = !expand.expanded;
                     reset_input_str(&expand.id, &mut names);
                     *color = UiColor::from(EXPAND_CLICK);
@@ -154,8 +161,8 @@ fn reset_input_str(
 ) {
     (
         match id {
-            TextInputId::One => names.players.get_mut(2_usize),
-            TextInputId::Two  => names.players.get_mut(3_usize),
+            TextInputId::One    => names.players.get_mut(2_usize),
+            TextInputId::Two    => names.players.get_mut(3_usize),
         }
     )
     .unwrap_or(&mut String::new())
@@ -172,8 +179,8 @@ fn expand_btn_icon_select(
     icon:       &Res<ExpandBtnImage>,
 ) -> UiImage {
     match expanded {
-        true  => UiImage(icon.close.clone()),
-        false => UiImage(icon.open.clone()),
+        true    => UiImage(icon.close.clone()),
+        false   => UiImage(icon.open.clone()),
     }
 }
 /*-----------------------------------------------------------------------------------------------*/
@@ -181,16 +188,23 @@ fn expand_btn_icon_select(
 /*████Input toggle████*/
 /*-----------------------------------------------------------------------------------------------*/
 /// To make the Input UI visibile or invisible.
+///
+/// To toggle the input when the box is pressed. Iterates through the box query and makes the
+/// corresponding [`InputBoxNode`] `Visible`.
 pub(crate) fn input_toggle(
     mut box_query:  Query<(&mut Visibility, &InputBoxNode), With<InputBoxNode>>,
     btn_query:      Query<&ExpandTextInputButton, (With<Button>, With<ExpandTextInputButton>)>,
 ) {
+    // Iterating over input_boxes.
     box_query
         .iter_mut()
         .for_each(|(mut visibility, input_box)| {
+            // Iterating over the button queries.
             btn_query
                 .iter()
                 .for_each(|btn| {
+                    // If the input box is expandable and button id correspond then make the input
+                    // box visible/invisible.
                     if input_box.expandable && btn.id.eq(&input_box.id) {
                         visibility.is_visible = btn.expanded;
                     }
