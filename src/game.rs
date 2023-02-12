@@ -10,7 +10,7 @@
 mod draw_piece;
 mod highlight;
 mod player_name;
-mod game_end;
+pub(crate) mod game_end;
 //-----------//
 
 use crate::{

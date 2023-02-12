@@ -52,12 +52,16 @@ impl Plugin for ListenerPlugin {
                 .with_system(hover_listener         )
                 .with_system(click_listener         )
             )
+            .add_system_set(
+                SystemSet::on_exit(FortChessState::BoardScreen)
+                .with_system(deallocate_listener_objects)
+            )
             .add_plugin(FortButtonPlugin);
     }
 }
 /*-----------------------------------------------------------------------------------------------*/
 
-/*████ListenerPlugin Objects Tnitializer████*/
+/*████ListenerPlugin Objects████*/
 /*-----------------------------------------------------------------------------------------------*/
 /// To initialize [`CursorPosition`] and [`PossiblePaths`] structs.
 fn initialize_listener_objects(mut commands: Commands) {
@@ -70,6 +74,12 @@ fn initialize_listener_objects(mut commands: Commands) {
     commands.insert_resource(PossiblePaths {
         paths: Vec::default(),
     });
+}
+
+/// To remove the board resources.
+fn deallocate_listener_objects(mut commands: Commands) {
+    commands.remove_resource::<CursorPosition>();
+    commands.remove_resource::<PossiblePaths>();
 }
 /*-----------------------------------------------------------------------------------------------*/
 

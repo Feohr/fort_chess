@@ -65,10 +65,6 @@ impl Plugin for ExpandTextInputButtonPlugin {
                 SystemSet::on_update(FortChessState::StartScreen)
                 .with_system(expand_btn_click   )
                 .with_system(input_toggle       )
-            )
-            .add_system_set(
-                SystemSet::on_exit(FortChessState::StartScreen)
-                .with_system(deallocate_expand_input_btn_res)
             );
     }
 }
@@ -110,12 +106,6 @@ fn insert_expand_input_btn_res(
         open:   asset_server.load("spritesheet/expand.png"  ),
         close:  asset_server.load("spritesheet/unexpand.png"),
     });
-}
-
-/// To deallocate button image resource when we leave the screen.
-#[inline]
-fn deallocate_expand_input_btn_res(mut commands: Commands) {
-    commands.remove_resource::<ExpandBtnImage>();
 }
 /*-----------------------------------------------------------------------------------------------*/
 
