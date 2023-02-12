@@ -200,20 +200,26 @@ fn game_update_tick(
     if !game.get().update { return }
     // Deleting lost players.
     clean_up_lost_players(game.get_mut(), &mut pname);
-    if game.get().players.is_empty() {
-        game.get_mut().set_play_false();
+    if game.get().players.len().eq(&1_usize) {
+        game
+            .get_mut()
+            .next_player()
+            .set_play_false()
+            .current_player_mut()
+            .set_winner();
     }
+    if !game.get().play {
+        // Idempotent in nature hence we throw the result.
+        let _throw = state.set(FortChessState::ResultScreen);
+        return;
+    }
+    // Setting the update as false to put latch back.
+    game.get_mut().set_update_false();
     // Update draw functions.
     draw_pieces(            &mut commands, &sprite, &game, &dquery);
     highlight_active_pieces(&mut commands, &game,          &hquery);
     display_player_names(   &mut commands, &pname,         &pnquery, &font);
     highlight_player_name(  &mut commands, &pname,  &game, &pnhquery);
-    // Setting the update as false to put latch back.
-    game.get_mut().set_update_false();
-    if !game.get().play {
-        // Idempotent in nature hence we throw the result.
-        let _throw = state.set(FortChessState::ResultScreen);
-    }
 }
 
 /// Looks for players and kills them at every iteration.

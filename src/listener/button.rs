@@ -39,12 +39,6 @@ use crate::{
 use skip_turn::SkipButtonPlugin;
 use dice_roll::DiceRollButtonPlugin;
 use return_main::ReturnButtonPlugin;
-use fort_builders::game::{Game, GameAction};
-
-/// Closure to hold `skip turn` button closures to run.
-const SKIP_TURN_GAME_CLOSURES: [fn(&mut Game); 3_usize] = [
-    GameAction::next_player, Game::set_update_true, Game::set_picked_false,
-];
 
 /// Object to create instances of button.
 pub(crate) struct BtnContainer {

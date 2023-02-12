@@ -12,11 +12,12 @@ use crate::{
     game::GameAsset,
     listener::{
         possible_paths::{PossiblePaths, Paths},
-        button::{style, btn_spawn, SKIP_TURN_GAME_CLOSURES, BtnContainer},
+        button::{style, btn_spawn, BtnContainer},
         click::Click,
     },
     state::FortChessState,
 };
+use fort_builders::game::GameAction;
 
 /// To hold the button text.
 const SKIP_TURN_BTN_TEXT: &str = "Skip Turn";
@@ -67,9 +68,11 @@ fn skip_turn_btn_clicked(
                     // Updating color,
                     *color = UiColor::from(style::BTN_CLICKD_COLOR);
                     // Iterating over a bunch of closures to process.
-                    SKIP_TURN_GAME_CLOSURES
-                        .into_iter()
-                        .for_each(|game_closure| game_closure(game.get_mut()));
+                    game
+                        .get_mut()
+                        .next_player()
+                        .set_update_true()
+                        .set_picked_false();
                     // To clear off the paths and clear the screen for next player.
                     paths.clear();
                     commands.despawn_entity(&click_query);

@@ -18,7 +18,7 @@ use crate::{
     listener::{
         possible_paths::{PossiblePaths, Paths},
         click::Click,
-        button::{btn_spawn, style, SKIP_TURN_GAME_CLOSURES, BtnContainer},
+        button::{btn_spawn, style, BtnContainer},
     },
     font::{RegFontHandle, DEFAULT_FONT_CLR},
     state::FortChessState,
@@ -26,6 +26,7 @@ use crate::{
 use fort_builders::{
     dice_roll,
     player::PlayerAction,
+    game::GameAction,
 };
 
 /// To hold the button text.
@@ -256,9 +257,11 @@ fn dice_roll_btn_clicked(
                         game.get_mut().set_play_false();
                     }
                     // To change the display and move the player along.
-                    SKIP_TURN_GAME_CLOSURES
-                        .into_iter()
-                        .for_each(|game_closure| game_closure(game.get_mut()));
+                    game
+                        .get_mut()
+                        .next_player()
+                        .set_update_true()
+                        .set_picked_false();
                     paths.clear();
                     commands.despawn_entity(&click_query);
                     commands.despawn_entity(&paths_query);

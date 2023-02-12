@@ -25,7 +25,7 @@ pub struct Game {
 /// To handle operations over the Game.
 pub trait GameAction {
     fn hunt(&mut self) -> Vec<Player>;
-    fn next_player(&mut self);
+    fn next_player(&mut self) -> &mut Self;
     fn update_position(&mut self, x: i32, y: i32) -> Result<&mut Self, Error>;
     fn check_piece_in_pos(&self, x: f32, y: f32) -> bool;
     fn remove_piece_in_pos(&mut self, x: f32, y: f32) -> Result<Option<Piece>, Error>;
@@ -58,8 +58,9 @@ impl Game {
     ///
     /// `Idempotent function`
     #[inline]
-    pub fn set_update_true(&mut self) {
+    pub fn set_update_true(&mut self) -> &mut Self {
         self.update = true;
+        self
     }
     /// To change the game update state to `false`.
     ///
@@ -67,8 +68,9 @@ impl Game {
     ///
     /// `Idempotent function`
     #[inline]
-    pub fn set_update_false(&mut self) {
+    pub fn set_update_false(&mut self) -> &mut Self {
         self.update = false;
+        self
     }
     /// To change the game picked state to `true`.
     ///
@@ -76,16 +78,18 @@ impl Game {
     ///
     /// `Idempotent function`
     #[inline]
-    pub fn set_picked_true(&mut self) {
+    pub fn set_picked_true(&mut self) -> &mut Self {
         self.picked = true;
+        self
     }
     /// To change the game play to `true`.
     ///
     /// Takes a mutable self reference and changes play to `true`.
     ///
     /// `Idempotent function`
-    pub fn set_play_false(&mut self) {
+    pub fn set_play_false(&mut self) -> &mut Self {
         self.play = false;
+        self
     }
     /// To change the game picked state to `false`.
     ///
@@ -93,8 +97,9 @@ impl Game {
     ///
     /// `Idempotent function`
     #[inline]
-    pub fn set_picked_false(&mut self) {
+    pub fn set_picked_false(&mut self) -> &mut Self {
         self.picked = false;
+        self
     }
     /// To return the current [`Player`] struct.
     #[inline]
@@ -129,11 +134,12 @@ impl GameAction for Game {
     ///
     /// Adds value to turn and changes to 0 if the value exceeds players vector len - 1.
     #[inline]
-    fn next_player(&mut self) {
+    fn next_player(&mut self) -> &mut Self {
         match self.turn < self.players.len() - 1_usize {
             true  => self.turn += 1_usize,
             false => self.turn = 0_usize,
         }
+        self
     }
     /// To update player pieces position every turn.
     #[inline]
