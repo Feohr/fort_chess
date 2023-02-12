@@ -71,6 +71,9 @@ impl Plugin for StartBtnPlugin {
 
 /*████Spawn Start Button████*/
 /*-----------------------------------------------------------------------------------------------*/
+/// To spwan the start button sprite.
+///
+/// Takes font handle and spawns a UI node with insert and exit button as children.
 pub(crate) fn spawn_start_btn(
     commands:   &mut ChildBuilder,
     font:       &Res<RegFontHandle>,
@@ -92,6 +95,7 @@ pub(crate) fn spawn_start_btn(
     });
 }
 
+/// To spawn a start button UI node.
 fn start_btn(
     commands:   &mut ChildBuilder,
     font:       &Res<RegFontHandle>,
@@ -126,6 +130,7 @@ fn start_btn(
 
 /*████Spawn Exit Button████*/
 /*-----------------------------------------------------------------------------------------------*/
+/// To spawn an exit button UI node.
 fn exit_btn(
     commands:   &mut ChildBuilder,
     font:       &Res<RegFontHandle>,
@@ -177,6 +182,7 @@ fn start_btn_click(
     start_btn_query
         .iter_mut()
         .for_each(|(&interaction, mut color, children, _btn_comp)| {
+            // To get the text color.
             let text_color = &mut text_query
                 .get_mut(children[0])
                 .expect("button does not have text inside")
@@ -184,6 +190,7 @@ fn start_btn_click(
             match interaction {
                 Interaction::Clicked    => {
                     *color = UiColor::from(style::START_BTN_CLICK);
+                    // Change the text color to white when clicked.
                     *text_color = Color::WHITE;
                     click(
                         &mut commands,
@@ -195,6 +202,7 @@ fn start_btn_click(
                         &err_msg_query,
                     );
                 },
+                // Change the text color to black as default.
                 Interaction::Hovered    => {
                     *color = UiColor::from(style::START_BTN_HOVER);
                     *text_color = DEFAULT_FONT_CLR;
@@ -222,6 +230,7 @@ fn click(
 ) {
     match button_type {
         ButtonType::Start   => {
+            // Clean up error message.
             commands.despawn_entity(err_msg_query);
             validate_and_start_game(commands, name_entry_value, state, font);
         },
