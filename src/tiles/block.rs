@@ -19,7 +19,7 @@ const BLOCK_COLOR: Color = Color::rgba(0.1_f32, 0.1_f32, 0.1_f32, 0.95_f32);
 
 /// To identify block [`Component`].
 #[derive(Component)]
-struct Blocker;
+pub(crate) struct Blocker;
 /// To hold the quadrant block plugin.
 pub(crate) struct FortBlockPlugin;
 

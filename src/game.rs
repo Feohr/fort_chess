@@ -7,9 +7,9 @@
 
 //  Module   //
 //-----------//
-mod draw_piece;
-mod highlight;
-mod player_name;
+pub(crate) mod draw_piece;
+pub(crate) mod highlight;
+pub(crate) mod player_name;
 pub(crate) mod game_end;
 //-----------//
 

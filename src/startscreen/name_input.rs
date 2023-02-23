@@ -46,10 +46,10 @@ impl Plugin for NameInputPlugin {
             )
             .add_system_set(
                 SystemSet::on_update(FortChessState::StartScreen)
-                .with_system(name_input_click)
-                .with_system(name_input_color)
-                .with_system(text_typing)
-                .with_system(display_text_to_input)
+                .with_system(name_input_click       )
+                .with_system(name_input_color       )
+                .with_system(text_typing            )
+                .with_system(display_text_to_input  )
             );
     }
 }

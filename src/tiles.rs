@@ -6,7 +6,7 @@
 
 //  Modules //
 /*----------*/
-mod block;
+pub(crate) mod block;
 /*----------*/
 
 use crate::{
@@ -14,9 +14,9 @@ use crate::{
     state::FortChessState,
 };
 use bevy::prelude::{
-    default, App, AssetServer, Assets, Commands, Entity, Handle, Name, Plugin, Res, ResMut,
+    default, App, AssetServer, Assets, Commands, Entity, Handle, Plugin, Res, ResMut,
     SpriteSheetBundle, StartupStage, TextureAtlas, TextureAtlasSprite, Transform, Vec2, Vec3,
-    SystemSet,
+    SystemSet, Component,
 };
 use fort_builders::{
     BREADTH,
@@ -32,10 +32,8 @@ const TILE_TYPE_COL : usize   = 1_usize;
 
 /// Struct to hold the tile texture atlas.
 struct TileSheet(Handle<TextureAtlas>);
-
 /// Plugin to handle board drawing systems.
 pub(crate) struct TilePlugin;
-
 /// To denote the type of tile.
 #[derive(PartialEq, Eq)]
 enum TileSpriteSheetIndex {
@@ -50,6 +48,9 @@ enum TileSpriteSheetIndex {
     /// The inner most part of the middle of the board.
     FortInner,
 }
+/// The tile component to query the entity.
+#[derive(Component)]
+pub(crate) struct TileComponent;
 
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
@@ -167,7 +168,7 @@ fn draw_board(
                             ZAxisLevel::Second.as_f32(),
                         ),
                     );
-                    commands.entity(tile).insert(Name::new("Tile"));
+                    commands.entity(tile).insert(TileComponent);
             }
         })
     });
@@ -205,7 +206,7 @@ fn draw_border(
                             ZAxisLevel::First.as_f32(),
                         ),
                     );
-                    commands.entity(tile).insert(Name::new("Border"));
+                    commands.entity(tile).insert(TileComponent);
             }
         })
     });
@@ -231,7 +232,7 @@ fn draw_fort(
                     ZAxisLevel::Third.as_f32(),
                 ),
             );
-            commands.entity(tile).insert(Name::new("Fort Exterior"));
+            commands.entity(tile).insert(TileComponent);
         })
     });
     // Draws the middle most part which is BREADTH - 1 size square.
@@ -247,7 +248,7 @@ fn draw_fort(
                     ZAxisLevel::Fourth.as_f32(),
                 ),
             );
-            commands.entity(tile).insert(Name::new("Fort Interior"));
+            commands.entity(tile).insert(TileComponent);
         })
     });
 }

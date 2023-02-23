@@ -5,10 +5,23 @@
 
 use crate::{
     state::FortChessState,
-    listener::button::{BtnContainer, btn_spawn, style},
-    game::game_end::{GameResult, GameResultComponent},
+    listener::{
+        possible_paths::Paths,
+        click::Click,
+        button::{BtnContainer, btn_spawn, style},
+    },
+    game::{
+        draw_piece::Piece,
+        highlight::Highlight,
+        player_name::{PlayerName, PlayerNameOutline},
+        game_end::{GameResult, GameResultComponent},
+    },
     startscreen::NameEntryValue,
     despawn_entity::DespawnEntity,
+    tiles::{
+        block::Blocker,
+        TileComponent,
+    },
 };
 use bevy::prelude::{
     Commands, Res, App, Plugin, SystemSet, Component, UiColor, Query, Interaction, Button, With,
@@ -18,12 +31,16 @@ use bevy::prelude::{
 /// Text of the return button.
 const RET_BTN_TEXT: &str = "Return";
 
+/// Component to query return button.
 #[derive(Component)]
 struct ReturnButtonComponent;
+/// Plugin to handle the return button.
 pub(crate) struct ReturnButtonPlugin;
 
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
+/*████Plugin for ReturnButtonPlugin████*/
+/*-----------------------------------------------------------------------------------------------*/
 impl Plugin for ReturnButtonPlugin {
     fn build(&self, app: &mut App) {
         app
@@ -37,10 +54,13 @@ impl Plugin for ReturnButtonPlugin {
             )
             .add_system_set(
                 SystemSet::on_exit(FortChessState::ResultScreen)
-                .with_system(return_to_main_process)
+                .with_system(return_main_res_clear      )
+                .with_system(return_main_desapawn_entity)
             );
     }
 }
+/*-----------------------------------------------------------------------------------------------*/
+
 /*████Return Main Button Clicked████*/
 /*-----------------------------------------------------------------------------------------------*/
 /// To animate the button clicked animations.
@@ -65,16 +85,38 @@ fn return_btn_clicked(
         });
 }
 
-fn return_to_main_process(
-    mut commands: Commands,
-    game_screen: Query<Entity, With<GameResultComponent>>,
-) {
+/// To clean out the unnecessary resources.
+fn return_main_res_clear(mut commands: Commands) {
     commands.remove_resource::<GameResult>();
     commands.remove_resource::<BtnContainer>();
     commands.remove_resource::<NameEntryValue>();
-    commands.despawn_entity(&game_screen);
 }
 
+/// To clean the entities for a fresh game start.
+fn return_main_desapawn_entity(
+    mut commands:   Commands,
+    result_screen:  Query<Entity, With<GameResultComponent>>,
+    return_btn:     Query<Entity, With<ReturnButtonComponent>>,
+    board_tiles:    Query<Entity, With<TileComponent>>,
+    board_block:    Query<Entity, With<Blocker>>,
+    player_pieces:  Query<Entity, With<Piece>>,
+    player_hilite:  Query<Entity, With<Highlight>>,
+    player_names:   Query<Entity, With<PlayerName>>,
+    player_outline: Query<Entity, With<PlayerNameOutline>>,
+    player_paths:   Query<Entity, With<Paths>>,
+    tile_clicked:   Query<Entity, With<Click>>,
+) {
+    commands.despawn_entity(&result_screen);
+    commands.despawn_entity(&return_btn);
+    commands.despawn_entity(&board_tiles);
+    commands.despawn_entity(&board_block);
+    commands.despawn_entity(&player_pieces);
+    commands.despawn_entity(&player_hilite);
+    commands.despawn_entity(&player_names);
+    commands.despawn_entity(&player_outline);
+    commands.despawn_entity(&player_paths);
+    commands.despawn_entity(&tile_clicked);
+}
 
 /*-----------------------------------------------------------------------------------------------*/
 

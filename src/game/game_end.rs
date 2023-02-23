@@ -26,9 +26,12 @@ const FADEOUT_SPEED: f32 = 2_f32;
 /// color of the background screen.
 const RES_BKGRND_COLOR: Color = Color::CYAN;
 
+/// To handle the game end screen.
 pub(crate) struct GameEndPlugin;
+/// To query the result screen.
 #[derive(Component)]
 pub(crate) struct GameResultComponent;
+/// To store the game result.
 #[derive(Component)]
 pub(crate) struct GameResult {
     result: String,
@@ -57,8 +60,8 @@ impl Plugin for GameEndPlugin {
             )
             .add_system_set(
                 SystemSet::on_update(FortChessState::ResultScreen)
-                .with_system(fade_in_result)
-                .with_system(jump_to_end_screen)
+                .with_system(fade_in_result     )
+                .with_system(jump_to_end_screen )
             );
     }
 }
