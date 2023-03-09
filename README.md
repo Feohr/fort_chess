@@ -5,9 +5,6 @@
 This was a game I came up with as a child. I was looking to create my own rust project and
 wonderd if I could turn my game idea into reality. So here we are. I hope you enjoy it.
 
-> Note: This game is open-source and free to use, re-engineered or re-used however you like.
-You are also welcomed to contribute to this and rest of my repositories.
-
 - Github:     https://github.com/RehaanMohammed
 - LinkedIn:   https://www.linkedin.com/in/mohammed-rehaan-193305222
 ---------------------------------------------------------------------------------------------------
@@ -36,18 +33,3 @@ You are also welcomed to contribute to this and rest of my repositories.
 
 > To Win: In order to win the game, the defender must either defeat all the players or the
 attacking player must reach the center of the fort and roll the dice to get 6.
----------------------------------------------------------------------------------------------------
-
-Some ideas to re-impliment this code into your own project:
-
-    -  Turn this game into online multiplayer.
-
-    -  Make a full blown out 3d-version of this game.
-
-    -  Add AI bots for opponents.
-
-    -  Make a terminal version of this game with only ASCII graphics.
-
-    -  Make this game cross-platform and port it to Android/IOS.
-
-    -- Mohammed Rehaan`
