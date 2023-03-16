@@ -1,12 +1,16 @@
 # FORT CHESS
 
+[![forthebadge made-with-rust](http://ForTheBadge.com/images/badges/made-with-rust.svg)](https://www.rust-lang.org/)
+[![LinkedIn](https://img.shields.io/badge/linkedin-%230077B5.svg?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/mohammed-rehaan-193305222)
+[![GitHub](https://badgen.net/badge/icon/github?icon=github&label)](https://github.com/Feohr/)
+[![GitHub commits](https://badgen.net/github/commits/Feohr/fort_chess)](https://GitHub.com/Feohr/fort_chess/commit/)
+[![GitHub license](https://img.shields.io/github/license/Feohr/fort_chess)](https://github.com/Feohr/fort_chess/blob/master/LICENSE.md)
+
 **Date:** *14th of September, 2022*.
 
 This was a game I came up with as a child. I was looking to create my own rust project and
 wonderd if I could turn my game idea into reality. So here we are. I hope you enjoy it.
 
-- Github:     https://github.com/RehaanMohammed
-- LinkedIn:   https://www.linkedin.com/in/mohammed-rehaan-193305222
 ---------------------------------------------------------------------------------------------------
 
 ### Rules:
