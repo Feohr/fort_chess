@@ -5,7 +5,7 @@
 //! Also contains the team object to handle the player teams.
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
-use crate::board::{Quadrant, check_in_opposite_enemy, check_in_opposite_defender};
+use crate::board::{check_in_opposite_defender, check_in_opposite_enemy, Quadrant};
 use crate::pieces;
 use crate::pieces::{Piece, Position};
 use crate::{RED, RST};
@@ -119,9 +119,9 @@ impl Team {
     #[inline]
     pub fn teamstr_from_team<'a>(team: Team) -> &'a str {
         match team {
-            Team::Red    => "Red",
-            Team::Green  => "Green",
-            Team::Blue   => "Blue",
+            Team::Red => "Red",
+            Team::Green => "Green",
+            Team::Blue => "Blue",
             Team::Yellow => "Yellow",
         }
     }
@@ -129,9 +129,9 @@ impl Team {
     #[inline]
     pub fn as_usize(&self) -> usize {
         match self {
-            Team::Red    => 0_usize,
-            Team::Blue   => 1_usize,
-            Team::Green  => 2_usize,
+            Team::Red => 0_usize,
+            Team::Blue => 1_usize,
+            Team::Green => 2_usize,
             Team::Yellow => 3_usize,
         }
     }
@@ -145,14 +145,14 @@ impl Player {
     ///
     /// Takes the name, team and is_defender boolean value to create a [`Player`] struct.
     pub fn from(
-        name:               String,
-        team:               Team,
-        is_defender:        bool,
-        quadrant_active:    usize,
-        quadrant:           Quadrant,
+        name: String,
+        team: Team,
+        is_defender: bool,
+        quadrant_active: usize,
+        quadrant: Quadrant,
     ) -> Result<Self, Error> {
         Ok(Player {
-            name:   Player::validate_name(name)?,
+            name: Player::validate_name(name)?,
             pieces: Piece::init_pieces(is_defender, quadrant, quadrant_active)?,
             team,
             is_defender,
@@ -202,7 +202,7 @@ impl Player {
     fn validate_name(name: String) -> Result<String, Error> {
         let len = name.len();
         match len >= NAME_MIN_LEN && len < NAME_MAX_LEN {
-            true  => Ok(name),
+            true => Ok(name),
             false => Err(Error::InvalidNameLength(name.clone(), name.len())),
         }
     }
@@ -251,12 +251,8 @@ impl PlayerAction for Player {
     /// [`pieces`]: crate::pieces
     #[inline]
     fn piece_index_from_xy_i32(&self, x: i32, y: i32) -> Result<usize, usize> {
-        self.pieces.binary_search_by(|piece| {
-            piece.position.cmp(&Position {
-                x,
-                y,
-            })
-        })
+        self.pieces
+            .binary_search_by(|piece| piece.position.cmp(&Position { x, y }))
     }
     /// To kill a piece inside the [`Player`] struct.
     ///
@@ -278,12 +274,13 @@ impl PlayerAction for Player {
         match self.pieces[pos].position.x == x && self.pieces[pos].position.y == y {
             true => Ok(false),
             false => {
-                self.pieces.get_mut(pos)
-                           .expect("cannot update piece as the position is not valid: {pos}.")
-                           .update_pos(x, y)?;
+                self.pieces
+                    .get_mut(pos)
+                    .expect("cannot update piece as the position is not valid: {pos}.")
+                    .update_pos(x, y)?;
                 self.sort_pieces();
                 Ok(true)
-            },
+            }
         }
     }
     /// To check if the current chosen piece is on the opposite side.
@@ -294,7 +291,7 @@ impl PlayerAction for Player {
         if let Ok(current_piece) = self.current_chosen_piece() {
             let (x, y) = (current_piece.position.x, current_piece.position.y);
             match self.is_defender {
-                true  => return check_in_opposite_defender(x, y),
+                true => return check_in_opposite_defender(x, y),
                 false => return check_in_opposite_enemy(x, y),
             }
         };

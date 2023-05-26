@@ -4,25 +4,22 @@
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
 //------------------//
-mod possible_paths;
+pub(crate) mod button;
 mod click;
 mod hover;
-pub(crate) mod button;
+mod possible_paths;
 //------------------//
 
-use crate::{
-    RESOLUTION, TILEDRAW,
-    state::FortChessState,
-};
+use crate::{state::FortChessState, RESOLUTION, TILEDRAW};
 use bevy::prelude::{
-    default, Color, Commands, Component, CursorMoved, Entity, EventReader, Res, ResMut, Sprite,
-    SpriteBundle, Transform, Vec2, Vec3, Windows, Plugin, App, SystemSet,
+    default, App, Color, Commands, Component, CursorMoved, Entity, EventReader, Plugin, Res,
+    ResMut, Sprite, SpriteBundle, SystemSet, Transform, Vec2, Vec3, Windows,
 };
-use fort_builders::board::cursor_in_window;
-use possible_paths::PossiblePaths;
-use click::click_listener;
-use hover::{hover_listener, clear_picker};
 use button::FortButtonPlugin;
+use click::click_listener;
+use fort_builders::board::cursor_in_window;
+use hover::{clear_picker, hover_listener};
+use possible_paths::PossiblePaths;
 
 /// To hold the current cursor position.
 #[derive(Component)]
@@ -39,23 +36,22 @@ pub(crate) struct ListenerPlugin;
 /*-----------------------------------------------------------------------------------------------*/
 impl Plugin for ListenerPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_system_set(
-                SystemSet::on_enter(FortChessState::BoardScreen)
-                .with_system(initialize_listener_objects)
-            )
-            .add_system_set(
-                SystemSet::on_update(FortChessState::BoardScreen)
-                .with_system(update_cursor_position )
-                .with_system(clear_picker           )
-                .with_system(hover_listener         )
-                .with_system(click_listener         )
-            )
-            .add_system_set(
-                SystemSet::on_exit(FortChessState::BoardScreen)
-                .with_system(deallocate_listener_objects)
-            )
-            .add_plugin(FortButtonPlugin);
+        app.add_system_set(
+            SystemSet::on_enter(FortChessState::BoardScreen)
+                .with_system(initialize_listener_objects),
+        )
+        .add_system_set(
+            SystemSet::on_update(FortChessState::BoardScreen)
+                .with_system(update_cursor_position)
+                .with_system(clear_picker)
+                .with_system(hover_listener)
+                .with_system(click_listener),
+        )
+        .add_system_set(
+            SystemSet::on_exit(FortChessState::BoardScreen)
+                .with_system(deallocate_listener_objects),
+        )
+        .add_plugin(FortButtonPlugin);
     }
 }
 /*-----------------------------------------------------------------------------------------------*/
@@ -88,9 +84,9 @@ fn deallocate_listener_objects(mut commands: Commands) {
 /// Without this, I had to "move" the cursor in order for the `click_listener` to activate and read
 /// the cursor position.
 pub(crate) fn update_cursor_position(
-    mut events:     EventReader<CursorMoved>,
-    mut position:   ResMut<CursorPosition>,
-    windows:        Res<Windows>,
+    mut events: EventReader<CursorMoved>,
+    mut position: ResMut<CursorPosition>,
+    windows: Res<Windows>,
 ) {
     let Some(window) = windows.get_primary()    else { return };
     let Some(cursor) = events.iter().next()     else { return };
@@ -106,21 +102,17 @@ pub(crate) fn update_cursor_position(
 /*████Spawn Sprites████*/
 /*-----------------------------------------------------------------------------------------------*/
 /// To spawn a square [`TILEDRAW`] size block.
-fn spawn_square_sprite(
-    commands:       &mut Commands,
-    color:          Color,
-    translation:    Vec3,
-) -> Entity {
+fn spawn_square_sprite(commands: &mut Commands, color: Color, translation: Vec3) -> Entity {
     commands
         .spawn()
         .insert_bundle(SpriteBundle {
             sprite: Sprite {
                 color,
                 custom_size: Some(Vec2::new(
-                        //width.
-                        TILEDRAW.0 * RESOLUTION,
-                        //height.
-                        TILEDRAW.1 * RESOLUTION,
+                    //width.
+                    TILEDRAW.0 * RESOLUTION,
+                    //height.
+                    TILEDRAW.1 * RESOLUTION,
                 )),
                 ..default()
             },

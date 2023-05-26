@@ -19,9 +19,9 @@ use std::time::SystemTime;
 use thiserror::Error;
 
 /// Holds the breadth size of the board.
-pub const BREADTH   : i32   = 2_i32;
-pub const RED       : &str  = "\x1b[31;1m";
-pub const RST       : &str  = "\x1b[0m";
+pub const BREADTH: i32 = 2_i32;
+pub const RED: &str = "\x1b[31;1m";
+pub const RST: &str = "\x1b[0m";
 
 /// Error enum to handle errors across the lib.
 #[derive(Error, Debug)]
@@ -39,14 +39,14 @@ pub enum Error {
     #[error(
         "{} The provided index {0} does not have a quadrant corresponding to it. {}",
         RED,
-        RST,
+        RST
     )]
     InvalidQuadrantIndex(usize),
     /// If position does not exist inside a quadrant.
     #[error(
         "{} The provided position ({0}, {1}) does not exist inside a quadrant. {}",
         RED,
-        RST,
+        RST
     )]
     PositionNotInQuadrant(i32, i32),
     /// When more than one winner exists.
@@ -87,7 +87,7 @@ pub fn exit(game: Game) -> Result<Option<Player>, Error> {
 #[inline]
 pub fn dice_roll() -> usize {
     match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
-        Ok(n)  => (n.as_secs() % 6_u64) as usize,
+        Ok(n) => (n.as_secs() % 6_u64) as usize,
         Err(_) => {
             eprintln!("{} System date set earlier than UNIX EPOCH {}", RED, RST);
             1_usize
@@ -102,12 +102,10 @@ pub fn dice_roll() -> usize {
 #[inline]
 pub fn decrement_if_positive<T>(x: T) -> T
 where
-    T:      std::cmp::PartialOrd<T>
-        +   std::ops::Sub<Output = T>
-        +   From<u16>,
+    T: std::cmp::PartialOrd<T> + std::ops::Sub<Output = T> + From<u16>,
 {
     match x > From::from(0) {
-        true  => x - From::from(1),
+        true => x - From::from(1),
         false => x,
     }
 }

@@ -4,10 +4,10 @@
 //!
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
-use fort_builders::game::Game;
 use crate::listener::possible_paths::{
-    PositionVectorf32, analyse_rook_paths, analyse_minister_paths,
+    analyse_minister_paths, analyse_rook_paths, PositionVectorf32,
 };
+use fort_builders::game::Game;
 
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
@@ -17,7 +17,7 @@ use crate::listener::possible_paths::{
 /// those two.
 pub(crate) fn analyse_queen_paths(x: f32, y: f32, game: &Game) -> PositionVectorf32 {
     let mut _possiblepaths: PositionVectorf32 = Vec::new();
-    _possiblepaths.append(&mut analyse_rook_paths(      x, y, game));
-    _possiblepaths.append(&mut analyse_minister_paths(  x, y, game));
+    _possiblepaths.append(&mut analyse_rook_paths(x, y, game));
+    _possiblepaths.append(&mut analyse_minister_paths(x, y, game));
     _possiblepaths
 }

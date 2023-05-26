@@ -4,12 +4,12 @@
 //!
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
+use crate::listener::possible_paths::{PositionVectorf32, STEP};
 use fort_builders::{
     board::position_in_board_bounds,
     game::{Game, GameAction},
     player::PlayerAction,
 };
-use crate::listener::possible_paths::{STEP, PositionVectorf32};
 
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
@@ -30,19 +30,27 @@ pub(crate) fn analyse_rook_paths(x: f32, y: f32, game: &Game) -> PositionVectorf
 /// Step and move in a given direction until the position is either in the current player pieces,
 /// out of bound of the board or another player piece present. Else push to possible paths.
 fn iter_rook_path_step_analysis<F>(
-    mut _x:         f32,
-    mut _y:         f32,
-    step:           F,
-    game:           &Game,
+    mut _x: f32,
+    mut _y: f32,
+    step: F,
+    game: &Game,
     _possiblepaths: &mut PositionVectorf32,
 ) where
-        F: Fn(&mut f32, &mut f32),
+    F: Fn(&mut f32, &mut f32),
 {
     loop {
         step(&mut _x, &mut _y);
         if !position_in_board_bounds(_x, _y)
-        || game.current_player().piece_index_from_xy_f32(_x, _y).is_ok() { break }
+            || game
+                .current_player()
+                .piece_index_from_xy_f32(_x, _y)
+                .is_ok()
+        {
+            break;
+        }
         _possiblepaths.push((_x, _y));
-        if game.check_piece_in_pos(_x, _y) { break }
+        if game.check_piece_in_pos(_x, _y) {
+            break;
+        }
     }
 }

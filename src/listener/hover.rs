@@ -4,16 +4,13 @@
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
 use crate::{
-    RESOLUTION, ZAxisLevel,
-    listener::{CursorPosition,spawn_square_sprite},
-    game::GameAsset,
     despawn_entity::DespawnEntity,
+    game::GameAsset,
+    listener::{spawn_square_sprite, CursorPosition},
+    ZAxisLevel, RESOLUTION,
 };
 use bevy::prelude::{Color, Commands, Component, Entity, Query, Res, ResMut, Vec3, With};
-use fort_builders::{
-    board::position_in_board_bounds,
-    player::PlayerAction,
-};
+use fort_builders::{board::position_in_board_bounds, player::PlayerAction};
 
 /// Displays the hover color.
 const PICKER_COLOR: Color = Color::SILVER;
@@ -27,10 +24,7 @@ pub(crate) struct Picker;
 /*████Picker Despawn████*/
 /*-----------------------------------------------------------------------------------------------*/
 /// Clear picker function to cleanup [`Picker`] entities.
-pub(crate) fn clear_picker(
-    mut commands:   Commands,
-    pickers:        Query<Entity, With<Picker>>,
-) {
+pub(crate) fn clear_picker(mut commands: Commands, pickers: Query<Entity, With<Picker>>) {
     commands.despawn_entity(&pickers);
 }
 /*-----------------------------------------------------------------------------------------------*/
@@ -42,25 +36,25 @@ pub(crate) fn clear_picker(
 /// Return a bool value that is checked at each [`CursorMoved`] event. If the cursor position is
 /// not a piece position then there won't be a light grey block displayed.
 #[inline]
-fn hovered_position_in_player_pieces(
-    x:      f32,
-    y:      f32,
-    game:   &ResMut<GameAsset>,
-) -> bool {
-    game.get().current_player().piece_index_from_xy_f32(x, y).is_ok()
+fn hovered_position_in_player_pieces(x: f32, y: f32, game: &ResMut<GameAsset>) -> bool {
+    game.get()
+        .current_player()
+        .piece_index_from_xy_f32(x, y)
+        .is_ok()
 }
 
 /// To display a light gray block over the piece where the mouse is hovering.
 ///
 /// Early return if not in player pieces or inside board bounds.
 pub(crate) fn hover_listener(
-    mut commands:   Commands,
-    game:           ResMut<GameAsset>,
-    cursor:         Res<CursorPosition>,
+    mut commands: Commands,
+    game: ResMut<GameAsset>,
+    cursor: Res<CursorPosition>,
 ) {
     let (m_x, m_y) = (cursor.x, cursor.y);
-    if  !position_in_board_bounds(m_x, m_y)
-    ||  !hovered_position_in_player_pieces(m_x, m_y, &game)  { return }
+    if !position_in_board_bounds(m_x, m_y) || !hovered_position_in_player_pieces(m_x, m_y, &game) {
+        return;
+    }
     let hover = spawn_square_sprite(
         &mut commands,
         PICKER_COLOR,

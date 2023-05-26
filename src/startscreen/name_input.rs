@@ -3,22 +3,20 @@
 //! Module to handle name input.
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
-use bevy::prelude::*;
 use crate::{
-    FortChessState,
-    startscreen::{
-        NameEntryValue, TEXT_INPUT_DEF_VAL,
-        FromBool, TEXT_INPUT_COLOR,
-        expand::InputBoxNode,
-    },
     font::DEFAULT_FONT_CLR,
+    startscreen::{
+        expand::InputBoxNode, FromBool, NameEntryValue, TEXT_INPUT_COLOR, TEXT_INPUT_DEF_VAL,
+    },
+    FortChessState,
 };
+use bevy::prelude::*;
 use std::fmt::Debug;
 
 /// Color of the input selection.
 const INPUT_SELECT_CLR: Color = Color::rgb(0.76_f32, 0.76_f32, 0.76_f32);
 /// Color of the default filler text holder.
-const TEXT_HOLDER_CLR:  Color = Color::GRAY;
+const TEXT_HOLDER_CLR: Color = Color::GRAY;
 
 /// Plugin to handle input of the name input.
 pub(crate) struct NameInputPlugin;
@@ -35,22 +33,25 @@ pub(crate) struct NameInputSelected {
     render: bool,
 }
 
+/// Type alias for name input button query.
+type NameInputBtnQuery = (Changed<Interaction>, With<Button>, With<NameInput>);
+/// Type alias for name input button non-interaction query.
+type NameNonInteractQuery = (With<Button>, With<NameInput>);
+
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
 impl Plugin for NameInputPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_system_set(
-                SystemSet::on_enter(FortChessState::StartScreen)
-                .with_system(name_input_selected_res)
-            )
-            .add_system_set(
-                SystemSet::on_update(FortChessState::StartScreen)
-                .with_system(name_input_click       )
-                .with_system(name_input_color       )
-                .with_system(text_typing            )
-                .with_system(display_text_to_input  )
-            );
+        app.add_system_set(
+            SystemSet::on_enter(FortChessState::StartScreen).with_system(name_input_selected_res),
+        )
+        .add_system_set(
+            SystemSet::on_update(FortChessState::StartScreen)
+                .with_system(name_input_click)
+                .with_system(name_input_color)
+                .with_system(text_typing)
+                .with_system(display_text_to_input),
+        );
     }
 }
 
@@ -117,23 +118,17 @@ fn name_input_selected_res(mut commands: Commands) {
 /// corresponding [`NameInputSelected`] values are noted down and referred when key presses are
 /// listened.
 fn name_input_click(
-    mut name_input_query:       Query<
-        (&Interaction, &Parent),
-        (Changed<Interaction>, With<Button>, With<NameInput>),
-    >,
-    parent_name_input:          Query<&InputBoxNode>,
-    mut name_input_selected:    ResMut<NameInputSelected>,
+    mut name_input_query: Query<(&Interaction, &Parent), NameInputBtnQuery>,
+    parent_name_input: Query<&InputBoxNode>,
+    mut name_input_selected: ResMut<NameInputSelected>,
 ) {
     name_input_query
         .iter_mut()
         .for_each(|(interaction, parent)| {
-            match interaction {
-                Interaction::Clicked    => {
-                    if let Ok(parent) = parent_name_input.get(parent.get()) {
-                        select_name_input_parent(&parent, &mut name_input_selected);
-                    }
-                },
-                _ => {},
+            if interaction == &Interaction::Clicked {
+                if let Ok(parent) = parent_name_input.get(parent.get()) {
+                    select_name_input_parent(parent, &mut name_input_selected);
+                }
             }
         });
 }
@@ -144,8 +139,8 @@ fn name_input_click(
 impl FromBool for Color {
     fn from_bool(value: bool) -> Self {
         match value {
-            true    => INPUT_SELECT_CLR,
-            false   => TEXT_INPUT_COLOR,
+            true => INPUT_SELECT_CLR,
+            false => TEXT_INPUT_COLOR,
         }
     }
 }
@@ -155,20 +150,20 @@ impl FromBool for Color {
 /// To set the color of the selected textbox so as to identify the current selected text box. The
 /// color of the selected text box is calculated by it's value.
 fn name_input_color(
-    input_node_query:           Query<&InputBoxNode>,
-    mut text_input_query:       Query<(&mut UiColor, &Parent), (With<Button>, With<NameInput>)>,
-    mut name_input_selected:    ResMut<NameInputSelected>,
+    input_node_query: Query<&InputBoxNode>,
+    mut text_input_query: Query<(&mut UiColor, &Parent), NameNonInteractQuery>,
+    mut name_input_selected: ResMut<NameInputSelected>,
 ) {
-    if !name_input_selected.render { return }
-    text_input_query
-        .iter_mut()
-        .for_each(|(mut color, parent)| {
-            if let Ok(parent) = input_node_query.get(parent.get()) {
-                if let Some(name) = name_input_selected.get_mut(parent.as_usize()) {
-                    *color = UiColor::from(Color::from_bool(*name));
-                }
+    if !name_input_selected.render {
+        return;
+    }
+    text_input_query.iter_mut().for_each(|(mut color, parent)| {
+        if let Ok(parent) = input_node_query.get(parent.get()) {
+            if let Some(name) = name_input_selected.get_mut(parent.as_usize()) {
+                *color = UiColor::from(Color::from_bool(*name));
             }
-        });
+        }
+    });
     name_input_selected.unrender();
 }
 
@@ -177,12 +172,14 @@ fn name_input_color(
 /// Takes the parent Node and corresponds that to the [`NameInputSelected`] value and sets the
 /// selected textbox value.
 fn select_name_input_parent(
-    parent:                 &InputBoxNode,
-    name_input_selected:    &mut ResMut<NameInputSelected>,
+    parent: &InputBoxNode,
+    name_input_selected: &mut ResMut<NameInputSelected>,
 ) {
     if let Some(bool_val) = name_input_selected.get_mut(parent.as_usize()) {
         *bool_val = !(*bool_val);
-    } else { return }
+    } else {
+        return;
+    }
     name_input_selected.mutex(parent.as_usize()).render();
 }
 
@@ -191,10 +188,10 @@ fn select_name_input_parent(
 /// Iterates through the [`RecievedCharacter`] [`EventReader`] and pushes the character values to
 /// the corresponding [`NameEntryValue`]. Pops a character if __backspace__ is pressed.
 fn text_typing(
-    mut input:                  EventReader<ReceivedCharacter>,
-    mut name_entry_value_res:   ResMut<NameEntryValue>,
-    name_input_selected:        Res<NameInputSelected>,
-    key_press:                  Res<Input<KeyCode>>,
+    mut input: EventReader<ReceivedCharacter>,
+    mut name_entry_value_res: ResMut<NameEntryValue>,
+    name_input_selected: Res<NameInputSelected>,
+    key_press: Res<Input<KeyCode>>,
 ) {
     let Some(&(index, _)) = name_input_selected.selected
         .iter()
@@ -203,37 +200,37 @@ fn text_typing(
         .collect::<Vec<(usize, &bool)>>()
         .get(0_usize) else { return };
     let Some(name) = name_entry_value_res.players.get_mut(index) else { return };
-    if key_press.just_pressed(KeyCode::Back) { name.pop(); }
-    input
-        .iter()
-        .for_each(|ch| {
-            if ch.char.ne(&'\u{08}') {
-                name.push(ch.char);
-            }
-        });
+    if key_press.just_pressed(KeyCode::Back) {
+        name.pop();
+    }
+    input.iter().for_each(|ch| {
+        if ch.char.ne(&'\u{08}') {
+            name.push(ch.char);
+        }
+    });
 }
 
 /// To handle the display of the input text.
 ///
 /// Gets the text from [`NameEntryValue`] and displays it to the textbox node.
 fn display_text_to_input(
-    name_entry_value:   Res<NameEntryValue>,
-    mut text_boxes:     Query<(&mut Text, &Parent), With<NameInputText>>,
-    name_input:         Query<&Parent, With<NameInput>>,
-    parent_text:        Query<&InputBoxNode>,
+    name_entry_value: Res<NameEntryValue>,
+    mut text_boxes: Query<(&mut Text, &Parent), With<NameInputText>>,
+    name_input: Query<&Parent, With<NameInput>>,
+    parent_text: Query<&InputBoxNode>,
 ) {
-    text_boxes
-        .iter_mut()
-        .for_each(|(mut text_box, parent)| {
-            if let Some(text_node) = get_text_node_parent(parent, &name_input, &parent_text) {
-                if let Some(text) = text_box.sections.first_mut() {
-                    let name = name_entry_value.as_string(text_node.as_usize()).unwrap();
-                    (text.value, text.style.color) = if name.is_empty() {
-                        (String::from(TEXT_INPUT_DEF_VAL), TEXT_HOLDER_CLR)
-                    } else { (name, DEFAULT_FONT_CLR) };
-                }
-           }
-      });
+    text_boxes.iter_mut().for_each(|(mut text_box, parent)| {
+        if let Some(text_node) = get_text_node_parent(parent, &name_input, &parent_text) {
+            if let Some(text) = text_box.sections.first_mut() {
+                let name = name_entry_value.as_string(text_node.as_usize()).unwrap();
+                (text.value, text.style.color) = if name.is_empty() {
+                    (String::from(TEXT_INPUT_DEF_VAL), TEXT_HOLDER_CLR)
+                } else {
+                    (name, DEFAULT_FONT_CLR)
+                };
+            }
+        }
+    });
 }
 
 /// To get the parent of the text node.
@@ -241,9 +238,9 @@ fn display_text_to_input(
 /// To get the [`NameInput`] query value corresponding to the parent and return the
 /// [`InputBoxNode`] `Option` value.
 fn get_text_node_parent<'a>(
-    parent:         &Parent,
-    name_input:     &Query<&Parent, With<NameInput>>,
-    parent_text:    &'a Query<&InputBoxNode>,
+    parent: &Parent,
+    name_input: &Query<&Parent, With<NameInput>>,
+    parent_text: &'a Query<&InputBoxNode>,
 ) -> Option<&'a InputBoxNode> {
     let Ok(name_input)  = name_input.get(parent.get())      else { return None };
     let Ok(text_node)   = parent_text.get(name_input.get()) else { return None };

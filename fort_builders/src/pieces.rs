@@ -10,13 +10,13 @@ use crate::{
     RED, RST,
 };
 use piece_alignment::{piece_type, position_from_quadrant};
-use thiserror::Error;
 use std::fmt;
+use thiserror::Error;
 
 /// To hold the number of maximum enemies at a given point for `defender`.
-const DEFND_COUNT   : usize = 24_usize;
+const DEFND_COUNT: usize = 24_usize;
 /// To hold the number of maximum enemies at a given point for `non-defender`.
-const ENEMY_COUNT   : usize =  8_usize;
+const ENEMY_COUNT: usize = 8_usize;
 
 /// Piece error enum.
 #[derive(Error, Debug)]
@@ -102,11 +102,11 @@ impl<'a> PieceType {
     #[inline]
     fn as_str(&self) -> &'a str {
         match self {
-            PieceType::Rook     => "Rook",
+            PieceType::Rook => "Rook",
             PieceType::Minister => "Minister",
-            PieceType::Queen    => "Queen",
-            PieceType::Pawn     => "Pawn",
-            PieceType::Knight   => "Knight",
+            PieceType::Queen => "Queen",
+            PieceType::Pawn => "Pawn",
+            PieceType::Knight => "Knight",
         }
     }
 }
@@ -131,11 +131,11 @@ impl PieceType {
     #[inline]
     pub fn as_usize(&self) -> usize {
         match self {
-            PieceType::Rook     => 0_usize,
+            PieceType::Rook => 0_usize,
             PieceType::Minister => 1_usize,
-            PieceType::Queen    => 2_usize,
-            PieceType::Pawn     => 3_usize,
-            PieceType::Knight   => 4_usize,
+            PieceType::Queen => 2_usize,
+            PieceType::Pawn => 3_usize,
+            PieceType::Knight => 4_usize,
         }
     }
 }
@@ -186,23 +186,16 @@ impl Piece {
     }
     /// Function used to initialize the [`Piece`] vector.
     pub(crate) fn init_pieces(
-        is_defender:        bool,
-        quadrant:           Quadrant,
-        quadrant_active:    usize,
+        is_defender: bool,
+        quadrant: Quadrant,
+        quadrant_active: usize,
     ) -> Result<Vec<Piece>, Error> {
         let mut pieces: Vec<Piece> = Vec::new();
-        for ((pos1, pos2), piece_type) in   position_from_quadrant(
-                                                &quadrant,
-                                                quadrant_active,
-                                            )
-                                            .into_iter()
-                                            .zip(piece_type(is_defender, quadrant_active))
+        for ((pos1, pos2), piece_type) in position_from_quadrant(&quadrant, quadrant_active)
+            .into_iter()
+            .zip(piece_type(is_defender, quadrant_active))
         {
-            pieces.push(
-                Piece::from(
-                    pos1, pos2, PieceType::from_index(piece_type)?,
-                )?
-            ); 
+            pieces.push(Piece::from(pos1, pos2, PieceType::from_index(piece_type)?)?);
         }
         Ok(pieces)
     }
@@ -225,10 +218,10 @@ impl Piece {
     #[inline]
     pub(crate) fn is_valid_index(pos: usize, is_defender: bool) -> Result<(), Error> {
         match match is_defender {
-            true  => pos < DEFND_COUNT,
+            true => pos < DEFND_COUNT,
             false => pos < ENEMY_COUNT,
         } {
-            true  => Ok(()),
+            true => Ok(()),
             false => Err(Error::IllegalPieceVectorIndex(pos)),
         }
     }

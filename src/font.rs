@@ -3,7 +3,7 @@
 //! Loads the font assets that will be used in the game.
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
-use bevy::prelude::{Commands, Res, Handle, StartupStage, App, AssetServer, Plugin, Font, Color};
+use bevy::prelude::{App, AssetServer, Color, Commands, Font, Handle, Plugin, Res, StartupStage};
 
 /// The default font color which is used for almost every text.
 pub(crate) const DEFAULT_FONT_CLR: Color = Color::BLACK;
@@ -21,9 +21,8 @@ pub(crate) struct FontHandlePlugin;
 /*-----------------------------------------------------------------------------------------------*/
 impl Plugin for FontHandlePlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_startup_system_to_stage(StartupStage::PreStartup, insert_bold_font_handle      )
-            .add_startup_system_to_stage(StartupStage::PreStartup, insert_regular_font_handle   );
+        app.add_startup_system_to_stage(StartupStage::PreStartup, insert_bold_font_handle)
+            .add_startup_system_to_stage(StartupStage::PreStartup, insert_regular_font_handle);
     }
 }
 /*-----------------------------------------------------------------------------------------------*/
@@ -36,10 +35,7 @@ impl BoldFontHandle {
     }
 }
 
-fn insert_bold_font_handle(
-    mut commands: Commands,
-    asset_server:   Res<AssetServer>,
-) {
+fn insert_bold_font_handle(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(BoldFontHandle(
         asset_server.load("fonts/fira-sans.extrabold.ttf"),
     ));
@@ -54,10 +50,7 @@ impl RegFontHandle {
     }
 }
 
-fn insert_regular_font_handle(
-    mut commands: Commands,
-    asset_server:   Res<AssetServer>,
-) {
+fn insert_regular_font_handle(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(RegFontHandle(
         asset_server.load("fonts/fira-sans.regular.ttf"),
     ));

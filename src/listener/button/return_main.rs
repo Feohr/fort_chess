@@ -4,28 +4,25 @@
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
 use crate::{
-    state::FortChessState,
-    listener::{
-        possible_paths::Paths,
-        click::Click,
-        button::{BtnContainer, btn_spawn, style},
-    },
+    despawn_entity::DespawnEntity,
     game::{
         draw_piece::Piece,
+        game_end::{GameResult, GameResultComponent},
         highlight::Highlight,
         player_name::{PlayerName, PlayerNameOutline},
-        game_end::{GameResult, GameResultComponent},
+    },
+    listener::{
+        button::{btn_spawn, style, BtnColorQuery, BtnContainer},
+        click::Click,
+        possible_paths::Paths,
     },
     startscreen::NameEntryValue,
-    despawn_entity::DespawnEntity,
-    tiles::{
-        block::Blocker,
-        TileComponent,
-    },
+    state::FortChessState,
+    tiles::{block::Blocker, TileComponent},
 };
 use bevy::prelude::{
-    Commands, Res, App, Plugin, SystemSet, Component, UiColor, Query, Interaction, Button, With,
-    Changed, ResMut, State, Entity,
+    App, Button, Changed, Commands, Component, Entity, Interaction, Plugin, Query, Res, ResMut,
+    State, SystemSet, UiColor, With,
 };
 
 /// Text of the return button.
@@ -37,26 +34,30 @@ struct ReturnButtonComponent;
 /// Plugin to handle the return button.
 pub(crate) struct ReturnButtonPlugin;
 
+/// Type alias for return button
+type ReturnBtnQuery = (
+    Changed<Interaction>,
+    With<Button>,
+    With<ReturnButtonComponent>,
+);
+
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
 /*████Plugin for ReturnButtonPlugin████*/
 /*-----------------------------------------------------------------------------------------------*/
 impl Plugin for ReturnButtonPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_system_set(
-                SystemSet::on_enter(FortChessState::ResultScreen)
-                .with_system(return_button_spawn)
-            )
-            .add_system_set(
-                SystemSet::on_update(FortChessState::ResultScreen)
-                .with_system(return_btn_clicked)
-            )
-            .add_system_set(
-                SystemSet::on_exit(FortChessState::ResultScreen)
-                .with_system(return_main_res_clear      )
-                .with_system(return_main_desapawn_entity)
-            );
+        app.add_system_set(
+            SystemSet::on_enter(FortChessState::ResultScreen).with_system(return_button_spawn),
+        )
+        .add_system_set(
+            SystemSet::on_update(FortChessState::ResultScreen).with_system(return_btn_clicked),
+        )
+        .add_system_set(
+            SystemSet::on_exit(FortChessState::ResultScreen)
+                .with_system(return_main_res_clear)
+                .with_system(return_main_desapawn_entity),
+        );
     }
 }
 /*-----------------------------------------------------------------------------------------------*/
@@ -65,23 +66,18 @@ impl Plugin for ReturnButtonPlugin {
 /*-----------------------------------------------------------------------------------------------*/
 /// To animate the button clicked animations.
 fn return_btn_clicked(
-    mut interaction_query:  Query<
-        (&Interaction, &mut UiColor),
-        (Changed<Interaction>, With<Button>, With<ReturnButtonComponent>),
-    >,
-    mut state:              ResMut<State<FortChessState>>,
+    mut interaction_query: Query<BtnColorQuery, ReturnBtnQuery>,
+    mut state: ResMut<State<FortChessState>>,
 ) {
     interaction_query
         .iter_mut()
-        .for_each(|(&interaction, mut color)| {
-            match interaction {
-                Interaction::Clicked => {
-                    *color = UiColor::from(style::BTN_CLICKD_COLOR);
-                    state.set(FortChessState::StartScreen).unwrap();
-                },
-                Interaction::Hovered => *color = UiColor::from(style::BTN_HOVERD_COLOR),
-                Interaction::None    => *color = UiColor::from(style::BTN_BKGRND_COLOR),
+        .for_each(|(&interaction, mut color)| match interaction {
+            Interaction::Clicked => {
+                *color = UiColor::from(style::BTN_CLICKD_COLOR);
+                state.set(FortChessState::StartScreen).unwrap();
             }
+            Interaction::Hovered => *color = UiColor::from(style::BTN_HOVERD_COLOR),
+            Interaction::None => *color = UiColor::from(style::BTN_BKGRND_COLOR),
         });
 }
 
@@ -94,17 +90,17 @@ fn return_main_res_clear(mut commands: Commands) {
 
 /// To clean the entities for a fresh game start.
 fn return_main_desapawn_entity(
-    mut commands:   Commands,
-    result_screen:  Query<Entity, With<GameResultComponent>>,
-    return_btn:     Query<Entity, With<ReturnButtonComponent>>,
-    board_tiles:    Query<Entity, With<TileComponent>>,
-    board_block:    Query<Entity, With<Blocker>>,
-    player_pieces:  Query<Entity, With<Piece>>,
-    player_hilite:  Query<Entity, With<Highlight>>,
-    player_names:   Query<Entity, With<PlayerName>>,
+    mut commands: Commands,
+    result_screen: Query<Entity, With<GameResultComponent>>,
+    return_btn: Query<Entity, With<ReturnButtonComponent>>,
+    board_tiles: Query<Entity, With<TileComponent>>,
+    board_block: Query<Entity, With<Blocker>>,
+    player_pieces: Query<Entity, With<Piece>>,
+    player_hilite: Query<Entity, With<Highlight>>,
+    player_names: Query<Entity, With<PlayerName>>,
     player_outline: Query<Entity, With<PlayerNameOutline>>,
-    player_paths:   Query<Entity, With<Paths>>,
-    tile_clicked:   Query<Entity, With<Click>>,
+    player_paths: Query<Entity, With<Paths>>,
+    tile_clicked: Query<Entity, With<Click>>,
 ) {
     commands.despawn_entity(&result_screen);
     commands.despawn_entity(&return_btn);
@@ -121,9 +117,6 @@ fn return_main_desapawn_entity(
 /*-----------------------------------------------------------------------------------------------*/
 
 /// Spawns the return to main menu button.
-fn return_button_spawn(
-    mut commands:   Commands,
-    button:         Res<BtnContainer>,
-) {
-    btn_spawn( &mut commands, &button, RET_BTN_TEXT, ReturnButtonComponent);
+fn return_button_spawn(mut commands: Commands, button: Res<BtnContainer>) {
+    btn_spawn(&mut commands, &button, RET_BTN_TEXT, ReturnButtonComponent);
 }

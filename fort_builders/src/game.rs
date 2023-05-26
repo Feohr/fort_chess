@@ -124,10 +124,7 @@ impl GameAction for Game {
     #[inline]
     fn hunt(&mut self) -> Vec<Player> {
         self.players
-            .drain_filter(|player|
-                    player.pieces.is_empty()
-                &&  !player.is_winner
-            )
+            .drain_filter(|player| player.pieces.is_empty() && !player.is_winner)
             .collect::<Vec<Player>>()
     }
     /// Changes the turn value to indiacate which player turn it is.
@@ -136,7 +133,7 @@ impl GameAction for Game {
     #[inline]
     fn next_player(&mut self) -> &mut Self {
         match self.turn < self.players.len() - 1_usize {
-            true  => self.turn += 1_usize,
+            true => self.turn += 1_usize,
             false => self.turn = 0_usize,
         }
         self
@@ -144,7 +141,7 @@ impl GameAction for Game {
     /// To update player pieces position every turn.
     #[inline]
     fn update_position(&mut self, x: i32, y: i32) -> Result<&mut Self, Error> {
-        self.players[self.turn].update_piece(x, y)?; 
+        self.players[self.turn].update_piece(x, y)?;
         self.set_update_true();
         Ok(self)
     }
@@ -156,7 +153,8 @@ impl GameAction for Game {
     /// [`binary_search`]: slice::binary_search
     #[inline]
     fn check_piece_in_pos(&self, x: f32, y: f32) -> bool {
-        !self.players
+        !self
+            .players
             .iter()
             .filter(|player| player.piece_index_from_xy_f32(x, y).is_ok())
             .collect::<Vec<&Player>>()
@@ -171,7 +169,7 @@ impl GameAction for Game {
         Piece::in_board_range(x as i32, y as i32)?;
         for player in self.players.iter_mut() {
             if let Ok(index) = player.piece_index_from_xy_f32(x, y) {
-                return Ok(Some(player.kill_piece(index)?))
+                return Ok(Some(player.kill_piece(index)?));
             }
         }
         Ok(None)

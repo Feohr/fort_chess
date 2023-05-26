@@ -4,12 +4,12 @@
 //!
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
+use crate::listener::possible_paths::{PositionVectorf32, STEP};
 use fort_builders::{
-    board::{Quadrant, position_in_board_bounds},
+    board::{position_in_board_bounds, Quadrant},
     game::{Game, GameAction},
     player::PlayerAction,
 };
-use crate::listener::possible_paths::{STEP, PositionVectorf32};
 
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
@@ -39,21 +39,21 @@ use crate::listener::possible_paths::{STEP, PositionVectorf32};
 /// the defender along the `positive x-axis`.
 pub(crate) fn analyse_pawn_paths(x: f32, y: f32, game: &Game) -> PositionVectorf32 {
     let mut _possiblepaths: PositionVectorf32 = Vec::new();
-    let quadrant    = Quadrant::from_xy(x, y).unwrap();
+    let quadrant = Quadrant::from_xy(x, y).unwrap();
     let is_defender = game.current_player().is_defender;
     let pawn_closure = match is_defender {
-        true  =>    match quadrant {
-                        Quadrant::Q1 => | x: &mut f32, _y: &mut f32| *x -= STEP,
-                        Quadrant::Q2 => |_x: &mut f32,  y: &mut f32| *y += STEP,
-                        Quadrant::Q3 => | x: &mut f32, _y: &mut f32| *x += STEP,
-                        _            => panic!("Position of the piece must have a qudrant."),
-                    },
-        false =>    match quadrant {
-                        Quadrant::Q1 => | x: &mut f32, _y: &mut f32| *x += STEP,
-                        Quadrant::Q2 => |_x: &mut f32,  y: &mut f32| *y -= STEP,
-                        Quadrant::Q3 => | x: &mut f32, _y: &mut f32| *x -= STEP,
-                        _            => panic!("Position of the piece must have a qudrant."),
-                    },
+        true => match quadrant {
+            Quadrant::Q1 => |x: &mut f32, _y: &mut f32| *x -= STEP,
+            Quadrant::Q2 => |_x: &mut f32, y: &mut f32| *y += STEP,
+            Quadrant::Q3 => |x: &mut f32, _y: &mut f32| *x += STEP,
+            _ => panic!("Position of the piece must have a qudrant."),
+        },
+        false => match quadrant {
+            Quadrant::Q1 => |x: &mut f32, _y: &mut f32| *x += STEP,
+            Quadrant::Q2 => |_x: &mut f32, y: &mut f32| *y -= STEP,
+            Quadrant::Q3 => |x: &mut f32, _y: &mut f32| *x -= STEP,
+            _ => panic!("Position of the piece must have a qudrant."),
+        },
     };
     iter_pawn_path_step_analysis(
         x,
@@ -72,31 +72,33 @@ pub(crate) fn analyse_pawn_paths(x: f32, y: f32, game: &Game) -> PositionVectorf
 /// The pawn possible killable pieces detection. After taking a step front, check for diagonal
 /// pieces that can be killed.
 fn iter_pawn_path_step_analysis<F>(
-    mut _x:         f32,
-    mut _y:         f32,
-    _is_defender:   bool,
-    qudrant:        Quadrant,
-    step:           F,
-    game:           &Game,
+    mut _x: f32,
+    mut _y: f32,
+    _is_defender: bool,
+    qudrant: Quadrant,
+    step: F,
+    game: &Game,
     _possiblepaths: &mut PositionVectorf32,
 ) where
-        F: Fn(&mut f32, &mut f32),
+    F: Fn(&mut f32, &mut f32),
 {
     step(&mut _x, &mut _y);
     match qudrant {
-       Quadrant::Q1 | Quadrant::Q3 => {
+        Quadrant::Q1 | Quadrant::Q3 => {
             pawn_possible_path_if_piece_at_pos(_x, _y + STEP, game, _possiblepaths);
             pawn_possible_path_if_piece_at_pos(_x, _y - STEP, game, _possiblepaths);
-        },
-        Quadrant::Q2               => {
+        }
+        Quadrant::Q2 => {
             pawn_possible_path_if_piece_at_pos(_x + STEP, _y, game, _possiblepaths);
             pawn_possible_path_if_piece_at_pos(_x - STEP, _y, game, _possiblepaths);
-        },
-        _   => {
+        }
+        _ => {
             panic!("Cannot analyse steps for \'Noquad\' quadrant pieces.")
-        },
+        }
     }
-    if game.check_piece_in_pos(_x, _y) || !position_in_board_bounds(_x, _y) { return }
+    if game.check_piece_in_pos(_x, _y) || !position_in_board_bounds(_x, _y) {
+        return;
+    }
     _possiblepaths.push((_x, _y));
 }
 
@@ -108,12 +110,14 @@ fn iter_pawn_path_step_analysis<F>(
 /// This is an arbitrary function written to reduce code clutter. As in there is nothingin
 /// particular that this function does specific to pawn pieces.
 fn pawn_possible_path_if_piece_at_pos(
-    x:              f32,
-    y:              f32,
-    game:           &Game,
+    x: f32,
+    y: f32,
+    game: &Game,
     _possiblepaths: &mut PositionVectorf32,
 ) {
-    if !game.check_piece_in_pos(x, y)
-    ||  game.current_player().piece_index_from_xy_f32(x, y).is_ok() { return }
+    if !game.check_piece_in_pos(x, y) || game.current_player().piece_index_from_xy_f32(x, y).is_ok()
+    {
+        return;
+    }
     _possiblepaths.push((x, y));
 }

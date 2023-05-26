@@ -7,33 +7,28 @@
 
 //-----------//
 pub(crate) mod draw_piece;
+pub(crate) mod game_end;
 pub(crate) mod highlight;
 pub(crate) mod player_name;
-pub(crate) mod game_end;
 //-----------//
 
-use crate::{
-    SPRITESIZE,
-    font::BoldFontHandle,
-    state::FortChessState,
-    startscreen::NameEntryValue,
-};
+use crate::{font::BoldFontHandle, startscreen::NameEntryValue, state::FortChessState, SPRITESIZE};
 use bevy::prelude::{
-    Entity, With, Commands, Res, ResMut, Component, Vec2, Handle, TextureAtlas, StartupStage, App,
-    Assets, AssetServer, Plugin, Query, SystemSet, State,
+    App, AssetServer, Assets, Commands, Component, Entity, Handle, Plugin, Query, Res, ResMut,
+    StartupStage, State, SystemSet, TextureAtlas, Vec2, With,
 };
+use draw_piece::{draw_pieces, Piece};
 use fort_builders::{
+    board::{q1_outer_bound_pos, q2_outer_bound_pos, q3_outer_bound_pos, Quadrant},
     dice_roll,
-    board::{Quadrant, q1_outer_bound_pos, q2_outer_bound_pos, q3_outer_bound_pos},
     game::{Game, GameAction},
     player::{Player, Team},
 };
-use draw_piece::{draw_pieces, Piece};
+use game_end::GameEndPlugin;
 use highlight::{highlight_active_pieces, Highlight};
 use player_name::{
     display_player_names, highlight_player_name, PlayerName, PlayerNameBoxVec, PlayerNameOutline,
 };
-use game_end::GameEndPlugin;
 
 /// To hold the number of types of pieces.
 const PIECE_TYPE_COUNT: usize = 5_usize;
@@ -56,27 +51,21 @@ pub(crate) struct GameAsset(pub(crate) Game);
 impl Plugin for GamePlugin {
     /// [`Plugin`] implementation for [`GamePlugin`].
     fn build(&self, app: &mut App) {
-        app
-            .add_startup_system_to_stage(StartupStage::PreStartup, load_sprite)
+        app.add_startup_system_to_stage(StartupStage::PreStartup, load_sprite)
+            .add_system_set(SystemSet::on_enter(FortChessState::GameBuild).with_system(init_game))
             .add_system_set(
-                SystemSet::on_enter(FortChessState::GameBuild)
-                .with_system(init_game)
-            )
-            .add_system_set(
-                SystemSet::on_update(FortChessState::GameBuild)
-                .with_system(set_state_boardscreen)
+                SystemSet::on_update(FortChessState::GameBuild).with_system(set_state_boardscreen),
             )
             .add_system_set(
                 SystemSet::on_enter(FortChessState::BoardScreen)
-                .with_system(init_player_name_box_vec)
+                    .with_system(init_player_name_box_vec),
             )
             .add_system_set(
-                SystemSet::on_update(FortChessState::BoardScreen)
-                .with_system(game_update_tick)
+                SystemSet::on_update(FortChessState::BoardScreen).with_system(game_update_tick),
             )
-           .add_system_set(
-               SystemSet::on_exit(FortChessState::BoardScreen)
-               .with_system(dealloc_player_name_box_vec)
+            .add_system_set(
+                SystemSet::on_exit(FortChessState::BoardScreen)
+                    .with_system(dealloc_player_name_box_vec),
             )
             .add_plugin(GameEndPlugin);
     }
@@ -86,28 +75,18 @@ impl Plugin for GamePlugin {
 /*████Player Name Box████*/
 /*-----------------------------------------------------------------------------------------------*/
 /// Simple function to initialize player name struct vec.
-fn init_player_name_box_vec(
-    mut commands:   Commands,
-    game:           Res<GameAsset>,
-) {
+fn init_player_name_box_vec(mut commands: Commands, game: Res<GameAsset>) {
     let mut player_name = PlayerNameBoxVec::new();
-    let mut outer_check_fn_iter = [
-        q1_outer_bound_pos,
-        q2_outer_bound_pos,
-        q3_outer_bound_pos,
-    ].into_iter();
-    game
-        .get()
-        .players
-        .iter()
-        .for_each(|player| {
-            let (x, y) = if player.is_defender {
-                (-1_i32, 0_i32)
-            } else {
-                (outer_check_fn_iter.next().unwrap())()
-            };
-            player_name.push(player.name.clone(), player.team, x, y);
-        });
+    let mut outer_check_fn_iter =
+        [q1_outer_bound_pos, q2_outer_bound_pos, q3_outer_bound_pos].into_iter();
+    game.get().players.iter().for_each(|player| {
+        let (x, y) = if player.is_defender {
+            (-1_i32, 0_i32)
+        } else {
+            (outer_check_fn_iter.next().unwrap())()
+        };
+        player_name.push(player.name.clone(), player.team, x, y);
+    });
     commands.insert_resource(player_name);
 }
 
@@ -137,12 +116,11 @@ impl GameAsset {
 /*-----------------------------------------------------------------------------------------------*/
 /// Initial game creation. In future, this will be handled a bit differently to facilitate variable
 /// game players.
-fn init_game(
-    mut commands:           Commands,
-    name_entry_value_res:   Res<NameEntryValue>,
-) {
+fn init_game(mut commands: Commands, name_entry_value_res: Res<NameEntryValue>) {
     let count = name_entry_value_res.count();
-    if count < 2_usize { panic!("Less than two players") }
+    if count < 2_usize {
+        panic!("Less than two players")
+    }
     let dice_roll = (dice_roll() % TEAM_TYPE_COUNT) % count;
     let mut quadrant = [Quadrant::Q1, Quadrant::Q2, Quadrant::Q3].into_iter();
     commands.insert_resource(GameAsset(Game::init(
@@ -163,7 +141,7 @@ fn init_game(
                 )
                 .unwrap()
             })
-            .collect::<Vec<Player>>()
+            .collect::<Vec<Player>>(),
     )));
 }
 
@@ -177,22 +155,23 @@ fn set_state_boardscreen(mut state: ResMut<State<FortChessState>>) {
 /// Runs every frame of the game to check if the board needs to update graphics. Draws pieces as
 /// well as highlights.
 fn game_update_tick(
-    mut commands:   Commands,
-    mut game:       ResMut<GameAsset>,
-    font:           Res<BoldFontHandle>,
-    sprite:         Res<PlayerSheet>,
-    mut pname:      ResMut<PlayerNameBoxVec>,
-    mut state:      ResMut<State<FortChessState>>,
-    dquery:         Query<Entity, With<Piece>>,
-    hquery:         Query<Entity, With<Highlight>>,
-    pnquery:        Query<Entity, With<PlayerName>>,
-    pnhquery:       Query<Entity, With<PlayerNameOutline>>,
+    mut commands: Commands,
+    mut game: ResMut<GameAsset>,
+    font: Res<BoldFontHandle>,
+    sprite: Res<PlayerSheet>,
+    mut pname: ResMut<PlayerNameBoxVec>,
+    mut state: ResMut<State<FortChessState>>,
+    dquery: Query<Entity, With<Piece>>,
+    hquery: Query<Entity, With<Highlight>>,
+    pnquery: Query<Entity, With<PlayerName>>,
+    pnhquery: Query<Entity, With<PlayerNameOutline>>,
 ) {
-    if !game.get().update { return }
+    if !game.get().update {
+        return;
+    }
     clean_up_lost_players(game.get_mut(), &mut pname);
     if game.get().players.len().eq(&1_usize) {
-        game
-            .get_mut()
+        game.get_mut()
             .next_player()
             .set_play_false()
             .current_player_mut()
@@ -203,22 +182,19 @@ fn game_update_tick(
         return;
     }
     game.get_mut().set_update_false();
-    draw_pieces(            &mut commands, &sprite, &game, &dquery);
-    highlight_active_pieces(&mut commands, &game,          &hquery);
-    display_player_names(   &mut commands, &pname,         &pnquery, &font);
-    highlight_player_name(  &mut commands, &pname,  &game, &pnhquery);
+    draw_pieces(&mut commands, &sprite, &game, &dquery);
+    highlight_active_pieces(&mut commands, &game, &hquery);
+    display_player_names(&mut commands, &pname, &pnquery, &font);
+    highlight_player_name(&mut commands, &pname, &game, &pnhquery);
 }
 
 /// Looks for players and kills them at every iteration.
-fn clean_up_lost_players(
-    game:   &mut Game,
-    pname:  &mut ResMut<PlayerNameBoxVec>,
-) {
+fn clean_up_lost_players(game: &mut Game, pname: &mut ResMut<PlayerNameBoxVec>) {
     let _dead = game.hunt();
-    if !_dead.is_empty() { dbg!(&_dead); }
-    _dead
-        .into_iter()
-        .for_each(|player| pname.pop(player.team))
+    if !_dead.is_empty() {
+        dbg!(&_dead);
+    }
+    _dead.into_iter().for_each(|player| pname.pop(player.team))
 }
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -230,9 +206,9 @@ fn clean_up_lost_players(
 /// the binary to load the player pieces asset. Otherwise it won't be possible for the pieces to
 /// load.
 fn load_sprite(
-    mut commands:           Commands,
-    mut texture_atlases:    ResMut<Assets<TextureAtlas>>,
-    asset:                  Res<AssetServer>,
+    mut commands: Commands,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+    asset: Res<AssetServer>,
 ) {
     commands.insert_resource(PlayerSheet(texture_atlases.add(
         TextureAtlas::from_grid_with_padding(

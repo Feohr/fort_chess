@@ -4,35 +4,31 @@
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
 //----------//
-mod pawn;
-mod rook;
 mod knight;
 mod minister;
+mod pawn;
 mod queen;
+mod rook;
 //----------//
 
-use crate::{
-    ZAxisLevel, RESOLUTION,
-    listener::spawn_square_sprite,
-    despawn_entity::DespawnEntity,
-};
+use crate::{despawn_entity::DespawnEntity, listener::spawn_square_sprite, ZAxisLevel, RESOLUTION};
 use bevy::prelude::{Color, Commands, Component, Entity, Query, ResMut, Vec3, With};
 use fort_builders::{
     game::{Game, GameAction},
     pieces::PieceType,
 };
-use pawn::analyse_pawn_paths;
-use rook::analyse_rook_paths;
 use knight::analyse_knight_paths;
 use minister::analyse_minister_paths;
+use pawn::analyse_pawn_paths;
 use queen::analyse_queen_paths;
+use rook::analyse_rook_paths;
 
 /// The color of the [`PossiblePaths`] that do not have a piece.
-const PPATHS_COLOR_EMPTY    : Color = Color::rgb(0.9_f32, 0.9_f32, 0.6_f32);
+const PPATHS_COLOR_EMPTY: Color = Color::rgb(0.9_f32, 0.9_f32, 0.6_f32);
 /// The color of [`PossiblePaths`] that have a piece.
-const PPATHS_COLOR_PIECE    : Color = Color::PURPLE;
+const PPATHS_COLOR_PIECE: Color = Color::PURPLE;
 /// The step size just holds 1.0 as the value. Not necessary but I do a lot of unnecessary stuff.
-const STEP                  : f32   = 1_f32;
+const STEP: f32 = 1_f32;
 
 /// Type to hold a vector of tuple with `f32` x and y positions.
 type PositionVectorf32 = Vec<(f32, f32)>;
@@ -50,20 +46,18 @@ pub struct Paths;
 
 /// To detect possible paths of a piece.
 pub(crate) fn possible_piece_paths(
-    x:          f32,
-    y:          f32,
+    x: f32,
+    y: f32,
     piece_type: PieceType,
-    game:       &Game,
+    game: &Game,
 ) -> PositionVectorf32 {
-    (
-        match piece_type {
-            PieceType::Rook     => analyse_rook_paths,
-            PieceType::Pawn     => analyse_pawn_paths,
-            PieceType::Knight   => analyse_knight_paths,
-            PieceType::Minister => analyse_minister_paths,
-            PieceType::Queen    => analyse_queen_paths,
-        }
-    )   (x, y, game)
+    (match piece_type {
+        PieceType::Rook => analyse_rook_paths,
+        PieceType::Pawn => analyse_pawn_paths,
+        PieceType::Knight => analyse_knight_paths,
+        PieceType::Minister => analyse_minister_paths,
+        PieceType::Queen => analyse_queen_paths,
+    })(x, y, game)
 }
 
 /*████PossiblePaths████*/
@@ -93,35 +87,29 @@ impl PossiblePaths {
 
 /// To draw the paths whenever a piece is chosen.
 pub(crate) fn draw_possible_piece_paths(
-    commands:       &mut Commands,
-    paths:          &PossiblePaths,
-    paths_query:    &Query<Entity, With<Paths>>,
-    game:           &Game,
+    commands: &mut Commands,
+    paths: &PossiblePaths,
+    paths_query: &Query<Entity, With<Paths>>,
+    game: &Game,
 ) {
     commands.despawn_entity(paths_query);
-    paths
-        .get()
-        .iter()
-        .for_each(|step| {
-            let step_block = spawn_square_sprite(
-                commands,
-                piece_in_step_detection(step, game),
-                Vec3::new(
-                    step.0 * RESOLUTION,
-                    step.1 * RESOLUTION,
-                    ZAxisLevel::Seventh.as_f32(),
-                ),
-            );
-            commands.entity(step_block).insert(Paths);
-        });
+    paths.get().iter().for_each(|step| {
+        let step_block = spawn_square_sprite(
+            commands,
+            piece_in_step_detection(step, game),
+            Vec3::new(
+                step.0 * RESOLUTION,
+                step.1 * RESOLUTION,
+                ZAxisLevel::Seventh.as_f32(),
+            ),
+        );
+        commands.entity(step_block).insert(Paths);
+    });
 }
 
 /// To update the possible paths whenever a piece is chosen. The paths are derived from
 /// `possible_piece_paths` function that returns a vector of position tuples.
-pub(crate) fn update_possible_piece_paths(
-    game: &Game,
-    paths: &mut ResMut<PossiblePaths>,
-) {
+pub(crate) fn update_possible_piece_paths(game: &Game, paths: &mut ResMut<PossiblePaths>) {
     let (piece_pos_x, piece_pos_y, piece_type) = {
         let piece = game.current_player().current_chosen_piece().unwrap();
         (
@@ -143,7 +131,7 @@ pub(crate) fn update_possible_piece_paths(
 #[inline]
 fn piece_in_step_detection(step: &(f32, f32), game: &Game) -> Color {
     match game.check_piece_in_pos(step.0, step.1) {
-        true  => PPATHS_COLOR_PIECE,
+        true => PPATHS_COLOR_PIECE,
         false => PPATHS_COLOR_EMPTY,
     }
 }

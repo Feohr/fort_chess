@@ -3,22 +3,22 @@
 //! Handles the knight's possible paths analysis.
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
+use crate::listener::possible_paths::PositionVectorf32;
 use fort_builders::{
     board::{position_in_q1_bounds, position_in_q2_bounds, position_in_q3_bounds, Quadrant},
     game::Game,
     player::PlayerAction,
 };
-use crate::listener::possible_paths::PositionVectorf32;
 
 mod circle {
     /// The circle's min angle value that holds `0`.
-    pub(crate) const ANGLE_START    : usize = 0_usize;
+    pub(crate) const ANGLE_START: usize = 0_usize;
     /// To hold the value of `360`.
-    pub(crate) const ANGLE_END      : usize = 360_usize;
+    pub(crate) const ANGLE_END: usize = 360_usize;
     /// To get the circle scan increment step.
-    pub(crate) const ANGLE_STEP     : usize = 30_usize;
+    pub(crate) const ANGLE_STEP: usize = 30_usize;
     /// To get the radius of the circle scanner.
-    pub(crate) const RADIUS         : f32   = 2_f32;
+    pub(crate) const RADIUS: f32 = 2_f32;
 }
 
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
@@ -49,19 +49,25 @@ pub(crate) fn analyse_knight_paths(x: f32, y: f32, game: &Game) -> PositionVecto
         let path_x = ((theta as f32).to_radians().sin() * circle::RADIUS).round() + x;
         let path_y = ((theta as f32).to_radians().cos() * circle::RADIUS).round() + y;
         if path_x == x.round()
-        || path_y == y.round()
-        || game.current_player().piece_index_from_xy_f32(path_x, path_y).is_ok() { continue }
+            || path_y == y.round()
+            || game
+                .current_player()
+                .piece_index_from_xy_f32(path_x, path_y)
+                .is_ok()
+        {
+            continue;
+        }
         _possiblepaths.push((path_x, path_y));
     }
-    _possiblepaths  .into_iter()
-                    .filter(|(_x, _y)| (
-                    match Quadrant::from_xy(x, y).unwrap() {
-                        Quadrant::Q1 => position_in_q1_bounds,
-                        Quadrant::Q2 => position_in_q2_bounds,
-                        Quadrant::Q3 => position_in_q3_bounds,
-                        _            => panic!(
-                            "Cannot analyse paths for a piece in \'NoQuad\' Quadrant."
-                        ),
-                    })(*_x, *_y))
-                    .collect::<PositionVectorf32>()
+    _possiblepaths
+        .into_iter()
+        .filter(|(_x, _y)| {
+            (match Quadrant::from_xy(x, y).unwrap() {
+                Quadrant::Q1 => position_in_q1_bounds,
+                Quadrant::Q2 => position_in_q2_bounds,
+                Quadrant::Q3 => position_in_q3_bounds,
+                _ => panic!("Cannot analyse paths for a piece in \'NoQuad\' Quadrant."),
+            })(*_x, *_y)
+        })
+        .collect::<PositionVectorf32>()
 }

@@ -19,16 +19,34 @@ fn defender_position(quadrant_active: usize) -> PositionVectori32 {
         .into_iter()
         .flat_map(|index| match index {
             1_usize => vec![
-                (-3_i32, -2_i32), (-3_i32, -1_i32), (-3_i32,  0_i32), (-3_i32,  1_i32),
-                (-4_i32, -2_i32), (-4_i32, -1_i32), (-4_i32,  0_i32), (-4_i32,  1_i32),
+                (-3_i32, -2_i32),
+                (-3_i32, -1_i32),
+                (-3_i32, 0_i32),
+                (-3_i32, 1_i32),
+                (-4_i32, -2_i32),
+                (-4_i32, -1_i32),
+                (-4_i32, 0_i32),
+                (-4_i32, 1_i32),
             ],
             2_usize => vec![
-                (-2_i32,  2_i32), (-1_i32,  2_i32), ( 0_i32,  2_i32), ( 1_i32,  2_i32),
-                (-2_i32,  3_i32), (-1_i32,  3_i32), ( 0_i32,  3_i32), ( 1_i32,  3_i32),
+                (-2_i32, 2_i32),
+                (-1_i32, 2_i32),
+                (0_i32, 2_i32),
+                (1_i32, 2_i32),
+                (-2_i32, 3_i32),
+                (-1_i32, 3_i32),
+                (0_i32, 3_i32),
+                (1_i32, 3_i32),
             ],
             3_usize => vec![
-                ( 2_i32,  1_i32), ( 2_i32,  0_i32), ( 2_i32, -1_i32), ( 2_i32, -2_i32),
-                ( 3_i32,  1_i32), ( 3_i32,  0_i32), ( 3_i32, -1_i32), ( 3_i32, -2_i32),
+                (2_i32, 1_i32),
+                (2_i32, 0_i32),
+                (2_i32, -1_i32),
+                (2_i32, -2_i32),
+                (3_i32, 1_i32),
+                (3_i32, 0_i32),
+                (3_i32, -1_i32),
+                (3_i32, -2_i32),
             ],
             _ => panic!("There can't be more than 4 players. index: {}.", index),
         })
@@ -39,8 +57,14 @@ fn defender_position(quadrant_active: usize) -> PositionVectori32 {
 #[inline]
 fn enemy_position_q1() -> PositionVectori32 {
     vec![
-        (-7_i32, -2_i32), (-7_i32, -1_i32), (-7_i32,  0_i32), (-7_i32,  1_i32),
-        (-8_i32, -2_i32), (-8_i32, -1_i32), (-8_i32,  0_i32), (-8_i32,  1_i32),
+        (-7_i32, -2_i32),
+        (-7_i32, -1_i32),
+        (-7_i32, 0_i32),
+        (-7_i32, 1_i32),
+        (-8_i32, -2_i32),
+        (-8_i32, -1_i32),
+        (-8_i32, 0_i32),
+        (-8_i32, 1_i32),
     ]
 }
 
@@ -48,8 +72,14 @@ fn enemy_position_q1() -> PositionVectori32 {
 #[inline]
 fn enemy_position_q2() -> PositionVectori32 {
     vec![
-        (-2_i32,  6_i32), (-1_i32,  6_i32), ( 0_i32,  6_i32), ( 1_i32,  6_i32),
-        (-2_i32,  7_i32), (-1_i32,  7_i32), ( 0_i32,  7_i32), ( 1_i32,  7_i32),
+        (-2_i32, 6_i32),
+        (-1_i32, 6_i32),
+        (0_i32, 6_i32),
+        (1_i32, 6_i32),
+        (-2_i32, 7_i32),
+        (-1_i32, 7_i32),
+        (0_i32, 7_i32),
+        (1_i32, 7_i32),
     ]
 }
 
@@ -57,8 +87,14 @@ fn enemy_position_q2() -> PositionVectori32 {
 #[inline]
 fn enemy_position_q3() -> PositionVectori32 {
     vec![
-        ( 6_i32,  1_i32), ( 6_i32,  0_i32), ( 6_i32, -1_i32), ( 6_i32, -2_i32),
-        ( 7_i32,  1_i32), ( 7_i32,  0_i32), ( 7_i32, -1_i32), ( 7_i32, -2_i32),
+        (6_i32, 1_i32),
+        (6_i32, 0_i32),
+        (6_i32, -1_i32),
+        (6_i32, -2_i32),
+        (7_i32, 1_i32),
+        (7_i32, 0_i32),
+        (7_i32, -1_i32),
+        (7_i32, -2_i32),
     ]
 }
 
@@ -94,7 +130,7 @@ fn defender_type(quadrant_active: usize) -> PieceTypeVectoru8 {
 #[inline]
 pub(crate) fn piece_type(is_defender: bool, quadrant_active: usize) -> PieceTypeVectoru8 {
     match is_defender {
-        true  => defender_type(quadrant_active),
+        true => defender_type(quadrant_active),
         false => enemy_type(),
     }
 }
@@ -104,14 +140,14 @@ pub(crate) fn piece_type(is_defender: bool, quadrant_active: usize) -> PieceType
 ///
 /// [`Position`]: crate::pieces::Position
 pub(crate) fn position_from_quadrant(
-    quadrant:           &Quadrant,
-    quadrant_active:    usize,
+    quadrant: &Quadrant,
+    quadrant_active: usize,
 ) -> PositionVectori32 {
-        match quadrant {
-            Quadrant::Q1     => enemy_position_q1(),
-            Quadrant::Q2     => enemy_position_q2(),
-            Quadrant::Q3     => enemy_position_q3(),
-            Quadrant::NoQuad => defender_position(quadrant_active),
-        }
+    match quadrant {
+        Quadrant::Q1 => enemy_position_q1(),
+        Quadrant::Q2 => enemy_position_q2(),
+        Quadrant::Q3 => enemy_position_q3(),
+        Quadrant::NoQuad => defender_position(quadrant_active),
+    }
 }
 /*-----------------------------------------------------------------------------------------------*/

@@ -6,23 +6,23 @@
 pub(crate) mod style {
     use bevy::prelude::Color;
     /// When expand button is clicked.
-    pub(crate) const EXPAND_CLICK:          Color = Color::DARK_GRAY;
+    pub(crate) const EXPAND_CLICK: Color = Color::DARK_GRAY;
     /// When expand button is hovered.
-    pub(crate) const EXPAND_HOVER:          Color = Color::GRAY;
+    pub(crate) const EXPAND_HOVER: Color = Color::GRAY;
     /// When expand is idle.
-    pub(crate) const EXPAND_NORML:          Color = Color::SILVER;
+    pub(crate) const EXPAND_NORML: Color = Color::SILVER;
 }
 
-use bevy::prelude::{
-    Handle, Image, Component, Interaction, Query, With, Changed, Plugin, App, SystemSet,
-    Visibility, Button, Res, StartupStage, AssetServer, UiImage, Commands, ResMut, UiColor,
-};
 use crate::{
-    FortChessState,
     startscreen::{
-        NameEntryValue,
         expand::style::{EXPAND_CLICK, EXPAND_HOVER, EXPAND_NORML},
+        NameEntryValue,
     },
+    FortChessState,
+};
+use bevy::prelude::{
+    App, AssetServer, Button, Changed, Commands, Component, Handle, Image, Interaction, Plugin,
+    Query, Res, ResMut, StartupStage, SystemSet, UiColor, UiImage, Visibility, With,
 };
 
 /// Resource to access the expand button image.
@@ -53,18 +53,31 @@ pub(crate) struct InputBoxNode {
 /// Plugin to handle [`ExpandTextInputButton`].
 pub(crate) struct ExpandTextInputButtonPlugin;
 
+/// Type alias for expand text button query.
+type ExpandTextInputBtnQuery = (
+    Changed<Interaction>,
+    With<Button>,
+    With<ExpandTextInputButton>,
+);
+/// Type alias for expand text button color query.
+type ExpandTexBtnColorQuery<'a> = (
+    &'a Interaction,
+    &'a mut UiColor,
+    &'a mut UiImage,
+    &'a mut ExpandTextInputButton,
+);
+
 /*████Functions██████████████████████████████████████████████████████████████████████████████████*/
 
 /*████Plugin for ExpandTextInputButtonPlugin████*/
 /*-----------------------------------------------------------------------------------------------*/
 impl Plugin for ExpandTextInputButtonPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_startup_system_to_stage(StartupStage::PreStartup, insert_expand_input_btn_res)
+        app.add_startup_system_to_stage(StartupStage::PreStartup, insert_expand_input_btn_res)
             .add_system_set(
                 SystemSet::on_update(FortChessState::StartScreen)
-                .with_system(expand_btn_click   )
-                .with_system(input_toggle       )
+                    .with_system(expand_btn_click)
+                    .with_system(input_toggle),
             );
     }
 }
@@ -85,12 +98,7 @@ impl InputBoxNode {
     /// To get the [`InputBoxNode`] value as `usize` value in order to identify the text box.
     #[inline]
     pub(crate) fn as_usize(&self) -> usize {
-        self.id.as_usize()
-        +   (if self.expandable {
-            2_usize
-        } else {
-            0_usize
-        })
+        self.id.as_usize() + (if self.expandable { 2_usize } else { 0_usize })
     }
 }
 
@@ -98,13 +106,10 @@ impl InputBoxNode {
 /*-----------------------------------------------------------------------------------------------*/
 /// To store the button image resources when we enter the screen.
 #[inline]
-fn insert_expand_input_btn_res(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-) {
+fn insert_expand_input_btn_res(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(ExpandBtnImage {
-        open:   asset_server.load("spritesheet/expand.png"  ),
-        close:  asset_server.load("spritesheet/unexpand.png"),
+        open: asset_server.load("spritesheet/expand.png"),
+        close: asset_server.load("spritesheet/unexpand.png"),
     });
 }
 /*-----------------------------------------------------------------------------------------------*/
@@ -116,43 +121,35 @@ fn insert_expand_input_btn_res(
 /// When the mouse is hovered, or does not hover, the only difference is change in color of the
 /// button being clicked.
 pub(crate) fn expand_btn_click(
-    icons:                  Res<ExpandBtnImage>,
-    mut names:              ResMut<NameEntryValue>,
-    mut expand_text_query:  Query<
-        (&Interaction, &mut UiColor, &mut UiImage, &mut ExpandTextInputButton),
-        (Changed<Interaction>, With<Button>, With<ExpandTextInputButton>),
-    >,
+    icons: Res<ExpandBtnImage>,
+    mut names: ResMut<NameEntryValue>,
+    mut expand_text_query: Query<ExpandTexBtnColorQuery, ExpandTextInputBtnQuery>,
 ) {
     expand_text_query
         .iter_mut()
-        .for_each(|(&interaction, mut color, mut image, mut expand)| {
-            match interaction {
-                Interaction::Clicked    => {
+        .for_each(
+            |(&interaction, mut color, mut image, mut expand)| match interaction {
+                Interaction::Clicked => {
                     expand.expanded = !expand.expanded;
                     reset_input_str(&expand.id, &mut names);
                     *color = UiColor::from(EXPAND_CLICK);
                     *image = expand_btn_icon_select(expand.expanded, &icons);
-                },
-                Interaction::Hovered    => *color = UiColor::from(EXPAND_HOVER),
-                Interaction::None       => *color = UiColor::from(EXPAND_NORML),
-            }
-        });
+                }
+                Interaction::Hovered => *color = UiColor::from(EXPAND_HOVER),
+                Interaction::None => *color = UiColor::from(EXPAND_NORML),
+            },
+        );
 }
 
 /// To reset the input string value.
 ///
 /// Takes [`TextInputId`] value and maps to the respective string buffer which is to be cleared.
 #[inline]
-fn reset_input_str(
-    id:     &TextInputId,
-    names:  &mut ResMut<NameEntryValue>,
-) {
-    (
-        match id {
-            TextInputId::One    => names.players.get_mut(2_usize),
-            TextInputId::Two    => names.players.get_mut(3_usize),
-        }
-    )
+fn reset_input_str(id: &TextInputId, names: &mut ResMut<NameEntryValue>) {
+    (match id {
+        TextInputId::One => names.players.get_mut(2_usize),
+        TextInputId::Two => names.players.get_mut(3_usize),
+    })
     .unwrap_or(&mut String::new())
     .clear()
 }
@@ -162,13 +159,10 @@ fn reset_input_str(
 /// Takes a boolean value and returns the appropriate [`UiImage`] to show if the button is expanded
 /// or not.
 #[inline]
-fn expand_btn_icon_select(
-    expanded:   bool,
-    icon:       &Res<ExpandBtnImage>,
-) -> UiImage {
+fn expand_btn_icon_select(expanded: bool, icon: &Res<ExpandBtnImage>) -> UiImage {
     match expanded {
-        true    => UiImage(icon.close.clone()),
-        false   => UiImage(icon.open.clone()),
+        true => UiImage(icon.close.clone()),
+        false => UiImage(icon.open.clone()),
     }
 }
 /*-----------------------------------------------------------------------------------------------*/
@@ -180,19 +174,17 @@ fn expand_btn_icon_select(
 /// To toggle the input when the box is pressed. Iterates through the box query and makes the
 /// corresponding [`InputBoxNode`] `Visible`.
 pub(crate) fn input_toggle(
-    mut box_query:  Query<(&mut Visibility, &InputBoxNode), With<InputBoxNode>>,
-    btn_query:      Query<&ExpandTextInputButton, (With<Button>, With<ExpandTextInputButton>)>,
+    mut box_query: Query<(&mut Visibility, &InputBoxNode), With<InputBoxNode>>,
+    btn_query: Query<&ExpandTextInputButton, (With<Button>, With<ExpandTextInputButton>)>,
 ) {
     box_query
         .iter_mut()
         .for_each(|(mut visibility, input_box)| {
-            btn_query
-                .iter()
-                .for_each(|btn| {
-                    if input_box.expandable && btn.id.eq(&input_box.id) {
-                        visibility.is_visible = btn.expanded;
-                    }
-                });
+            btn_query.iter().for_each(|btn| {
+                if input_box.expandable && btn.id.eq(&input_box.id) {
+                    visibility.is_visible = btn.expanded;
+                }
+            });
         });
 }
 /*-----------------------------------------------------------------------------------------------*/

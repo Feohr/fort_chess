@@ -8,26 +8,22 @@
 pub(crate) mod block;
 /*----------*/
 
-use crate::{
-    RESOLUTION, SPRITESIZE, TILESIZE, ZAxisLevel,
-    state::FortChessState,
-};
+use crate::{state::FortChessState, ZAxisLevel, RESOLUTION, SPRITESIZE, TILESIZE};
 use bevy::prelude::{
-    default, App, AssetServer, Assets, Commands, Entity, Handle, Plugin, Res, ResMut,
-    SpriteSheetBundle, StartupStage, TextureAtlas, TextureAtlasSprite, Transform, Vec2, Vec3,
-    SystemSet, Component,
-};
-use fort_builders::{
-    BREADTH,
-    board::{X_MAX, X_MIN, Y_MAX, Y_MIN},
-    decrement_if_positive,
+    default, App, AssetServer, Assets, Commands, Component, Entity, Handle, Plugin, Res, ResMut,
+    SpriteSheetBundle, StartupStage, SystemSet, TextureAtlas, TextureAtlasSprite, Transform, Vec2,
+    Vec3,
 };
 use block::FortBlockPlugin;
+use fort_builders::{
+    board::{X_MAX, X_MIN, Y_MAX, Y_MIN},
+    decrement_if_positive, BREADTH,
+};
 
 /// To hold the row size of the tile pieces.
-const TILE_TYPE_ROW : usize   = 5_usize;
+const TILE_TYPE_ROW: usize = 5_usize;
 /// To hold the col size of the tile pieces.
-const TILE_TYPE_COL : usize   = 1_usize;
+const TILE_TYPE_COL: usize = 1_usize;
 
 /// Struct to hold the tile texture atlas.
 struct TileSheet(Handle<TextureAtlas>);
@@ -58,15 +54,14 @@ pub(crate) struct TileComponent;
 impl Plugin for TilePlugin {
     /// [`Plugin`] implementation for [`TilePlugin`].
     fn build(&self, app: &mut App) {
-        app
-            .add_startup_system_to_stage(StartupStage::PreStartup, load_tile)
+        app.add_startup_system_to_stage(StartupStage::PreStartup, load_tile)
             .add_system_set(
                 SystemSet::on_enter(FortChessState::BoardScreen)
-                .with_system(draw_board )
-                .with_system(draw_border)
-                .with_system(draw_fort  )
+                    .with_system(draw_board)
+                    .with_system(draw_border)
+                    .with_system(draw_fort),
             )
-           .add_plugin(FortBlockPlugin);
+            .add_plugin(FortBlockPlugin);
     }
 }
 /*-----------------------------------------------------------------------------------------------*/
@@ -83,16 +78,16 @@ impl TileSpriteSheetIndex {
             2_usize => TileSpriteSheetIndex::Border,
             3_usize => TileSpriteSheetIndex::FortOuter,
             4_usize => TileSpriteSheetIndex::FortInner,
-            _       => panic!("TileSpriteSheetIndex cannot have index greater than 4."),
+            _ => panic!("TileSpriteSheetIndex cannot have index greater than 4."),
         }
     }
     /// Converts a given [`TileSpriteSheetIndex`] variant to corresponding usize value.
     #[inline]
     fn as_usize(&self) -> usize {
         match self {
-            TileSpriteSheetIndex::Light     => 0_usize,
-            TileSpriteSheetIndex::Dark      => 1_usize,
-            TileSpriteSheetIndex::Border    => 2_usize,
+            TileSpriteSheetIndex::Light => 0_usize,
+            TileSpriteSheetIndex::Dark => 1_usize,
+            TileSpriteSheetIndex::Border => 2_usize,
             TileSpriteSheetIndex::FortOuter => 3_usize,
             TileSpriteSheetIndex::FortInner => 4_usize,
         }
@@ -108,19 +103,16 @@ impl TileSpriteSheetIndex {
 /// After `x > 0`, the tiles are then switched with Light for even and Dark for odd tiles.
 fn dark_or_light_tile_index(x: i32, y: i32) -> TileSpriteSheetIndex {
     TileSpriteSheetIndex::from_usize({
-        (
-            match x > 0_i32 {
-                true  => TileSpriteSheetIndex::Light,
-                false => TileSpriteSheetIndex::Dark,
-            }
-            .as_usize()
-        ) ^ (
-            match (x + y) % 2_i32 == 0_i32 {
-                true  => TileSpriteSheetIndex::Dark,
+        (match x > 0_i32 {
+            true => TileSpriteSheetIndex::Light,
+            false => TileSpriteSheetIndex::Dark,
+        }
+        .as_usize())
+            ^ (match (x + y) % 2_i32 == 0_i32 {
+                true => TileSpriteSheetIndex::Dark,
                 false => TileSpriteSheetIndex::Light,
             }
-            .as_usize()
-        )
+            .as_usize())
     })
 }
 
@@ -133,33 +125,28 @@ fn dark_or_light_tile_index(x: i32, y: i32) -> TileSpriteSheetIndex {
 ///
 /// with the power of mathematics. The one issue I do have is with the *Zeroeth* axis as that
 /// produced odd number of tiles at each axis.
-fn draw_board(
-    mut commands:   Commands,
-    tile:           Res<TileSheet>,
-) {
+fn draw_board(mut commands: Commands, tile: Res<TileSheet>) {
     (X_MIN..=X_MAX).for_each(|x| {
         (Y_MIN..=Y_MAX).for_each(|mut y| {
-            if !{   y == 0_i32
-            ||  (
-                    x.abs() <=  BREADTH
-                &&  y.abs() <=  BREADTH
-                )
-            ||  (
-                    x.abs() >   BREADTH
-                &&  y.abs() >   BREADTH
-            )}  {
-                    if y > 0_i32 { y -= 1_i32 }
-                    let tile = spawn_tile(
-                        &mut commands,
-                        &tile,
-                        dark_or_light_tile_index(x, y),
-                        Vec3::new(
-                            decrement_if_positive(x)    as f32 * RESOLUTION,
-                            y                           as f32 * RESOLUTION,
-                            ZAxisLevel::Second.as_f32(),
-                        ),
-                    );
-                    commands.entity(tile).insert(TileComponent);
+            if !{
+                y == 0_i32
+                    || (x.abs() <= BREADTH && y.abs() <= BREADTH)
+                    || (x.abs() > BREADTH && y.abs() > BREADTH)
+            } {
+                if y > 0_i32 {
+                    y -= 1_i32
+                }
+                let tile = spawn_tile(
+                    &mut commands,
+                    &tile,
+                    dark_or_light_tile_index(x, y),
+                    Vec3::new(
+                        decrement_if_positive(x) as f32 * RESOLUTION,
+                        y as f32 * RESOLUTION,
+                        ZAxisLevel::Second.as_f32(),
+                    ),
+                );
+                commands.entity(tile).insert(TileComponent);
             }
         })
     });
@@ -168,33 +155,28 @@ fn draw_board(
 /// To Draw the border of the board.
 ///
 /// This is essentially just the same as *draw_board* but with bounds incremented to form a border.
-fn draw_border(
-    mut commands:   Commands,
-    tile:           Res<TileSheet>,
-) {
+fn draw_border(mut commands: Commands, tile: Res<TileSheet>) {
     ((X_MIN - 1)..=(X_MAX + 1)).for_each(|x| {
         ((Y_MIN - 1)..=(Y_MAX + 1)).for_each(|mut y| {
-            if !{   y == 0_i32
-            ||  (
-                    x.abs() <=  BREADTH
-                &&  y.abs() <=  BREADTH
-                )
-            ||  (
-                    x.abs() >   BREADTH + 1_i32
-                &&  y.abs() >   BREADTH + 1_i32
-            )}  {
-                    if y > 0_i32 { y -= 1_i32 }
-                    let tile = spawn_tile(
-                        &mut commands,
-                        &tile,
-                        TileSpriteSheetIndex::Border,
-                        Vec3::new(
-                            decrement_if_positive(x)    as f32 * RESOLUTION,
-                            y                           as f32 * RESOLUTION,
-                            ZAxisLevel::First.as_f32(),
-                        ),
-                    );
-                    commands.entity(tile).insert(TileComponent);
+            if !{
+                y == 0_i32
+                    || (x.abs() <= BREADTH && y.abs() <= BREADTH)
+                    || (x.abs() > BREADTH + 1_i32 && y.abs() > BREADTH + 1_i32)
+            } {
+                if y > 0_i32 {
+                    y -= 1_i32
+                }
+                let tile = spawn_tile(
+                    &mut commands,
+                    &tile,
+                    TileSpriteSheetIndex::Border,
+                    Vec3::new(
+                        decrement_if_positive(x) as f32 * RESOLUTION,
+                        y as f32 * RESOLUTION,
+                        ZAxisLevel::First.as_f32(),
+                    ),
+                );
+                commands.entity(tile).insert(TileComponent);
             }
         })
     });
@@ -203,10 +185,7 @@ fn draw_border(
 /// To draw the fort.
 ///
 /// Follows the similar logic as other "drawing" functions.
-fn draw_fort(
-    mut commands:   Commands,
-    tile_sheet:     Res<TileSheet>,
-) {
+fn draw_fort(mut commands: Commands, tile_sheet: Res<TileSheet>) {
     (-BREADTH..=BREADTH).for_each(|x| {
         (-BREADTH..BREADTH).for_each(|y| {
             let tile = spawn_tile(
@@ -214,8 +193,8 @@ fn draw_fort(
                 &tile_sheet,
                 TileSpriteSheetIndex::FortOuter,
                 Vec3::new(
-                    decrement_if_positive(x)    as f32 * RESOLUTION,
-                    y                           as f32 * RESOLUTION,
+                    decrement_if_positive(x) as f32 * RESOLUTION,
+                    y as f32 * RESOLUTION,
                     ZAxisLevel::Third.as_f32(),
                 ),
             );
@@ -229,8 +208,8 @@ fn draw_fort(
                 &tile_sheet,
                 TileSpriteSheetIndex::FortInner,
                 Vec3::new(
-                    decrement_if_positive(x)    as f32 * RESOLUTION,
-                    y                           as f32 * RESOLUTION,
+                    decrement_if_positive(x) as f32 * RESOLUTION,
+                    y as f32 * RESOLUTION,
                     ZAxisLevel::Fourth.as_f32(),
                 ),
             );
@@ -247,11 +226,11 @@ fn draw_fort(
 /// To load the tile resource `.png` from assets folder. This folder needs to exist with the
 /// executable binary otherwise the game won't have the asset.
 fn load_tile(
-    mut commands:           Commands,
-    asset:                  Res<AssetServer>,
-    mut texture_atlases:    ResMut<Assets<TextureAtlas>>,
+    mut commands: Commands,
+    asset: Res<AssetServer>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
-   commands.insert_resource(TileSheet(texture_atlases.add(
+    commands.insert_resource(TileSheet(texture_atlases.add(
         TextureAtlas::from_grid_with_padding(
             asset.load("spritesheet/tile_sheet.png"),
             Vec2::splat(SPRITESIZE),
@@ -274,19 +253,16 @@ fn load_tile(
 ///
 /// This is a helper function to spawn a tile from the given input.
 fn spawn_tile(
-    commands:       &mut Commands,
-    tile:           &TileSheet,
-    index:          TileSpriteSheetIndex,
-    translation:    Vec3,
+    commands: &mut Commands,
+    tile: &TileSheet,
+    index: TileSpriteSheetIndex,
+    translation: Vec3,
 ) -> Entity {
     commands
         .spawn_bundle(SpriteSheetBundle {
             sprite: TextureAtlasSprite {
                 index: index.as_usize(),
-                custom_size: Some(Vec2::new(
-                        TILESIZE.0 * RESOLUTION,
-                        TILESIZE.1 * RESOLUTION,
-                )),
+                custom_size: Some(Vec2::new(TILESIZE.0 * RESOLUTION, TILESIZE.1 * RESOLUTION)),
                 ..default()
             },
             texture_atlas: tile.0.clone(),
