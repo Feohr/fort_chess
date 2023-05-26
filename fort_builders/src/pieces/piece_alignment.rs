@@ -35,7 +35,6 @@ fn defender_position(quadrant_active: usize) -> PositionVectori32 {
         .collect::<PositionVectori32>()
 }
 
-// The enemies.
 /// Returns the non-defender player positions in [`Quadrant::Q1`].
 #[inline]
 fn enemy_position_q1() -> PositionVectori32 {
@@ -63,7 +62,6 @@ fn enemy_position_q3() -> PositionVectori32 {
     ]
 }
 
-// piece type index
 /// Returns `u8` value vector that corresponds to the [`PieceType`] value for non-defender type.
 ///
 /// [`PieceType`]: crate::pieces::PieceType

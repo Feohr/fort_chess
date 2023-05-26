@@ -59,8 +59,6 @@ pub(crate) struct DiceRollButton;
 /*████Plugin for DiceRollButtonPlugin████*/
 /*-----------------------------------------------------------------------------------------------*/
 impl Plugin for DiceRollButtonPlugin {
-    // The `dice roll` button was spawning before the `skip turn` button unpredictably. Hence,
-    // the button spawning is pushed to on resume `BoardScreen`. Not the most elegant solution.
     fn build(&self, app: &mut App) {
         app
             .add_system_set(
@@ -86,7 +84,6 @@ fn dice_roll_btn_visibility(
     mut dice_roll_query:    Query<&mut Visibility, With<DiceRollButton>>,
     game:                   Res<GameAsset>,
 ) {
-    // Matching to see if the current player piece is in opposite side.
     dice_roll_query
         .iter_mut()
         .for_each(|mut visibility| visibility.is_visible = game
@@ -102,9 +99,7 @@ fn dice_roll_btn_visibility(
 /*-----------------------------------------------------------------------------------------------*/
 /// Initializing dice roll object values.
 fn init_dice_roll_objects(mut commands: Commands) {
-    // Inserting the DiceRollValue object.
     commands.insert_resource(DiceRollValue::new());
-    // Initializing the DiceRollTimer.
     commands.insert_resource(DiceRollTimer::init());
 }
 /*-----------------------------------------------------------------------------------------------*/
@@ -169,7 +164,6 @@ fn clear_dice_roll_ui_text(
     mut dice_time:  ResMut<DiceRollTimer>,
     time:           Res<Time>,
 ) {
-    // Ticking.
     dice_time.get_mut().tick(time.delta());
     dice_query
         .iter_mut()
@@ -178,7 +172,6 @@ fn clear_dice_roll_ui_text(
                     .first_mut()
                     .expect("There are no text sections for dice roll value prompt").style.color
                     .set_a(dice_time.get().percent_left() * FADEOUT_SPEED);
-            // Clear text when the timer is done.
             if dice_time.get().just_finished() {
                 commands.entity(entity).despawn();
             }
@@ -197,9 +190,7 @@ fn dice_roll_ui_text(
     font:                   Res<RegFontHandle>,
 ) {
     if !dice_roll_value.display { return }
-    // Cleaning up text so that new text can be displayed.
     commands.despawn_entity(&dice_query);
-    // Dice roll timer reset.
     dice_time.get_mut().reset();
     commands.spawn_bundle(Text2dBundle {
         text_2d_bounds: Text2dBounds {
@@ -222,7 +213,6 @@ fn dice_roll_ui_text(
         ..default()
     })
     .insert(DiceRollValueText);
-    // To stop from spawning more than one at a time.
     dice_roll_value.undisplay();
 }
 /*-----------------------------------------------------------------------------------------------*/
@@ -242,7 +232,6 @@ fn dice_roll_btn_clicked(
     paths_query:            Query<Entity, With<Paths>>,
     click_query:            Query<Entity, With<Click>>,
 ) {
-    // Matching with the interaction to display the respective animations.
     dice_roll_query
         .iter_mut()
         .for_each(|(&interaction, mut color)| {
@@ -250,13 +239,11 @@ fn dice_roll_btn_clicked(
                 Interaction::Clicked => {
                     *color = UiColor::from(style::BTN_CLICKD_COLOR);
                     let roll = dice_roll();
-                    // Set dice roll value.
                     dice_roll_val.set(roll);
                     if roll == 5_usize {
                         game.get_mut().current_player_mut().set_winner();
                         game.get_mut().set_play_false();
                     }
-                    // To change the display and move the player along.
                     game
                         .get_mut()
                         .next_player()

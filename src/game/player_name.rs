@@ -108,7 +108,6 @@ pub(crate) fn highlight_player_name(
     game:           &ResMut<GameAsset>,
     pname_query:    &Query<Entity, With<PlayerNameOutline>>,
 ) {
-    // Clean up.
     commands.despawn_entity(pname_query); // Getting the current highlighted color.
     let highlight_color = {
         let player_team = game.get().current_player().team;
@@ -155,7 +154,6 @@ pub(crate) fn display_player_names(
     query:          &Query<Entity, With<PlayerName>>,
     font:           &Res<BoldFontHandle>,
 ) {
-    // Clean up.
     commands.despawn_entity(query);
     player_names.boxes
         .iter()

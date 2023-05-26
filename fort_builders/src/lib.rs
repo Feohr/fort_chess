@@ -6,7 +6,6 @@
 
 #![feature(drain_filter)]
 
-// Modules      //
 //--------------//
 pub mod board;
 pub mod game;
@@ -21,9 +20,7 @@ use thiserror::Error;
 
 /// Holds the breadth size of the board.
 pub const BREADTH   : i32   = 2_i32;
-// To print red output.
 pub const RED       : &str  = "\x1b[31;1m";
-// To reset stdout. i.e. white.
 pub const RST       : &str  = "\x1b[0m";
 
 /// Error enum to handle errors across the lib.
@@ -32,15 +29,12 @@ pub enum Error {
     /// To handle runtime IO errors.
     #[error("{} Ran into runtime error: {0} {}", RED, RST)]
     RunTimeError(#[from] std::io::Error),
-    // Piece.
     /// Piece module errors,
     #[error("{} Error in the piece module: {0} {}", RED, RST)]
     PieceModuleError(#[from] pieces::Error),
-    // Player.
     /// Player modile error.
     #[error("{} Error in the player module: {0} {}", RED, RST)]
     PlayerModuleError(#[from] player::Error),
-    // Misc.
     /// If invalid Quadrant index was provided.
     #[error(
         "{} The provided index {0} does not have a quadrant corresponding to it. {}",
@@ -95,8 +89,6 @@ pub fn dice_roll() -> usize {
     match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
         Ok(n)  => (n.as_secs() % 6_u64) as usize,
         Err(_) => {
-            // You should not be reaching this but if you do then your computer date is stuck
-            // before the 70's.
             eprintln!("{} System date set earlier than UNIX EPOCH {}", RED, RST);
             1_usize
         }
@@ -124,7 +116,6 @@ where
 
 #[cfg(test)]
 mod tests {
-    //    use super::*;
     #[test]
     fn test_str_from_string() {
         assert!("str1", str_from_string("str1".to_string()))

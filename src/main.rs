@@ -15,7 +15,6 @@
 
 extern crate fort_builders;
 
-//   Modules  //
 /*------------*/
 mod game;
 mod listener;
@@ -112,7 +111,6 @@ fn close_window_listener(
     input:      Res<Input<KeyCode>>,
     mut windows:    ResMut<Windows>,
 ) {
-    // If the Control and q key is pressed, find the primary window and close it instantly.
     if  input.pressed(KeyCode::LControl)
     &&  input.pressed(KeyCode::Q) { close_window(&mut windows) }
 }
@@ -161,13 +159,11 @@ fn set_panic_hook_fmt() {
     }));
 }
 
-// Temporary function.
 fn tmp_state_change(
     mut state:  ResMut<State<FortChessState>>,
     keyboard:   Res<Input<KeyCode>>,
 ) {
     if keyboard.just_pressed(KeyCode::Return) {
-        // Idempotent function. Hence no need for handling err.
         match state.current() {
             FortChessState::StartScreen => {
                 state.set(FortChessState::GameBuild).unwrap_or_default();
@@ -175,7 +171,6 @@ fn tmp_state_change(
             FortChessState::GameBuild => {
                 state.set(FortChessState::BoardScreen).unwrap_or_default();
             },
-            // Do nothing.
             _ => {},
         }
     }
@@ -183,23 +178,10 @@ fn tmp_state_change(
 
 /// Main entry function.
 fn main() {
-    // Setting up the panic hook before the program begins.
     set_panic_hook_fmt();
-    // Main loop of the game.
     //
-    // __WindowDescriptor__ for setting up the window.
-    // -    Name:       fort_chess.
-    // -    Reszable:   no.
-    // -    Mode:       fullscreen.
     //
-    // __ClearColor__ is used to fill the background color,
-    // -    Value:      BKGRND_COLOR.
     //
-    //  Plugins:
-    //  -   Default:    for default bevy functionalities.
-    //  -   Tile:       to draw the fort.
-    //  -   Game:       to handle the game object.
-    //  -   Listener:   to handle input.
     App::new()
         .insert_resource(WindowDescriptor {
             title: "Fort Chess".to_string(),

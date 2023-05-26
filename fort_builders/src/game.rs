@@ -144,9 +144,7 @@ impl GameAction for Game {
     /// To update player pieces position every turn.
     #[inline]
     fn update_position(&mut self, x: i32, y: i32) -> Result<&mut Self, Error> {
-        // updating the piece.
         self.players[self.turn].update_piece(x, y)?; 
-        // To trigger draw.
         self.set_update_true();
         Ok(self)
     }
@@ -170,7 +168,6 @@ impl GameAction for Game {
     /// particular piece is present and removes that piece to return it.
     #[inline]
     fn remove_piece_in_pos(&mut self, x: f32, y: f32) -> Result<Option<Piece>, Error> {
-        // To check if the piece is in board range.
         Piece::in_board_range(x as i32, y as i32)?;
         for player in self.players.iter_mut() {
             if let Ok(index) = player.piece_index_from_xy_f32(x, y) {

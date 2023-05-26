@@ -31,7 +31,6 @@ pub(crate) fn clear_picker(
     mut commands:   Commands,
     pickers:        Query<Entity, With<Picker>>,
 ) {
-    // Iterate over all the entities that have the Picker component and despawn them.
     commands.despawn_entity(&pickers);
 }
 /*-----------------------------------------------------------------------------------------------*/
@@ -59,11 +58,9 @@ pub(crate) fn hover_listener(
     game:           ResMut<GameAsset>,
     cursor:         Res<CursorPosition>,
 ) {
-    // Checking for early return.
     let (m_x, m_y) = (cursor.x, cursor.y);
     if  !position_in_board_bounds(m_x, m_y)
     ||  !hovered_position_in_player_pieces(m_x, m_y, &game)  { return }
-    // Creating a hover tile.
     let hover = spawn_square_sprite(
         &mut commands,
         PICKER_COLOR,

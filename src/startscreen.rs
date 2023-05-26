@@ -3,7 +3,6 @@
 //! Module to handle the starting screen of the game.
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
-//  Module   //
 //-----------//
 mod expand;
 mod name_input;
@@ -160,8 +159,6 @@ fn title_text(
     .insert(MainTitle);
 }
 
-// Main UI Node:
-// ------------- //
 
 /// To insert the expand button to open and close the name input three and four.
 fn expand_btn(
@@ -256,9 +253,7 @@ fn text_box_sprite_node(
         ..default()
     })
     .with_children(|commands| {
-        // Left text box.
         text_box_sprite(commands, expandable, font, asset_server, TextInputId::One);
-        // Right text box.
         text_box_sprite(commands, expandable, font, asset_server, TextInputId::Two);
     });
 }
@@ -271,10 +266,8 @@ fn name_entry_text_box_ui(
     asset_server:   Res<ExpandBtnImage>,
     start_btn_font: Res<RegFontHandle>,
 ) {
-    // Input box.
     commands.spawn_bundle(NodeBundle {
         style: Style {
-            // Fullscreen.
             size: Size::new(Val::Percent(100_f32), Val::Percent(100_f32)),
             align_self: AlignSelf::Center,
             align_items: AlignItems::Center,
@@ -287,7 +280,6 @@ fn name_entry_text_box_ui(
     })
     .insert(PlayerNameInput)
     .with_children(|commands| {
-        // Main Node.
         commands.spawn_bundle(NodeBundle {
             style: Style {
                 size: Size::new(Val::Px(TEXT_INPUT_NODE.0), Val::Px(TEXT_INPUT_NODE.1)),
@@ -302,11 +294,8 @@ fn name_entry_text_box_ui(
             ..default()
         })
         .with_children(|commands| {
-            // Start Button.
             spawn_start_btn(        commands, &start_btn_font               );
-            // Bottom 2 names.
             text_box_sprite_node(   commands, true,    &asset_server, &start_btn_font );
-            // Top 2 names.
             text_box_sprite_node(   commands, false,   &asset_server, &start_btn_font );
        });
     });

@@ -5,7 +5,6 @@
 
 use crate::{Error, BREADTH};
 
-// Board tile borders.
 /// Board's right most `x axis` length.
 pub const X_MAX : i32 =  8_i32;
 /// Board's left most `x axis` length.
@@ -15,7 +14,6 @@ pub const Y_MAX : i32 =  8_i32;
 /// Board's down most `y axis` length.
 pub const Y_MIN : i32 = -2_i32;
 
-// Camera view over the board.
 /// Board's right most length in view.
 pub const RGT   : i32 =  12_i32;
 /// Board's left most length in view.
@@ -93,11 +91,9 @@ impl Quadrant {
     /// To get a [`Quadrant`] value from x and y values of `f32` type.
     #[inline]
     pub fn from_xy(x: f32, y: f32) -> Result<Self, Error> {
-        // Checking in each quadrant and returning the specific one.
         if position_in_q1_bounds(x, y) { return Ok(Quadrant::Q1) }
         if position_in_q2_bounds(x, y) { return Ok(Quadrant::Q2) }
         if position_in_q3_bounds(x, y) { return Ok(Quadrant::Q3) }
-        // If the position is out of bounds.
         Err(Error::PositionNotInQuadrant(x as i32, y as i32))
     }
 }

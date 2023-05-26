@@ -157,7 +157,6 @@ impl Position {
     /// Takes the x and y value, checks if it is inside the board and creates the struct.
     #[inline]
     pub(crate) fn from(x: i32, y: i32) -> Result<Self, Error> {
-        // Checking if the poisition is in the board range.
         Piece::in_board_range(x, y)?;
         Ok(Position { x, y })
     }
@@ -192,7 +191,6 @@ impl Piece {
         quadrant_active:    usize,
     ) -> Result<Vec<Piece>, Error> {
         let mut pieces: Vec<Piece> = Vec::new();
-        // Zipping through the hard-coded positions and creating pieces.
         for ((pos1, pos2), piece_type) in   position_from_quadrant(
                                                 &quadrant,
                                                 quadrant_active,
@@ -200,14 +198,12 @@ impl Piece {
                                             .into_iter()
                                             .zip(piece_type(is_defender, quadrant_active))
         {
-            // Pushing to the vec. Throws error if invalid piece type or position.
             pieces.push(
                 Piece::from(
                     pos1, pos2, PieceType::from_index(piece_type)?,
                 )?
             ); 
         }
-        // Return.
         Ok(pieces)
     }
     /// To update the [`Position`] of the [`Piece`].
@@ -216,7 +212,6 @@ impl Piece {
     /// Returns error if the new position is out of range.
     #[inline]
     pub(crate) fn update_pos(&mut self, x: i32, y: i32) -> Result<(), Error> {
-        // Checking if the position is in the board range.
         Self::in_board_range(x, y)?;
         Ok({
             self.position.x = x;

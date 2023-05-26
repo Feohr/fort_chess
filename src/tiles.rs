@@ -4,7 +4,6 @@
 //! game.
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
-//  Modules //
 /*----------*/
 pub(crate) mod block;
 /*----------*/
@@ -134,19 +133,12 @@ fn dark_or_light_tile_index(x: i32, y: i32) -> TileSpriteSheetIndex {
 ///
 /// with the power of mathematics. The one issue I do have is with the *Zeroeth* axis as that
 /// produced odd number of tiles at each axis.
-// I chose to decrement x and y values if they are greater than zero. Not the most elegant solution
-// and far from being the best one as apparent from the trouble I go through everytime I refactor.
 fn draw_board(
     mut commands:   Commands,
     tile:           Res<TileSheet>,
 ) {
     (X_MIN..=X_MAX).for_each(|x| {
         (Y_MIN..=Y_MAX).for_each(|mut y| {
-            // If x value as well as y value are less than BREADTH value then it won't be drawn
-            // as that is the center of the board where the fort will reside.
-            // if x value as well as y value is greater than BREADTH, then a tile won't be
-            // drawn as that will come outside the board bounds.
-            // Y == 0 column is ignored to remove the extra zeroeth column.
             if !{   y == 0_i32
             ||  (
                     x.abs() <=  BREADTH
@@ -156,7 +148,6 @@ fn draw_board(
                     x.abs() >   BREADTH
                 &&  y.abs() >   BREADTH
             )}  {
-                    // To get rid of the zeroeth line.
                     if y > 0_i32 { y -= 1_i32 }
                     let tile = spawn_tile(
                         &mut commands,
@@ -183,8 +174,6 @@ fn draw_border(
 ) {
     ((X_MIN - 1)..=(X_MAX + 1)).for_each(|x| {
         ((Y_MIN - 1)..=(Y_MAX + 1)).for_each(|mut y| {
-            // Exactly the same as draw_board fucntion but with one column and row extra padding
-            // for the border.
             if !{   y == 0_i32
             ||  (
                     x.abs() <=  BREADTH
@@ -194,7 +183,6 @@ fn draw_border(
                     x.abs() >   BREADTH + 1_i32
                 &&  y.abs() >   BREADTH + 1_i32
             )}  {
-                    // To get rid of the zeroeth line.
                     if y > 0_i32 { y -= 1_i32 }
                     let tile = spawn_tile(
                         &mut commands,
@@ -219,7 +207,6 @@ fn draw_fort(
     mut commands:   Commands,
     tile_sheet:     Res<TileSheet>,
 ) {
-    // Draws the fort in the BREADTH side square.
     (-BREADTH..=BREADTH).for_each(|x| {
         (-BREADTH..BREADTH).for_each(|y| {
             let tile = spawn_tile(
@@ -235,7 +222,6 @@ fn draw_fort(
             commands.entity(tile).insert(TileComponent);
         })
     });
-    // Draws the middle most part which is BREADTH - 1 size square.
     ((-BREADTH + 1_i32)..=(BREADTH - 1_i32)).for_each(|x| {
         ((-BREADTH + 1_i32)..(BREADTH - 1_i32)).for_each(|y| {
             let tile = spawn_tile(
@@ -298,14 +284,11 @@ fn spawn_tile(
             sprite: TextureAtlasSprite {
                 index: index.as_usize(),
                 custom_size: Some(Vec2::new(
-                        // width.
                         TILESIZE.0 * RESOLUTION,
-                        // height.
                         TILESIZE.1 * RESOLUTION,
                 )),
                 ..default()
             },
-            // Creates a copy of the texture everytime a tile is created.
             texture_atlas: tile.0.clone(),
             transform: Transform {
                 translation,

@@ -18,15 +18,10 @@ use crate::listener::possible_paths::{STEP, PositionVectorf32};
 /// Checks for steps along `+ve X-axis`, `-ve X-axis`, `+ve Y-axis` and `-ve Y-axis`.
 pub(crate) fn analyse_rook_paths(x: f32, y: f32, game: &Game) -> PositionVectorf32 {
     let mut _possiblepaths: PositionVectorf32 = Vec::new();
-    // Along positive x-axis.
     iter_rook_path_step_analysis(x, y, |_x, _y| *_x += STEP, game, &mut _possiblepaths);
-    // Along negative x-axis.
     iter_rook_path_step_analysis(x, y, |_x, _y| *_x -= STEP, game, &mut _possiblepaths);
-    // Along positive y-axis.
     iter_rook_path_step_analysis(x, y, |_x, _y| *_y += STEP, game, &mut _possiblepaths);
-    // Along negative y-axis.
     iter_rook_path_step_analysis(x, y, |_x, _y| *_y -= STEP, game, &mut _possiblepaths);
-    // Return.
     _possiblepaths
 }
 
@@ -43,17 +38,11 @@ fn iter_rook_path_step_analysis<F>(
 ) where
         F: Fn(&mut f32, &mut f32),
 {
-    // Loop over a direction until we hit the same team player, enemy player and add that to path
-    // or go out of bounds.
     loop {
-        // Step.
         step(&mut _x, &mut _y);
-        // Checking for early return.
         if !position_in_board_bounds(_x, _y)
         || game.current_player().piece_index_from_xy_f32(_x, _y).is_ok() { break }
-        // Push.
         _possiblepaths.push((_x, _y));
-        // Checking if the next piece needs to be calculated.
         if game.check_piece_in_pos(_x, _y) { break }
     }
 }

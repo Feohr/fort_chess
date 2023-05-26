@@ -5,7 +5,6 @@
 //! It also is responsible for drawing the pieces to the board.
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
-//  Module   //
 //-----------//
 pub(crate) mod draw_piece;
 pub(crate) mod highlight;
@@ -91,29 +90,24 @@ fn init_player_name_box_vec(
     mut commands:   Commands,
     game:           Res<GameAsset>,
 ) {
-    // Initilization.
     let mut player_name = PlayerNameBoxVec::new();
     let mut outer_check_fn_iter = [
         q1_outer_bound_pos,
         q2_outer_bound_pos,
         q3_outer_bound_pos,
     ].into_iter();
-    // Iterating through players and creating text boxes,
     game
         .get()
         .players
         .iter()
         .for_each(|player| {
-            // Get the x and y positions based on if the piece is_defender.
             let (x, y) = if player.is_defender {
                 (-1_i32, 0_i32)
             } else {
                 (outer_check_fn_iter.next().unwrap())()
             };
-            // Push to player name vec.
             player_name.push(player.name.clone(), player.team, x, y);
         });
-    // Inserting the resource.
     commands.insert_resource(player_name);
 }
 
@@ -149,10 +143,8 @@ fn init_game(
 ) {
     let count = name_entry_value_res.count();
     if count < 2_usize { panic!("Less than two players") }
-    // Initialization.
     let dice_roll = (dice_roll() % TEAM_TYPE_COUNT) % count;
     let mut quadrant = [Quadrant::Q1, Quadrant::Q2, Quadrant::Q3].into_iter();
-    // Inserting the game resource.
     commands.insert_resource(GameAsset(Game::init(
         (usize::MIN..count)
             .into_iter()
@@ -196,9 +188,7 @@ fn game_update_tick(
     pnquery:        Query<Entity, With<PlayerName>>,
     pnhquery:       Query<Entity, With<PlayerNameOutline>>,
 ) {
-    // If no need for update, return.
     if !game.get().update { return }
-    // Deleting lost players.
     clean_up_lost_players(game.get_mut(), &mut pname);
     if game.get().players.len().eq(&1_usize) {
         game
@@ -209,13 +199,10 @@ fn game_update_tick(
             .set_winner();
     }
     if !game.get().play {
-        // Idempotent in nature hence we throw the result.
         let _throw = state.set(FortChessState::ResultScreen);
         return;
     }
-    // Setting the update as false to put latch back.
     game.get_mut().set_update_false();
-    // Update draw functions.
     draw_pieces(            &mut commands, &sprite, &game, &dquery);
     highlight_active_pieces(&mut commands, &game,          &hquery);
     display_player_names(   &mut commands, &pname,         &pnquery, &font);
@@ -227,10 +214,8 @@ fn clean_up_lost_players(
     game:   &mut Game,
     pname:  &mut ResMut<PlayerNameBoxVec>,
 ) {
-    // Getting the lost players,
     let _dead = game.hunt();
     if !_dead.is_empty() { dbg!(&_dead); }
-    // Iterating through and poping the corresponding player_name text box.
     _dead
         .into_iter()
         .for_each(|player| pname.pop(player.team))

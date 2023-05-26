@@ -23,7 +23,6 @@ use crate::listener::possible_paths::PositionVectorf32;
 /// inside.
 pub(crate) fn analyse_minister_paths(x: f32, y: f32, game: &Game) -> PositionVectorf32 {
     let mut _possiblepaths: PositionVectorf32 = Vec::new();
-    // Along +ve X and +ve y diagonal.
     minister_step_analysis(
         x, y,   |x, y, breadth| {
                     (x + breadth as f32,
@@ -31,7 +30,6 @@ pub(crate) fn analyse_minister_paths(x: f32, y: f32, game: &Game) -> PositionVec
                 },
         game, &mut _possiblepaths,
     );
-    // Along +ve X and -ve y diagonal.
     minister_step_analysis(
         x, y,   |x, y, breadth| {
                     (x + breadth as f32,
@@ -39,7 +37,6 @@ pub(crate) fn analyse_minister_paths(x: f32, y: f32, game: &Game) -> PositionVec
                 },
         game, &mut _possiblepaths,
     );
-    // Along -ve X and +ve y diagonal.
     minister_step_analysis(
         x, y,   |x, y, breadth| {
                     (x - breadth as f32,
@@ -47,7 +44,6 @@ pub(crate) fn analyse_minister_paths(x: f32, y: f32, game: &Game) -> PositionVec
                 },
         game, &mut _possiblepaths,
     );
-    // Along -ve X and -ve y diagonal.
     minister_step_analysis(
         x, y,   |x, y, breadth| {
                     (x - breadth as f32,
@@ -55,11 +51,9 @@ pub(crate) fn analyse_minister_paths(x: f32, y: f32, game: &Game) -> PositionVec
                 },
         game, &mut _possiblepaths,
     );
-    // Return.
     _possiblepaths
         .into_iter()
         .filter(|(_x, _y)| (
-            // Fetching the appropriate filter function based on the x and y location.
             match Quadrant::from_xy(x, y).unwrap() {
                 Quadrant::Q1 => position_in_q1_bounds,
                 Quadrant::Q2 => position_in_q2_bounds,
@@ -80,15 +74,10 @@ fn minister_step_analysis<F>(
 ) where
         F: Fn(f32, f32, i32) -> (f32, f32),
 {
-    // Looping over the breadth of a single quadrant.
     for breadth in 1..(BREADTH * 2_i32) {
-        // To get the x and y for this step.
         let (x, y) = step(x, y, breadth);
-        // If the same team piece exists at the step stop.
         if game.current_player().piece_index_from_xy_f32(x, y).is_ok()  { break }
-        // Push.
         _possiblepaths.push((x, y));
-        // If there was an enemy piece at the position then stop.
         if game.check_piece_in_pos(x, y)                                { break }
     }
 }

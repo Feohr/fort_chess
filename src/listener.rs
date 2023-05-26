@@ -3,7 +3,6 @@
 //! Handles the main IO interaction by the player.
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
-//      Module      //
 //------------------//
 mod possible_paths;
 mod click;
@@ -65,12 +64,10 @@ impl Plugin for ListenerPlugin {
 /*-----------------------------------------------------------------------------------------------*/
 /// To initialize [`CursorPosition`] and [`PossiblePaths`] structs.
 fn initialize_listener_objects(mut commands: Commands) {
-    // To create and insert the CursorPosition resource.
     commands.insert_resource(CursorPosition {
         x: default(),
         y: default(),
     });
-    // To create an insert the PossiblePaths resource.
     commands.insert_resource(PossiblePaths {
         paths: Vec::default(),
     });
@@ -95,11 +92,8 @@ pub(crate) fn update_cursor_position(
     mut position:   ResMut<CursorPosition>,
     windows:        Res<Windows>,
 ) {
-    // Does not read when the window is not active.
     let Some(window) = windows.get_primary()    else { return };
-    // Updating cursor position at each frame.
     let Some(cursor) = events.iter().next()     else { return };
-    // Updating the position struct.
     (position.x, position.y) = cursor_in_window(
         cursor.position.x,
         cursor.position.y,

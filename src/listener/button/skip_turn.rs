@@ -65,15 +65,12 @@ fn skip_turn_btn_clicked(
         .for_each(|(&interaction, mut color)| {
             match interaction {
                 Interaction::Clicked => {
-                    // Updating color,
                     *color = UiColor::from(style::BTN_CLICKD_COLOR);
-                    // Iterating over a bunch of closures to process.
                     game
                         .get_mut()
                         .next_player()
                         .set_update_true()
                         .set_picked_false();
-                    // To clear off the paths and clear the screen for next player.
                     paths.clear();
                     commands.despawn_entity(&click_query);
                     commands.despawn_entity(&paths_query);

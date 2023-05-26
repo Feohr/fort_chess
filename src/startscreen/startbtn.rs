@@ -182,7 +182,6 @@ fn start_btn_click(
     start_btn_query
         .iter_mut()
         .for_each(|(&interaction, mut color, children, _btn_comp)| {
-            // To get the text color.
             let text_color = &mut text_query
                 .get_mut(children[0])
                 .expect("button does not have text inside")
@@ -190,7 +189,6 @@ fn start_btn_click(
             match interaction {
                 Interaction::Clicked    => {
                     *color = UiColor::from(style::START_BTN_CLICK);
-                    // Change the text color to white when clicked.
                     *text_color = Color::WHITE;
                     click(
                         &mut commands,
@@ -202,7 +200,6 @@ fn start_btn_click(
                         &err_msg_query,
                     );
                 },
-                // Change the text color to black as default.
                 Interaction::Hovered    => {
                     *color = UiColor::from(style::START_BTN_HOVER);
                     *text_color = DEFAULT_FONT_CLR;
@@ -230,11 +227,9 @@ fn click(
 ) {
     match button_type {
         ButtonType::Start   => {
-            // Clean up error message.
             commands.despawn_entity(err_msg_query);
             validate_and_start_game(commands, name_entry_value, state, font);
         },
-        // closes the window.
         ButtonType::Exit    => close_window(windows),
     }
 }
@@ -252,7 +247,6 @@ fn validate_and_start_game(
         return
     }
     for name in name_entry_value.players.iter() {
-        // Checking for the name length.
         {
             let len = name.len();
             if (len <= NAME_MIN_LEN || len >= NAME_MAX_LEN) && len != 0_usize {
@@ -260,12 +254,10 @@ fn validate_and_start_game(
                 return
             }
         }
-        // Checking if name has space.
         if name.contains('\u{0020}') || name.contains('\u{00a0}') {
             err_msg(commands, font, "Name cannot have whitespace");
             return
         }
-        // Checking the first character of the names.
         if let Some(ch) = name.chars().nth(0_usize) {
             if !ch.is_alphabetic() {
                 err_msg(commands, font, "Name should start with an alphabet");

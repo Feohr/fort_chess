@@ -38,7 +38,6 @@ pub(crate) fn draw_pieces(
     game:       &ResMut<GameAsset>,
     query:      &Query<Entity, With<Piece>>,
 ) {
-    // Clean up.
     commands.despawn_entity(query);
     game
         .get().players
@@ -49,9 +48,7 @@ pub(crate) fn draw_pieces(
                     commands,
                     sprite,
                     (
-                            // Row.
                             player.team.as_usize()  * PIECES_SPRITESHEET_WIDTH
-                            // Column.
                     )   +   piece.piece_type.as_usize(),
                     Vec3::new(
                         piece.position.x as f32     * RESOLUTION,
@@ -77,9 +74,7 @@ fn spawn_piece(
             sprite: TextureAtlasSprite {
                 index,
                 custom_size: Some(Vec2::new(
-                        // width.
                         TILESIZE.0 * RESOLUTION,
-                        // height.
                         TILESIZE.1 * RESOLUTION,
                 )),
                 ..default()

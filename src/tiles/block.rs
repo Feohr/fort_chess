@@ -48,7 +48,6 @@ fn muteblockq2(
     mut commands:           Commands,
     name_entry_value_res:   Res<NameEntryValue>,
 ) {
-    // If player count is greater than or equal to `3`.
     if name_entry_value_res.count() >= 3_usize { return }
     (-BREADTH..BREADTH)
         .into_iter()
@@ -77,7 +76,6 @@ fn muteblockq3(
     mut commands:           Commands,
     name_entry_value_res:   Res<NameEntryValue>,
 ) {
-    // If player count is greater than or equal to `4` then.
     if name_entry_value_res.count() >= 4_usize { return }
     (BREADTH..X_MAX)
         .into_iter()

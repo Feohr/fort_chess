@@ -29,16 +29,13 @@ pub(crate) fn highlight_active_pieces(
     game:       &ResMut<GameAsset>,
     query:      &Query<Entity, With<Highlight>>,
 ) {
-    // Clean up.
     commands.despawn_entity(query);
-    // Draw.
     game
         .get()
         .current_player()
         .pieces()
         .iter()
         .for_each(|piece| {
-            // Spawn.
             commands
                 .spawn()
                 .insert_bundle(SpriteBundle {

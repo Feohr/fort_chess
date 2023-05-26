@@ -3,7 +3,6 @@
 //! To handle and change the game state.
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
-// use bevy::prelude::*;
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub(crate) enum FortChessState {

@@ -45,23 +45,16 @@ mod circle {
 /// Any positions with the pieces of the same team are also skipped.
 pub(crate) fn analyse_knight_paths(x: f32, y: f32, game: &Game) -> PositionVectorf32 {
     let mut _possiblepaths: PositionVectorf32 = Vec::new();
-    // Looping from 0 to 360 with 30 as the step.
     for theta in (circle::ANGLE_START..circle::ANGLE_END).step_by(circle::ANGLE_STEP) {
-        // Getting the circumeference x and y values.
         let path_x = ((theta as f32).to_radians().sin() * circle::RADIUS).round() + x;
         let path_y = ((theta as f32).to_radians().cos() * circle::RADIUS).round() + y;
-        // Checking if they are either equal to the piece's x and y value or if the position
-        // consists of a piece from the same team.
         if path_x == x.round()
         || path_y == y.round()
         || game.current_player().piece_index_from_xy_f32(path_x, path_y).is_ok() { continue }
-        // Pushing to the _possiblepaths vec.
         _possiblepaths.push((path_x, path_y));
     }
-    // Return.
     _possiblepaths  .into_iter()
                     .filter(|(_x, _y)| (
-                    // Fetching the appropriate filter function based on the x and y location.
                     match Quadrant::from_xy(x, y).unwrap() {
                         Quadrant::Q1 => position_in_q1_bounds,
                         Quadrant::Q2 => position_in_q2_bounds,

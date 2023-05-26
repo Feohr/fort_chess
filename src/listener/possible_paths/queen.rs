@@ -17,10 +17,7 @@ use crate::listener::possible_paths::{
 /// those two.
 pub(crate) fn analyse_queen_paths(x: f32, y: f32, game: &Game) -> PositionVectorf32 {
     let mut _possiblepaths: PositionVectorf32 = Vec::new();
-    // Appending rook paths.
     _possiblepaths.append(&mut analyse_rook_paths(      x, y, game));
-    // Analysing minister paths.
     _possiblepaths.append(&mut analyse_minister_paths(  x, y, game));
-    // Return.
     _possiblepaths
 }

@@ -152,7 +152,6 @@ pub(crate) fn btn_spawn<'a>(
     text:               &'a str,
     button_component:   impl Component,
 ) {
-    // Spawning a UI Node.
     commands.spawn_bundle(NodeBundle {
         style: Style {
             size: button.size,

@@ -5,7 +5,6 @@
 //! Also contains the team object to handle the player teams.
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
-// use crate::Error;
 use crate::board::{Quadrant, check_in_opposite_enemy, check_in_opposite_defender};
 use crate::pieces;
 use crate::pieces::{Piece, Position};
@@ -201,7 +200,6 @@ impl Player {
     /// returns false if the name length is invalid. The constraints are 2 < name_length < 15.
     #[inline]
     fn validate_name(name: String) -> Result<String, Error> {
-        // The length of the name.
         let len = name.len();
         match len >= NAME_MIN_LEN && len < NAME_MAX_LEN {
             true  => Ok(name),
@@ -216,14 +214,12 @@ impl Player {
     /// To get the chosen piece reference.
     #[inline]
     pub fn current_chosen_piece(&self) -> Result<&Piece, Error> {
-        // Checking if the index is valid.
         Piece::is_in_bounds(self.chosen_piece_index, self.pieces.len())?;
         Ok(&self.pieces[self.chosen_piece_index])
     }
     /// To get the chosen piece mutable reference.
     #[inline]
     pub fn current_chosen_piece_mut(&mut self) -> Result<&mut Piece, Error> {
-        // Checking if the index is valid.
         Piece::is_in_bounds(self.chosen_piece_index, self.pieces.len())?;
         Ok(&mut self.pieces[self.chosen_piece_index])
     }
@@ -266,12 +262,9 @@ impl PlayerAction for Player {
     ///
     /// Takes the position of the piece, finds it inside the vector and deletes that piece.
     fn kill_piece(&mut self, pos: usize) -> Result<Piece, Error> {
-        // Checks.
         Piece::is_valid_index(pos, self.is_defender)?;
         Piece::is_in_bounds(pos, self.pieces.len())?;
-        // Removing the piece.
         let piece = self.pieces.remove(pos);
-        // Sort pieces after mutation.
         self.sort_pieces();
         Ok(piece)
     }
@@ -281,7 +274,6 @@ impl PlayerAction for Player {
     /// returns a result type in case of errors.
     fn update_piece(&mut self, x: i32, y: i32) -> Result<bool, Error> {
         let pos = self.chosen_piece_index;
-        // Is the index a valid index?
         Piece::is_valid_index(pos, self.is_defender)?;
         match self.pieces[pos].position.x == x && self.pieces[pos].position.y == y {
             true => Ok(false),

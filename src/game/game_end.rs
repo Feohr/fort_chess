@@ -84,7 +84,6 @@ impl GameResult {
                                 draw: true,
                                 fade: Timer::from_seconds(4_f32, false),
             },
-            // Throw panic if there are more than one winners.
             Err(err)  => panic!("{error:?}: {error}", error = err),
         }
     }
@@ -102,7 +101,6 @@ fn game_result(
     let exit_game = exit(
         std::mem::replace(game.get_mut(), Game::default())
     );
-    // Dealloc.
     commands.remove_resource::<GameAsset>();
     commands.insert_resource(GameResult::from(exit_game));
 }
@@ -115,21 +113,16 @@ fn fade_in_result(
     mut query:          Query<(&mut Sprite, &mut Children), With<GameResultComponent>>,
     mut query_child:    Query<&mut Text>,
 ) {
-    // Clock tick.
     result_obj.fade.tick(time.delta());
-    // Early return if the fade animations are done.
     if result_obj.fade.finished() { return }
     query
         .iter_mut()
         .for_each(|(mut sprite, child)| {
-            // To get the fade amount from the percent of timer completed mutliplied by the speed.
             let alpha = result_obj.fade.percent() * FADEOUT_SPEED;
-            // To set the alpha.
             sprite.color.set_a(alpha);
             child
                 .iter()
                 .for_each(|text| {
-                    // To set the alpha of the text as well.
                     let mut text_var = query_child.get_mut(*text).unwrap();
                     text_var.sections
                         .first_mut()
@@ -140,7 +133,6 @@ fn fade_in_result(
         });
 }
 
-// Tmp test function to get the result screen.
 fn jump_to_end_screen(
     mut state:      ResMut<State<FortChessState>>,
     key:            Res<Input<KeyCode>>,
@@ -156,9 +148,7 @@ fn display_winner(
     font:               Res<BoldFontHandle>,
     mut game_result:    ResMut<GameResult>,
 ) {
-    // Early return.
     if !game_result.draw { return }
-    // draw if the screen has not been drawn.
     commands.spawn_bundle(SpriteBundle {
         sprite: Sprite {
             color: RES_BKGRND_COLOR,
@@ -195,6 +185,5 @@ fn display_winner(
         });
     })
     .insert(GameResultComponent);
-    // Put the latch on.
     game_result.set_draw_false();
 }

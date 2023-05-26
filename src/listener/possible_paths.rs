@@ -3,7 +3,6 @@
 //! Handles the logic for piece possible paths and their movements.
 /*████Constants and Declarations█████████████████████████████████████████████████████████████████*/
 
-//  Modules //
 //----------//
 mod pawn;
 mod rook;
@@ -56,8 +55,6 @@ pub(crate) fn possible_piece_paths(
     piece_type: PieceType,
     game:       &Game,
 ) -> PositionVectorf32 {
-    // fetches an appropriate closure to perform over a certain piece so that we can get the
-    // respective possible paths.
     (
         match piece_type {
             PieceType::Rook     => analyse_rook_paths,
@@ -66,7 +63,6 @@ pub(crate) fn possible_piece_paths(
             PieceType::Minister => analyse_minister_paths,
             PieceType::Queen    => analyse_queen_paths,
         }
-        // executing the function.
     )   (x, y, game)
 }
 
@@ -102,9 +98,7 @@ pub(crate) fn draw_possible_piece_paths(
     paths_query:    &Query<Entity, With<Paths>>,
     game:           &Game,
 ) {
-    // Clean up.
     commands.despawn_entity(paths_query);
-    // Iterate over paths and draw a red tile where there is a piece else draw a yellow piece.
     paths
         .get()
         .iter()
@@ -113,11 +107,8 @@ pub(crate) fn draw_possible_piece_paths(
                 commands,
                 piece_in_step_detection(step, game),
                 Vec3::new(
-                    // step_x.
                     step.0 * RESOLUTION,
-                    // step_y.
                     step.1 * RESOLUTION,
-                    // Z leve.
                     ZAxisLevel::Seventh.as_f32(),
                 ),
             );
@@ -131,7 +122,6 @@ pub(crate) fn update_possible_piece_paths(
     game: &Game,
     paths: &mut ResMut<PossiblePaths>,
 ) {
-    // Exctracting piece position and type from game.
     let (piece_pos_x, piece_pos_y, piece_type) = {
         let piece = game.current_player().current_chosen_piece().unwrap();
         (
@@ -140,7 +130,6 @@ pub(crate) fn update_possible_piece_paths(
             piece.piece_type,
         )
     };
-    // Updating the paths.
     paths.update_paths(possible_piece_paths(
         piece_pos_x,
         piece_pos_y,

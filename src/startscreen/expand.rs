@@ -118,7 +118,6 @@ fn insert_expand_input_btn_res(
 pub(crate) fn expand_btn_click(
     icons:                  Res<ExpandBtnImage>,
     mut names:              ResMut<NameEntryValue>,
-//    mut input_box:          ResMut<InputBoxTimers>,
     mut expand_text_query:  Query<
         (&Interaction, &mut UiColor, &mut UiImage, &mut ExpandTextInputButton),
         (Changed<Interaction>, With<Button>, With<ExpandTextInputButton>),
@@ -129,7 +128,6 @@ pub(crate) fn expand_btn_click(
         .for_each(|(&interaction, mut color, mut image, mut expand)| {
             match interaction {
                 Interaction::Clicked    => {
-                    // Expand and unexpand button switch.
                     expand.expanded = !expand.expanded;
                     reset_input_str(&expand.id, &mut names);
                     *color = UiColor::from(EXPAND_CLICK);
@@ -185,16 +183,12 @@ pub(crate) fn input_toggle(
     mut box_query:  Query<(&mut Visibility, &InputBoxNode), With<InputBoxNode>>,
     btn_query:      Query<&ExpandTextInputButton, (With<Button>, With<ExpandTextInputButton>)>,
 ) {
-    // Iterating over input_boxes.
     box_query
         .iter_mut()
         .for_each(|(mut visibility, input_box)| {
-            // Iterating over the button queries.
             btn_query
                 .iter()
                 .for_each(|btn| {
-                    // If the input box is expandable and button id correspond then make the input
-                    // box visible/invisible.
                     if input_box.expandable && btn.id.eq(&input_box.id) {
                         visibility.is_visible = btn.expanded;
                     }
